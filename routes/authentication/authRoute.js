@@ -11,17 +11,21 @@ function authenticateToken(req, res, next) {
   const token = authHeader && authHeader.split(' ')[1];
 
   if (!token) {
+    console.log('No token found in request headers');
     return res.sendStatus(401); // Unauthorized
   }
 
   jwt.verify(token, JWT_SECRET, (err, user) => {
     if (err) {
+      console.error('Token verification failed:', err.message);
       return res.sendStatus(403); // Forbidden
     }
+    console.log('Token verified successfully:', user);
     req.user = user;
     next();
   });
 }
+
 
 router.get('/protected', authenticateToken, (req, res) => {
   res.send(`Hello, ${req.user.roleName}`);
@@ -49,11 +53,21 @@ router.post('/login', async (req, res) => {
       { expiresIn: '1h' }
     );
 
+    res.cookie('token', token, { httpOnly: true }); // Set token in cookie
     res.json({ message: `Welcome ${user.RoleName}!`, token });
   } catch (err) {
     console.error(err);
     res.status(500).send('Internal server error');
   }
+});
+
+// POST request to log out
+router.post('/logout', (req, res) => {
+  // Clear the token from the client's cookie
+  res.clearCookie('token'); // Clear token cookie
+
+  // Respond with success message
+  res.status(200).json({ message: 'Logout successful' });
 });
 
 module.exports = router;
