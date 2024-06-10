@@ -16,6 +16,7 @@ const session = require("express-session");
 //import Route
 const authRoute = require("./routes/authentication/authRoute");
 const userFeatures = require("./routes/userFeatures/view/email/forgotPassword");
+const manageProduct = require("./routes/products/productsRoute");
 //-------//
 const app = express();
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -53,7 +54,7 @@ sql
 
 //use Routes
 app.use("/auth", authRoute, userFeatures);
-
+app.use("/products", manageProduct);
 //----------//
 
 const port = process.env.PORT; // port server của API
