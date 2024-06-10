@@ -1,3 +1,4 @@
+const sql = require('mssql');
 require('dotenv').config();
 
 module.exports = {
@@ -6,6 +7,6 @@ module.exports = {
   server: process.env.DB_SERVER,
   database: process.env.DB_DATABASE,
   options: {
-    trustServerCertificate: process.env.DB_TRUST_SERVER_CERTIFICATE === 'true'
+    trustServerCertificate: true
   }
 };
