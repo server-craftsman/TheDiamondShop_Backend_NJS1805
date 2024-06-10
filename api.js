@@ -6,6 +6,8 @@
 //npm install express express-session body-parser
 //npm install googleapis nodemailer
 //npm install ejs
+//npm install express-flash express-session
+//npm install passport-google-oauth20
 
 const express = require("express");
 const bodyParser = require("body-parser");
@@ -13,6 +15,7 @@ const cors = require("cors");
 const sql = require("mssql");
 const dbConfig = require("./config/dbconfig");
 const session = require("express-session");
+const flash = require('express-flash');
 //import Route
 const authRoute = require("./routes/authentication/authRoute");
 const userFeatures = require("./routes/userFeatures/view/email/forgotPassword");
@@ -54,7 +57,10 @@ sql
 
 //use Routes
 app.use("/auth", authRoute, userFeatures);
+
 app.use("/products", manageProduct);
+
+app.use(flash());
 //----------//
 
 const port = process.env.PORT; // port server của API
