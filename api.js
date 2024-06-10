@@ -15,6 +15,7 @@ const dbConfig = require("./config/dbconfig");
 const session = require("express-session");
 //import Route
 const authRoute = require("./routes/authentication/authRoute");
+const userFeatures = require("./routes/userFeatures/view/email/forgotPassword");
 //-------//
 const app = express();
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -51,7 +52,7 @@ sql
   });
 
 //use Routes
-app.use("/auth", authRoute);
+app.use("/auth", authRoute, userFeatures);
 
 //----------//
 
