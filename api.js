@@ -18,13 +18,14 @@ const session = require("express-session");
 const flash = require("express-flash");
 //import Route
 const authRoute = require("./routes/authentication/authRoute");
-const userFeatures = require("./routes/userFeatures/view/email/forgotPassword");
+const forgotPassword = require("./routes/userFeatures/view/email/forgotPassword");
 const manageProduct = require("./routes/products/productsRoute");
-const viewBonus = require("./routes/userFeatures/userFeaturesRoute");
+const userFeatures = require("./routes/userFeatures/userFeaturesRoute");
 //-------//
 const app = express();
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
+app.use(express.json());//
 
 app.use(
   session({
@@ -53,7 +54,8 @@ sql
     console.log("Connected to SSMS");
 
     //use Routes
-    app.use("/auth", authRoute, userFeatures, viewBonus);
+    app.use("/auth", authRoute, forgotPassword);
+    app.use("/features", userFeatures);
 
     app.use("/products", manageProduct);
 
