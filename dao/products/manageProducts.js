@@ -1,7 +1,7 @@
 const config = require("../../config/dbconfig");
 const sql = require("mssql");
 
-async function getAllBridal() {
+async function getAllBridals() {
   try {
     let pool = await sql.connect(config);
     let products = await pool.request().query("SELECT * FROM Bridal");
@@ -50,7 +50,7 @@ async function getAllBrands() {
   }
 }
 
-async function getAllDiamond() {
+async function getAllDiamonds() {
   try {
     let pool = await sql.connect(config);
     let products = await pool.request().query("SELECT * FROM Diamond");
@@ -86,9 +86,9 @@ async function getAllTimePieces() {
 }
 
 module.exports = {
-  getAllBridal,
+  getAllBridals,
   getAllBrands,
-  getAllDiamond,
+  getAllDiamonds,
   getAllDiamondRings,
   getAllTimePieces,
 };
