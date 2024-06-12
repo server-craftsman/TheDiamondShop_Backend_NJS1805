@@ -1,4 +1,4 @@
-# BE_DiamondStore
+# BE_DiamondShop
 
 ![BE_DiamondShop Logo](https://firebasestorage.googleapis.com/v0/b/the-diamond-anh3.appspot.com/o/Logo%2FlogoDiamondShop.jpg?alt=media&token=753bec3b-2c2b-4d3a-bc47-0913437732da)
 
