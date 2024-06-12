@@ -52,7 +52,7 @@ router.get('/history-order', async (req, res) => {
 
     const historyOrder = await db.request()
       .input("Email", sql.NVarChar, email)
-      .query("SELECT a.FirstName, a.LastName, a.Email, a.PhoneNumber, o.OrderDate, o.Quantity, od.AttachedAccessories, od.Shipping, od.ReportNo, od.DeliveryAddress, o.OrderStatus, o.TotalPrice FROM Orders o JOIN Account a ON o.AccountID = a.AccountID JOIN OrderDetails od ON o.OrderID = od.OrderID WHERE a.Email = @Email");
+      .query("SELECT a.FirstName, a.LastName, a.Email, a.PhoneNumber, o.OrderID, o.OrderDate, o.Quantity, od.AttachedAccessories, od.Shipping, od.ReportNo, od.DeliveryAddress, o.OrderStatus, o.TotalPrice FROM Orders o JOIN Account a ON o.AccountID = a.AccountID JOIN OrderDetails od ON o.OrderID = od.OrderID WHERE a.Email = @Email");
 
     if (historyOrder.recordset.length > 0) {
       return res.status(200).json({ status: true, message: 'History Order Found', HistoryOrder: historyOrder.recordset });
@@ -65,6 +65,53 @@ router.get('/history-order', async (req, res) => {
     return res.status(500).json({ status: false, message: 'An error occurred', error: error.message });
   }
 });
+
+// change-location (Changes are only allowed while the order is pending)
+router.put('/change-locate', async (req, res) => {
+  const { Email, OrderID, DeliveryAddress } = req.body;
+
+  if (!OrderID || !DeliveryAddress || !Email) {
+    return res.status(400).json({ status: false, message: 'Email, OrderID and DeliveryAddress are required' });
+  }
+
+  try {
+    const db = await sql.connect(dbConfig);
+    
+    const chkStatus = await db.request()
+      .input("Email", sql.NVarChar, Email)
+      .input('OrderID', sql.Int, OrderID)
+      .query("SELECT o.OrderStatus FROM OrderDetails od JOIN Orders o ON od.OrderID = o.OrderID JOIN Account a ON o.AccountID = a.AccountID WHERE a.Email = @Email AND o.OrderID = @OrderID"); // o for OrderTable, od for OrderDetail
+
+    if (chkStatus.recordset.length === 0) {
+      return res.status(404).json({ status: false, message: 'Order not found' });
+    }
+
+    const orderStatus = chkStatus.recordset[0].OrderStatus;
+
+    if (orderStatus === "Pending") {
+      const updateLocate = await db.request()
+        .input("Email", sql.NVarChar, Email)
+        .input('OrderID', sql.Int, OrderID)
+        .input('DeliveryAddress', sql.NVarChar, DeliveryAddress)
+        .query("UPDATE od SET od.DeliveryAddress = @DeliveryAddress FROM OrderDetails od JOIN Orders o ON od.OrderID = o.OrderID JOIN Account a ON o.AccountID = a.AccountID WHERE a.Email = @Email AND o.OrderID = @OrderID ");
+
+      if (updateLocate.rowsAffected[0] > 0) {
+        console.log('Update successful');
+        return res.json({ status: true, message: 'Update successful' });
+      } else {
+        console.log('Update failed');
+        return res.status(500).json({ status: false, message: 'Update failed' });
+      }
+    } else {
+      return res.status(400).json({ status: false, message: 'Order is processing and you cannot change location' });
+    }
+  } catch (error) {
+    console.error('Error:', error);
+    return res.status(500).json({ status: false, message: 'An error occurred', error: error.message });
+  }
+});
+
+
 
 // View Schedule Appointment
 router.get('/schedule-appointment', (req, res) => {
