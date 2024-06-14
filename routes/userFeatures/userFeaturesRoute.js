@@ -197,4 +197,47 @@ router.get('/schedule-delivery', (req, res) => {
   });
 });
 
+// Update OrderStatus sale
+router.put('/update-order-status-sale', async (req, res) => {
+  const { orderID } = req.body;
+  let poolConnect;
+  let transaction;
+
+  try {
+    // Connect to the database
+    poolConnect = await pool.connect();
+
+    // Begin transaction
+    transaction = new sql.Transaction(poolConnect);
+    await transaction.begin();
+
+    // Update order status in Orders table
+    const request = new sql.Request(transaction);
+    await request.input('OrderID', sql.Int, orderID)
+                 .query('UPDATE Orders SET OrderStatus = \'Confirm\' WHERE OrderID = @OrderID');
+
+    // Update order detail status in OrderDetails table
+    await request.query('UPDATE OrderDetails SET OrderStatus = \'Confirm\' WHERE OrderID = @OrderID');
+
+    // Commit transaction
+    await transaction.commit();
+
+    res.status(200).send({ message: 'Order status and order detail status updated successfully!' });
+  } catch (error) {
+    console.error('Error updating order status:', error);
+
+    // Rollback transaction if an error occurs
+    if (transaction) {
+      await transaction.rollback();
+    }
+
+    res.status(500).send({ message: 'Internal Server Error' });
+  } finally {
+    // Release the connection
+    if (poolConnect) {
+      poolConnect.release();
+    }
+  }
+});
+
 module.exports = router;
