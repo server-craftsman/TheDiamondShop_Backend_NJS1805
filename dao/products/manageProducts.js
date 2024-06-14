@@ -85,10 +85,23 @@ async function getAllTimePieces() {
   }
 }
 
+async function getAllBanner() {
+  try {
+    const pool = await sql.connect(config);
+    const results = await pool
+    .request()
+    .query("SELECT * FROM Banner");
+    return results.recordsets;
+  } catch (error) {
+    console.error("Connection SQL error:", error);
+  }
+}
+
 module.exports = {
   getAllBridals,
   getAllBrands,
   getAllDiamonds,
   getAllDiamondRings,
   getAllTimePieces,
+  getAllBanner,
 };

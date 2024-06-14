@@ -6,6 +6,7 @@ const {
   getAllDiamonds,
   getAllDiamondRings,
   getAllTimePieces,
+  getAllBanner,
 } = require("../../dao/products/manageProducts");
 
 // View Bridal
@@ -61,6 +62,16 @@ router.get("/diamond-rings", async (req, response) => {
         console.error('Error fetching diamond rings: ', error);
         response.status(500).send('Error fetching diamond rings');
     });
+});
+
+//View Banner
+router.get("/banner", async (req, response) => {
+  getAllBanner().then(result =>{
+    response.json(result[0]);
+  }).catch(error => {
+    console.error('Error fetching banners: ', error);
+    response.status(500).send('Error fetching banners');
+  });
 });
 
 module.exports = router;
