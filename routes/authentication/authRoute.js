@@ -3,7 +3,7 @@ const jwt = require("jsonwebtoken");
 const {
   getUserByEmailAndPassword,
   registerUser,
-} = require("../../dao/authentication/loginDAO");
+} = require("../../dao/authentication/authenticationDAO");
 const router = express.Router();
 const passport = require("passport");
 const GoogleStrategy = require("passport-google-oauth20").Strategy;

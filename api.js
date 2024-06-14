@@ -21,6 +21,9 @@ const authRoute = require("./routes/authentication/authRoute");
 const forgotPassword = require("./routes/userFeatures/view/email/forgotPassword");
 const manageProduct = require("./routes/products/productsRoute");
 const userFeatures = require("./routes/userFeatures/userFeaturesRoute");
+//---order danger---
+const orderRoute = require('./routes/orders/ordersRoute');
+//------------------
 //-------//
 const app = express();
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -56,9 +59,8 @@ sql
     //use Routes
     app.use("/auth", authRoute, forgotPassword);
     app.use("/features", userFeatures);
-
     app.use("/products", manageProduct);
-
+    app.use("/orders", orderRoute);
     app.use(flash());
     //----------//
 
