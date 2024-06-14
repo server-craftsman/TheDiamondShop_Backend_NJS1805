@@ -54,6 +54,10 @@ router.post("/login", async (req, res) => {
 
     const user = users[0];
 
+    if (user.Status === 'Deactivate') {
+      return res.status(403).send("Account is deactivated. Please contact Administrator for support.");
+    }
+
     const token = jwt.sign(
       { accountId: user.AccountID, roleName: user.RoleName },
       JWT_SECRET,

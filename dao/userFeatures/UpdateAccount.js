@@ -66,6 +66,53 @@ async function UpdateAccount(userData) {
     }
 }
 
+// 0: activated  1: deactivated
+async function accountStatus(account) {
+    try {
+        const { email, status } = account;
+        const db = await sql.connect(dbConfig);
+        const check = await db.request()
+            .input("Email", sql.NVarChar, email)
+            .query("SELECT RoleName FROM Roles r JOIN Account AS a ON r.RoleID = a.RoleID WHERE a.Email = @Email");
+
+        const recordset = check.recordset;
+
+        if (recordset.length === 0) {
+            return { status: false, message: 'User Not Found' };
+        }
+
+        const role = recordset[0].RoleName;
+
+        if (role === "Admin") {
+            return { status: false, message: 'God cannot be disabled' };
+        } else {
+            let query;
+            let responseMessage;
+
+            if (status === 1) {
+                query = "UPDATE Account SET Status = 'Deactivate' WHERE Email = @Email";
+                responseMessage = 'Account Deactivated';
+            } else if (status === 0) {
+                query = "UPDATE Account SET Status = 'Activate' WHERE Email = @Email";
+                responseMessage = 'Account Activated';
+            } else {
+                return { status: false, message: 'Invalid status value' };
+            }
+
+            await db.request()
+                .input("Email", sql.NVarChar, email)
+                .query(query);
+
+            return { status: true, message: responseMessage };
+        }
+
+    } catch (error) {
+        console.error("Database query error:", error);
+        throw new Error("Database query error");
+    }
+}
+
 module.exports = {
-    UpdateAccount
+    UpdateAccount,
+    accountStatus
 };
