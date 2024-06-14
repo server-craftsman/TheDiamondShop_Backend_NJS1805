@@ -84,7 +84,7 @@ async function accountStatus(account) {
         const role = recordset[0].RoleName;
 
         if (role === "Admin") {
-            return { status: false, message: 'God cannot be disabled' };
+            return { status: false, message: 'Admin cannot be disabled' };
         } else {
             let query;
             let responseMessage;
