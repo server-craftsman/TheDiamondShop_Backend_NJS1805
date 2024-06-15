@@ -220,13 +220,13 @@ WHERE RoleID = @RoleID;
         .input("BonusPointsEarned", sql.Int, bonusPointsEarned)
         .query(updateRoleQuery);
 
-        // Call function to update inventory after successful order
+      // Call function to update inventory after successful order
       await updateInventoryAfterOrder({
         DiamondID,
         BridalID,
         DiamondRingsID,
         DiamondTimepiecesID,
-        Quantity
+        Quantity,
       });
 
       // Retrieve certificates associated with the order
@@ -268,15 +268,9 @@ function generateReportNo() {
   return `WR0${randomNumber}`;
 }
 
-
 async function updateInventoryAfterOrder(orderData) {
-  const {
-    DiamondID,
-    BridalID,
-    DiamondRingsID,
-    DiamondTimepiecesID,
-    Quantity
-  } = orderData;
+  const { DiamondID, BridalID, DiamondRingsID, DiamondTimepiecesID, Quantity } =
+    orderData;
 
   try {
     const pool = await sql.connect(config);
@@ -339,8 +333,56 @@ async function updateInventoryAfterOrder(orderData) {
     console.error("Error updating inventory after order:", error.message);
     throw new Error("Failed to update inventory after order");
   }
+
+}
+
+ //cancel order
+ 
+async function checkOrderForCancellation(orderId) {
+  try {
+      let pool = await sql.connect(config);
+      let result = await pool.request()
+          .input('OrderID', sql.Int, orderId) // Declare and bind the parameter
+          .query(`
+              SELECT o.OrderID
+              FROM Orders o
+              LEFT JOIN Transactions t ON o.OrderID = t.OrderID
+              WHERE o.OrderID = @OrderID
+              AND o.OrderStatus = 'Pending'
+              AND t.PaymentID IS NULL;
+          `);
+
+      sql.close();
+      return result.recordset.length === 1;
+  } catch (error) {
+      console.error('Error checking order for cancellation:', error.message);
+      throw error;
+  }
+}
+
+async function cancelOrder(orderId) {
+  try {
+      let pool = await sql.connect(config);
+      let result = await pool.request()
+          .input('OrderID', sql.Int, orderId) // Declare and bind the parameter
+          .query(`
+              UPDATE Orders
+              SET OrderStatus = 'Cancelled'
+              WHERE OrderID = @OrderID
+              AND OrderStatus = 'Pending'
+              AND NOT EXISTS (SELECT 1 FROM Transactions WHERE OrderID = @OrderID);
+          `);
+
+      sql.close();
+      return result.rowsAffected[0] === 1;
+  } catch (error) {
+      console.error('Error cancelling order:', error.message);
+      throw error;
+  }
 }
 
 module.exports = {
   createOrder,
+  checkOrderForCancellation,
+  cancelOrder,
 };

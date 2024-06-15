@@ -1,24 +1,8 @@
 const express = require("express");
 const router = express.Router();
-const { createOrder } = require("../../dao/orders/manageOrdersDAO");
+const { createOrder, cancelOrder, checkOrderForCancellation } = require("../../dao/orders/manageOrdersDAO");
 
-// router.post('/create-order', async (req, res) => {
-//     try {
-//         const orderData = req.body;
-//         const orderID = await orderDAO.createOrder(orderData);
-//         res.status(201).json({ orderID });
-//     } catch (err) {
-//         console.error('Error creating order:', err);
-//         if (err.code === 'ORDER_NOT_VALID') {
-//             res.status(400).json({ error: err.message });
-//         } else if (err.code === 'DATABASE_ERROR') {
-//             res.status(500).json({ error: 'Database error' });
-//         } else {
-//             res.status(500).json({ error: 'Internal server error' });
-//         }
-//     }
-// });
-
+// Route to create an order
 router.post("/create-order", async (req, res) => {
   try {
     const orderData = req.body; // Assuming order data is sent in the request body
@@ -29,4 +13,24 @@ router.post("/create-order", async (req, res) => {
     res.status(500).json({ error: "Error creating order" }); // Handle error
   }
 });
+
+// Route to cancel an order
+router.put('/cancel-order/:orderId', async (req, res) => {
+  const orderId = req.params.orderId;
+
+  try {
+      const canCancel = await checkOrderForCancellation(orderId);
+
+      if (canCancel) {
+          await cancelOrder(orderId);
+          res.status(200).json({ message: `Order with ID ${orderId} successfully cancelled.` });
+      } else {
+          res.status(400).json({ error: `Cannot cancel order with OrderID ${orderId}. Either it does not exist, is not pending, or has already been paid.` });
+      }
+  } catch (error) {
+      console.error('Error in cancel-order route:', error);
+      res.status(500).json({ error: 'An error occurred while processing your request.' });
+  }
+});
+
 module.exports = router;
