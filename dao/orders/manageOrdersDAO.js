@@ -246,11 +246,23 @@ WHERE RoleID = @RoleID;
       // Commit the transaction
       await transaction.commit();
 
+      //===========save data Transaction=============
+      // Save payment details using TotalPrice from createOrder function
+      const paymentSaved = await savePayment(
+        OrderID,
+        totalPrice,
+        "PaymentMethod"
+      );
+      await transaction.commit();
+
+      //=============================================
+
       // Return success message and relevant data
       return {
         message: "Order created successfully",
         OrderID,
         certificates,
+        paymentSaved,
       };
     } catch (err) {
       // Rollback the transaction in case of errors
@@ -333,17 +345,15 @@ async function updateInventoryAfterOrder(orderData) {
     console.error("Error updating inventory after order:", error.message);
     throw new Error("Failed to update inventory after order");
   }
-
 }
 
- //cancel order
- 
+//cancel order
+
 async function checkOrderForCancellation(orderId) {
   try {
-      let pool = await sql.connect(config);
-      let result = await pool.request()
-          .input('OrderID', sql.Int, orderId) // Declare and bind the parameter
-          .query(`
+    let pool = await sql.connect(config);
+    let result = await pool.request().input("OrderID", sql.Int, orderId) // Declare and bind the parameter
+      .query(`
               SELECT o.OrderID
               FROM Orders o
               LEFT JOIN Transactions t ON o.OrderID = t.OrderID
@@ -352,20 +362,19 @@ async function checkOrderForCancellation(orderId) {
               AND t.PaymentID IS NULL;
           `);
 
-      sql.close();
-      return result.recordset.length === 1;
+    sql.close();
+    return result.recordset.length === 1;
   } catch (error) {
-      console.error('Error checking order for cancellation:', error.message);
-      throw error;
+    console.error("Error checking order for cancellation:", error.message);
+    throw error;
   }
 }
 
 async function cancelOrder(orderId) {
   try {
-      let pool = await sql.connect(config);
-      let result = await pool.request()
-          .input('OrderID', sql.Int, orderId) // Declare and bind the parameter
-          .query(`
+    let pool = await sql.connect(config);
+    let result = await pool.request().input("OrderID", sql.Int, orderId) // Declare and bind the parameter
+      .query(`
               UPDATE Orders
               SET OrderStatus = 'Cancelled'
               WHERE OrderID = @OrderID
@@ -373,11 +382,123 @@ async function cancelOrder(orderId) {
               AND NOT EXISTS (SELECT 1 FROM Transactions WHERE OrderID = @OrderID);
           `);
 
-      sql.close();
-      return result.rowsAffected[0] === 1;
+    sql.close();
+    return result.rowsAffected[0] === 1;
   } catch (error) {
-      console.error('Error cancelling order:', error.message);
+    console.error("Error cancelling order:", error.message);
+    throw error;
+  }
+}
+
+// async function savePayment(orderId, paymentAmount, method) {
+//   let pool;
+//   try {
+//     pool = await sql.connect(config);
+//     const transaction = await pool.transaction();
+//     await transaction.begin();
+
+//     try {
+//       // Retrieve the totalPrice from the Orders table based on OrderID
+//       const getOrderQuery = `
+//         SELECT TotalPrice
+//         FROM Orders
+//         WHERE OrderID = @OrderID
+//       `;
+//       const orderResult = await transaction
+//         .request()
+//         .input("OrderID", sql.Int, orderId)
+//         .query(getOrderQuery);
+
+//       if (orderResult.recordset.length === 0) {
+//         throw new Error(`Order with ID ${orderId} not found`);
+//       }
+
+//       const totalPrice = orderResult.recordset[0].TotalPrice;
+
+//       // Insert payment details into Transactions table
+//       const insertPaymentQuery = `
+//         INSERT INTO Transactions (OrderID, PaymentAmount, Method, PaymentDate)
+//         VALUES (@OrderID, @PaymentAmount, @Method, GETDATE());
+//       `;
+//       const insertResult = await transaction
+//         .request()
+//         .input("OrderID", sql.Int, orderId)
+//         .input("PaymentAmount", sql.Decimal(10, 2), paymentAmount)
+//         .input("Method", sql.VarChar(50), method)
+//         .query(insertPaymentQuery);
+
+//       // Commit the transaction
+//       await transaction.commit();
+
+//       return insertResult.rowsAffected[0] === 1;
+//     } catch (error) {
+//       await transaction.rollback();
+//       console.error("Error saving payment:", error.message);
+//       throw error;
+//     }
+//   } catch (error) {
+//     console.error("Database connection error:", error.message);
+//     throw new Error("Failed to save payment");
+//   } finally {
+//     if (pool) {
+//       pool.close();
+//     }
+//   }
+// }
+
+async function savePayment(orderId, paymentAmount, method) {
+  let pool;
+  try {
+    pool = await sql.connect(config);
+    const transaction = await pool.transaction();
+    await transaction.begin();
+
+    try {
+      // Retrieve the totalPrice from the Orders table based on OrderID
+      const getOrderQuery = `
+        SELECT TotalPrice
+        FROM Orders
+        WHERE OrderID = @OrderID
+      `;
+      const orderResult = await transaction
+        .request()
+        .input("OrderID", sql.Int, orderId)
+        .query(getOrderQuery);
+
+      if (orderResult.recordset.length === 0) {
+        throw new Error(`Order with ID ${orderId} not found`);
+      }
+
+      const totalPrice = orderResult.recordset[0].TotalPrice;
+
+      // Insert payment details into Transactions table
+      const insertPaymentQuery = `
+        INSERT INTO Transactions (OrderID, PaymentAmount, Method, PaymentDate)
+        VALUES (@OrderID, @PaymentAmount, @Method, GETDATE());
+      `;
+      const insertResult = await transaction
+        .request()
+        .input("OrderID", sql.Int, orderId)
+        .input("PaymentAmount", sql.Decimal(10, 2), totalPrice) // Use totalPrice as PaymentAmount
+        .input("Method", sql.VarChar(50), method)
+        .query(insertPaymentQuery);
+
+      // Commit the transaction
+      await transaction.commit();
+
+      return insertResult.rowsAffected[0] === 1;
+    } catch (error) {
+      await transaction.rollback();
+      console.error("Error saving payment:", error.message);
       throw error;
+    }
+  } catch (error) {
+    console.error("Database connection error:", error.message);
+    throw new Error("Failed to save payment");
+  } finally {
+    if (pool) {
+      pool.close();
+    }
   }
 }
 
@@ -385,4 +506,5 @@ module.exports = {
   createOrder,
   checkOrderForCancellation,
   cancelOrder,
+  savePayment,
 };
