@@ -85,10 +85,196 @@ async function getAllTimePieces() {
   }
 }
 
+async function getAllBanner() {
+  try {
+    const pool = await sql.connect(config);
+    const results = await pool
+    .request()
+    .query("SELECT * FROM Banner");
+    return results.recordsets;
+  } catch (error) {
+    console.error("Connection SQL error:", error);
+  }
+}
+
+//insert Diamond
+const insertDiamond = async (diamondData) => {
+  try {
+    const {
+      diamondOrigin,
+      caratWeight,
+      color,
+      clarity,
+      cut,
+      price,
+      shape,
+      image,
+      polish,
+      symmetry,
+      tablePercentage,
+      depth,
+      measurements,
+      giaReportNumber,
+      stockNumber,
+      labReportNumber,
+      gemstone,
+      gradingReport,
+      descriptors,
+      fluorescence,
+      inventory,
+    } = diamondData;
+
+    let pool = await sql.connect(config);
+    let result = await pool
+      .request()
+      .input("DiamondOrigin", sql.VarChar, diamondOrigin)
+      .input("CaratWeight", sql.Float, caratWeight)
+      .input("Color", sql.VarChar, color)
+      .input("Clarity", sql.VarChar, clarity)
+      .input("Cut", sql.VarChar, cut)
+      .input("Price", sql.Float, price)
+      .input("Shape", sql.VarChar, shape)
+      .input("Image", sql.VarChar, image)
+      .input("Polish", sql.VarChar, polish)
+      .input("Symmetry", sql.VarChar, symmetry)
+      .input("TablePercentage", sql.Decimal, tablePercentage)
+      .input("Depth", sql.Decimal, depth)
+      .input("Measurements", sql.VarChar, measurements)
+      .input("GIAReportNumber", sql.VarChar, giaReportNumber)
+      .input("StockNumber", sql.VarChar, stockNumber)
+      .input("LabReportNumber", sql.VarChar, labReportNumber)
+      .input("Gemstone", sql.VarChar, gemstone)
+      .input("GradingReport", sql.VarChar, gradingReport)
+      .input("Descriptors", sql.Text, descriptors)
+      .input("Fluorescence", sql.VarChar, fluorescence)
+      .input("Inventory", sql.Int, inventory).query(`
+        INSERT INTO Diamond (DiamondOrigin, CaratWeight, Color, Clarity, Cut, Price, Shape, Image, Polish, Symmetry, TablePercentage, Depth, Measurements, GIAReportNumber, StockNumber, LabReportNumber, Gemstone, GradingReport, Descriptors, Fluorescence, Inventory)
+        VALUES (@DiamondOrigin, @CaratWeight, @Color, @Clarity, @Cut, @Price, @Shape, @Image, @Polish, @Symmetry, @TablePercentage, @Depth, @Measurements, @GIAReportNumber, @StockNumber, @LabReportNumber, @Gemstone, @GradingReport, @Descriptors, @Fluorescence, @Inventory)
+      `);
+    return result;
+  } catch (err) {
+    console.error("Database query error:", err);
+    throw new Error("Database query error");
+  }
+};
+
+// edit diamond
+const updateDiamond = async (diamondData) => {
+  try {
+    const {
+      diamondId,
+      diamondOrigin,
+      caratWeight,
+      color,
+      clarity,
+      cut,
+      price,
+      shape,
+      image,
+      polish,
+      symmetry,
+      tablePercentage,
+      depth,
+      measurements,
+      giaReportNumber,
+      stockNumber,
+      labReportNumber,
+      gemstone,
+      gradingReport,
+      descriptors,
+      fluorescence,
+      inventory,
+    } = diamondData;
+
+    let pool = await sql.connect(config);
+    let results = await pool
+      .request()
+      .input("DiamondID", sql.Int, diamondId)
+      .input("DiamondOrigin", sql.VarChar, diamondOrigin)
+      .input("CaratWeight", sql.Float, caratWeight)
+      .input("Color", sql.VarChar, color)
+      .input("Clarity", sql.VarChar, clarity)
+      .input("Cut", sql.VarChar, cut)
+      .input("Price", sql.Float, price)
+      .input("Shape", sql.VarChar, shape)
+      .input("Image", sql.VarChar, image)
+      .input("Polish", sql.VarChar, polish)
+      .input("Symmetry", sql.VarChar, symmetry)
+      .input("TablePercentage", sql.Decimal, tablePercentage)
+      .input("Depth", sql.Decimal, depth)
+      .input("Measurements", sql.VarChar, measurements)
+      .input("GIAReportNumber", sql.VarChar, giaReportNumber)
+      .input("StockNumber", sql.VarChar, stockNumber)
+      .input("LabReportNumber", sql.VarChar, labReportNumber)
+      .input("Gemstone", sql.VarChar, gemstone)
+      .input("GradingReport", sql.VarChar, gradingReport)
+      .input("Descriptors", sql.Text, descriptors)
+      .input("Fluorescence", sql.VarChar, fluorescence)
+      .input("Inventory", sql.Int, inventory)
+      .query(`
+        UPDATE Diamond
+        SET 
+          DiamondOrigin = @DiamondOrigin,
+          CaratWeight = @CaratWeight,
+          Color = @Color,
+          Clarity = @Clarity,
+          Cut = @Cut,
+          Price = @Price,
+          Shape = @Shape,
+          Image = @Image,
+          Polish = @Polish,
+          Symmetry = @Symmetry,
+          TablePercentage = @TablePercentage,
+          Depth = @Depth,
+          Measurements = @Measurements,
+          GIAReportNumber = @GIAReportNumber,
+          StockNumber = @StockNumber,
+          LabReportNumber = @LabReportNumber,
+          Gemstone = @Gemstone,
+          GradingReport = @GradingReport,
+          Descriptors = @Descriptors,
+          Fluorescence = @Fluorescence,
+          Inventory = @Inventory
+        WHERE DiamondID = @DiamondID
+      `);
+      return results;
+    } catch (err) {
+      console.error("Database query error:", err);
+      throw new Error("Database query error");
+    }
+  };
+
+//Delete Diamond
+const deleteDiamond = async (dataSource) => {
+  try {
+    const{
+      diamondId
+    } = dataSource;
+    
+    let pool = await sql.connect(config);
+    let results = await pool
+      .request()
+      .input("diamondId", sql.Int, diamondId)
+      .query(`
+        DELETE FROM Diamond
+        WHERE DiamondID = @diamondId
+      `);
+    return results;
+  } catch (err) {
+    console.error("Database query error:", err);
+    throw new Error("Database query error");
+  }
+};
+
+
 module.exports = {
   getAllBridals,
   getAllBrands,
   getAllDiamonds,
   getAllDiamondRings,
   getAllTimePieces,
+  getAllBanner,
+  insertDiamond,
+  updateDiamond,
+  deleteDiamond,
 };

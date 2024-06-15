@@ -1,3 +1,4 @@
+const { config } = require("dotenv");
 const dbConfig = require("../../config/dbconfig");
 const sql = require('mssql');
 
@@ -21,6 +22,66 @@ function getBonusPointAndAccountDetails() {
     });
 }
 
+// Function to get Schedule Appointment
+async function getScheduleAppointment() {
+  try {
+    let pool = await sql.connect(config);
+    let results = await pool.request().query("SELECT * FROM ScheduleAppointment");
+    return results.recordsets;
+  } catch (error) {
+    console.error("SQL error", error);
+    throw error;
+  }
+}
+// Function to get Access Order
+async function getAccessOrder(){
+  try{
+      let pool = await sql.connect(config);
+      let order = await pool.request()
+      .query(`SELECT o.OrderID, o.Orderdate, a.Firstname, a.Lastname, o.Quantity, o.TotalPrice, o.OrderStatus 
+      FROM Orders o JOIN Account a ON o.AccountID = a.AccountID`);
+      return order.recordsets;
+  } catch (error) {
+      console.error('Connection SQL error:', error);
+      throw error;
+  }
+}
+
+//Funciton to get Schedule of delivery
+async function getScheduleOfDelivery(){
+  try{
+    let pool = await sql.connect(config);
+    let results = await pool.request()
+    .query(`SELECT 
+    r.RoleName, 
+    a.LastName, 
+    a.FirstName, 
+    a.PhoneNumber, 
+    o.OrderDate, 
+    o.Quantity, 
+    o.OrderStatus, 
+    o.TotalPrice, 
+    od.AttachedAccessories, 
+    od.Shipping, 
+    od.DeliveryAddress
+FROM 
+    Roles r
+JOIN
+	Account a ON r.RoleID = a.RoleID
+JOIN 
+    Orders o ON a.AccountID = o.AccountID
+JOIN 
+    OrderDetails od ON o.OrderID = od.OrderID`)
+    return results.recordsets;
+  }catch (error) {
+    console.error('Connection SQL error:', error);
+    throw error;
+}
+}
+
 module.exports = {
-  getBonusPointAndAccountDetails
+  getBonusPointAndAccountDetails,
+  getScheduleAppointment,
+  getAccessOrder,
+  getScheduleOfDelivery,
 };
