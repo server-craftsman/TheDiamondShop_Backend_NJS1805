@@ -115,7 +115,6 @@ router.post("/reset-password", async (req, res) => {
 
   // Check if the password is at least 8 characters long
  
-
   try {
     await sql.connect(dbConfig);
     const userTable = {

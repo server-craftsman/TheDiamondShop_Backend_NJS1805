@@ -3,7 +3,7 @@ const jwt = require("jsonwebtoken");
 const {
   getUserByEmailAndPassword,
   registerUser,
-} = require("../../dao/authentication/authenticationDAO");
+} = require("../../dao/authentication/loginDAO");
 const router = express.Router();
 const passport = require("passport");
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
@@ -53,10 +53,6 @@ router.post("/login", async (req, res) => {
     }
 
     const user = users[0];
-
-    if (user.Status === 'Deactivate') {
-      return res.status(403).send("Account is deactivated. Please contact Administrator for support.");
-    }
 
     const token = jwt.sign(
       { accountId: user.AccountID, roleName: user.RoleName },
