@@ -3,7 +3,7 @@ const router = express.Router();
 const { getBonusPointAndAccountDetails, getScheduleAppointment, getAccessOrder, getScheduleOfDelivery } = require('../../dao/userFeatures/userFeatures');
 const dbConfig = require('../../config/dbconfig');
 const sql = require('mssql');
-const { UpdateAccount, accountStatus } = require('../../dao/userFeatures/UpdateAccount');
+const { UpdateAccount, accountStatus, deleteAccount } = require('../../dao/userFeatures/UpdateAccount');
 const bodyParser = require("body-parser");
 const app = express();
 const pool = new sql.ConnectionPool(dbConfig);
@@ -115,6 +115,17 @@ router.put('/change-locate', async (req, res) => {
 router.put('/update-status', async (req, res) => {
   const account = req.body;
   accountStatus(account).then(response => {
+    res.json(response);
+  }).catch(err => {
+    console.error('Error:', err);
+    res.status(500).send('Server Error');
+  });
+});
+
+// delete account router
+router.delete('/delete-account', async (req, res) => {
+  const account = req.body;
+  deleteAccount(account).then(response => {
     res.json(response);
   }).catch(err => {
     console.error('Error:', err);

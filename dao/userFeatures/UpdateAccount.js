@@ -112,7 +112,34 @@ async function accountStatus(account) {
     }
 }
 
+async function deleteAccount(account) {
+    try {
+        const { email } = account;
+        const db = await sql.connect(dbConfig);
+        const check = await db.request()
+            .input("Email", sql.NVarChar, email)
+            .query("DELETE FROM Account WHERE Email = 'anhba@gmail.com'; DELETE FROM Roles WHERE RoleID NOT IN (SELECT RoleID FROM Account);");
+        if (check === "Admin") {
+            return { status: false, message: 'Admin cannot be Deleted' };
+        } else {
+            const deleteAccount = await db.request()
+                .input("Email", sql.NVarChar, email)
+                .query("DELETE FROM Account WHERE Email = @Email ; DELETE FROM Roles WHERE RoleID NOT IN (SELECT RoleID FROM Account);");
+
+            if (deleteAccount.rowsAffected[0] > 0) {
+                return { status: true, message: 'Account Deleted' };
+            } else {
+                return { status: false, message: 'Account Not Found or Already Deleted' };
+            }
+        }
+    } catch (error) {
+        console.error("Database query error:", error);
+        throw new Error("Database query error");
+    }
+}
+
 module.exports = {
     UpdateAccount,
-    accountStatus
+    accountStatus,
+    deleteAccount
 };
