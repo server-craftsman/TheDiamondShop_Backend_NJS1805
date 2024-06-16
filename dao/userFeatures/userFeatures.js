@@ -22,17 +22,6 @@ function getBonusPointAndAccountDetails() {
     });
 }
 
-// Function to get Schedule Appointment
-async function getScheduleAppointment() {
-  try {
-    let pool = await sql.connect(config);
-    let results = await pool.request().query("SELECT * FROM ScheduleAppointment");
-    return results.recordsets;
-  } catch (error) {
-    console.error("SQL error", error);
-    throw error;
-  }
-}
 // Function to get Access Order
 async function getAccessOrder(){
   try{
@@ -79,9 +68,73 @@ JOIN
 }
 }
 
+//=========Schedule Appointments============
+
+// Utility function to execute SQL queries
+async function executeQuery(query) {
+  try {
+    let pool = await sql.connect(dbConfig);
+    let result = await pool.request().query(query);
+    return result.recordset;
+  } catch (error) {
+    throw new Error(error.message);
+  }
+}
+
+// DAO function to get all schedule appointments
+async function getAllScheduleAppointments() {
+  const query = 'SELECT * FROM ScheduleAppointment';
+  return await executeQuery(query);
+}
+
+// DAO function to get schedule appointment by ID
+async function getScheduleAppointmentById(scheduleId) {
+  const query = `SELECT * FROM ScheduleAppointment WHERE NoSchedule = ${scheduleId}`;
+  return await executeQuery(query);
+}
+
+// DAO function to create a new schedule appointment
+async function createScheduleAppointment(appointmentData) {
+  const { FirstName, LastName, Email, PhoneNumber, DesiredDay, DesiredTime, Message, DiamondID, BridalID, DiamondRingsID, DiamondTimepiecesID, AccountID } = appointmentData;
+  const query = `
+      INSERT INTO ScheduleAppointment (FirstName, LastName, Email, PhoneNumber, DesiredDay, DesiredTime, Message, DiamondID, BridalID, DiamondRingsID, DiamondTimepiecesID, AccountID)
+      VALUES ('${FirstName}', '${LastName}', '${Email}', '${PhoneNumber}', '${DesiredDay}', '${DesiredTime}', '${Message}', ${DiamondID}, ${BridalID}, ${DiamondRingsID}, ${DiamondTimepiecesID}, ${AccountID});
+      SELECT SCOPE_IDENTITY() AS NewScheduleAppointmentID;
+  `;
+  const result = await executeQuery(query);
+  return result;
+}
+
+// DAO function to update schedule appointment by ID
+async function updateScheduleAppointment(scheduleId, updatedData) {
+  const { FirstName, LastName, Email, PhoneNumber, DesiredDay, DesiredTime, Message, DiamondID, BridalID, DiamondRingsID, DiamondTimepiecesID, AccountID } = updatedData;
+  const query = `
+      UPDATE ScheduleAppointment
+      SET FirstName = '${FirstName}', LastName = '${LastName}', Email = '${Email}', PhoneNumber = '${PhoneNumber}', 
+          DesiredDay = '${DesiredDay}', DesiredTime = '${DesiredTime}', Message = '${Message}', DiamondID = ${DiamondID}, 
+          BridalID = ${BridalID}, DiamondRingsID = ${DiamondRingsID}, DiamondTimepiecesID = ${DiamondTimepiecesID}, AccountID = ${AccountID}
+      WHERE NoSchedule = ${scheduleId};
+  `;
+  await executeQuery(query);
+  return true; // Assuming successful update
+}
+
+// DAO function to delete schedule appointment by ID
+async function deleteScheduleAppointment(scheduleId) {
+  const query = `DELETE FROM ScheduleAppointment WHERE NoSchedule = ${scheduleId}`;
+  await executeQuery(query);
+  return true; // Assuming successful deletion
+}
+//============================
+
 module.exports = {
   getBonusPointAndAccountDetails,
-  getScheduleAppointment,
   getAccessOrder,
   getScheduleOfDelivery,
+  //schedule for customer and sale, manger
+  getAllScheduleAppointments,
+  getScheduleAppointmentById,
+  createScheduleAppointment,
+  updateScheduleAppointment,
+  //==========end schedule===============
 };
