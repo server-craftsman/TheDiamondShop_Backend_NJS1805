@@ -200,16 +200,24 @@ router.put("/update-status", async (req, res) => {
     });
 });
 
-// Route to view access orders
-router.get("/view-order", (req, res) => {
-  getAccessOrder()
-    .then((result) => {
-      res.json(result);
-    })
-    .catch((err) => {
-      console.error("Failed to get view order:", err);
-      res.status(500).send("Failed to get order");
-    });
+// View Order
+router.get("/view-order", async (req, response) => {
+  getAccessOrder().then(result =>{
+    response.json(result[0]);
+  }).catch(error => {
+    console.error('Error fetching order: ', error);
+    response.status(500).send('Error fetching order');
+  });
+});
+
+//View Order Status Confirm
+router.get("/view-order-confirm", async (req, response) => {
+  getAccessOrderConfirm().then(result =>{
+    response.json(result[0]);
+  }).catch(error => {
+    console.error('Error fetching order: ', error);
+    response.status(500).send('Error fetching order');
+  });
 });
 
 // Route to edit order status

@@ -28,12 +28,33 @@ async function getAccessOrder() {
   try {
     let pool = await sql.connect(config);
     let order = await pool.request()
-      .query(`SELECT o.OrderID, o.Orderdate, a.Firstname, a.Lastname, o.Quantity, o.TotalPrice, o.OrderStatus 
-      FROM Orders o JOIN Account a ON o.AccountID = a.AccountID`);
+    .query(`SELECT o.OrderID, o.Orderdate, a.Firstname, a.Lastname, o.Quantity, o.TotalPrice, o.OrderStatus 
+      FROM Orders o JOIN Account a ON o.AccountID = a.AccountID WHERE o.OrderStatus = 'Pending'`);
     return order.recordsets;
   } catch (error) {
     console.error("Connection SQL error:", error);
     throw error;
+  }
+}
+//View Order Status Confirm
+async function getAccessOrderConfirm(){
+  try{
+      let pool = await sql.connect(config);
+      let order = await pool.request()
+      .query(`SELECT o.OrderID, 
+       o.Orderdate, 
+       a.Firstname, 
+       a.Lastname, 
+       o.Quantity, 
+       o.TotalPrice, 
+       o.OrderStatus 
+FROM Orders o 
+JOIN Account a ON o.AccountID = a.AccountID 
+WHERE o.OrderStatus = 'Confirm'`);
+      return order.recordsets;
+  } catch (error) {
+      console.error('Connection SQL error:', error);
+      throw error;
   }
 }
 
