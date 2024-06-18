@@ -3,6 +3,10 @@ const router = express.Router();
 const sql = require("mssql");
 const dbConfig = require("../../config/dbconfig");
 const bodyParser = require("body-parser");
+require("dotenv").config();
+const JWT_SECRET = process.env.JWT_SECRET; // Replace with your own secret key
+const jwt = require('jsonwebtoken');
+
 const {
   getBonusPointAndAccountDetails,
   getAccessOrder,
@@ -24,6 +28,26 @@ const pool = new sql.ConnectionPool(dbConfig);
 
 // Middleware to parse JSON bodies
 app.use(bodyParser.json());
+
+
+// Middleware to authenticate token
+function authenticateToken(req, res, next) {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (!token) {
+    return res.status(401).json({ status: false, message: 'Unauthorized' });
+  }
+
+  jwt.verify(token, JWT_SECRET, (err, decoded) => {
+    if (err) {
+      console.error('Token verification error:', err);
+      return res.status(403).json({ status: false, message: 'Forbidden' });
+    }
+    req.accountId = decoded.accountId; // Attach accountId to request object
+    next();
+  });
+}
 
 // Route to get bonus points and account details
 router.get("/bonus-account-details", (req, res) => {
@@ -388,18 +412,19 @@ router.put('/feedback/:feedbackID', async (req, res) => {
 // Route to delete feedback by ID
 router.delete('/feedback/:feedbackID', async (req, res) => {
   const { feedbackID } = req.params;
-  const { roleName } = req.body;
+  const { roleName } = req.body; // roleName được truyền qua body từ client
 
   try {
     const result = await deleteFeedback(feedbackID, roleName);
     if (result) {
-      res.status(200).json({ success: true, message: 'Delete successfully!' });
+      res.status(200).json({ success: true, message: 'Phản hồi đã được xóa thành công' });
     } else {
-      res.status(404).json({ success: false, message: 'Response was not found or you do not have permission to delete it' });
+      res.status(404).json({ success: false, message: 'Không tìm thấy phản hồi hoặc bạn không có quyền xóa nó' });
     }
   } catch (error) {
-    console.error('Error deleting response:', error);
-    res.status(500).json({ success: false, message: 'Internal server error' });
+    console.error('Lỗi khi xóa phản hồi:', error);
+    res.status(500).json({ success: false, message: 'Lỗi máy chủ nội bộ' });
   }
 });
+
 module.exports = router;

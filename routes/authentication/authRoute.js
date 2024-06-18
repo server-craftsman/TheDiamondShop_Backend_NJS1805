@@ -210,7 +210,9 @@ router.put("/change-password", async (request, response) => {
 });
 
 //login google
-// Google authentication setup
+const bcrypt = require('bcrypt');
+const saltRounds = 10;
+
 passport.use(
   'customer-google',
   new GoogleStrategy(
@@ -230,6 +232,15 @@ passport.use(
           return done(new Error('Email not provided by Google profile'));
         }
 
+        // Check if the email already exists in the Account table
+        const emailCheckQuery = `SELECT * FROM Account WHERE Email = @Email`;
+        const emailCheckResult = await pool.request().input('Email', sql.NVarChar, email).query(emailCheckQuery);
+
+        if (emailCheckResult.recordset && emailCheckResult.recordset.length > 0) {
+          // Email already exists, return existing user details
+          return done(null, emailCheckResult.recordset[0]);
+        }
+
         // Insert or update Role in Roles table
         let roleId = null;
         const insertRoleQuery = `INSERT INTO Roles (RoleName) VALUES ('Customer'); SELECT SCOPE_IDENTITY() AS RoleID;`;
@@ -237,16 +248,25 @@ passport.use(
         if (insertRoleResult.recordset && insertRoleResult.recordset.length > 0) {
           roleId = insertRoleResult.recordset[0].RoleID;
         } else {
-          // Handle case where roleId is not retrieved properly
           console.error('Failed to retrieve RoleID from Roles table:', insertRoleResult);
           return done(new Error('Failed to retrieve RoleID from Roles table'));
         }
 
-        // Insert new customer with the retrieved RoleID
-        const insertAccountQuery = `INSERT INTO Account (FirstName, LastName, Email, RoleID) 
+        // Generate a random password and hash it
+        const randomPassword = Math.random().toString(36).slice(-8); // Generate a simple random password
+        const hashedPassword = await bcrypt.hash(randomPassword, saltRounds);
+
+        // Insert new customer with the retrieved RoleID and hashed password
+        const insertAccountQuery = `INSERT INTO Account (FirstName, LastName, Email, Password, RoleID) 
                                     OUTPUT INSERTED.AccountID
-                                    VALUES ('${profile.name.givenName}', '${profile.name.familyName}', '${email}', ${roleId})`;
-        const insertAccountResult = await pool.request().query(insertAccountQuery);
+                                    VALUES (@FirstName, @LastName, @Email, @Password, @RoleID)`;
+        const insertAccountResult = await pool.request()
+          .input('FirstName', sql.NVarChar, profile.name.givenName)
+          .input('LastName', sql.NVarChar, profile.name.familyName)
+          .input('Email', sql.NVarChar, email)
+          .input('Password', sql.NVarChar, hashedPassword)
+          .input('RoleID', sql.Int, roleId)
+          .query(insertAccountQuery);
 
         if (insertAccountResult.recordset && insertAccountResult.recordset.length > 0) {
           // Return newly created customer
@@ -258,7 +278,6 @@ passport.use(
             RoleID: roleId,
           });
         } else {
-          // Handle case where insertAccountResult does not return valid data
           console.error('Invalid insertAccountResult:', insertAccountResult);
           return done(new Error('Failed to create new account'));
         }
@@ -296,13 +315,16 @@ passport.deserializeUser(async (id, done) => {
 // Google authentication route for customer
 router.get('/google/customer', passport.authenticate('customer-google', { scope: ['profile', 'email'] }));
 
+const frontendHomepageURL = 'http://localhost:5173/';
+
 router.get(
   '/google/customer/callback',
   passport.authenticate('customer-google', { failureRedirect: '/login' }),
   (req, res) => {
-    // If authentication is successful, redirect to the homepage with a success message
-    res.send('Login successful!');
+    // Redirect to the front-end homepage URL after successful authentication
+    res.redirect(frontendHomepageURL);
   }
 );
+
 
 module.exports = router;

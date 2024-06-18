@@ -9,5 +9,4 @@ module.exports = {
   options: {
     trustServerCertificate: true
   },
-  secret: "huyit"
 };

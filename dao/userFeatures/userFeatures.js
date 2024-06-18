@@ -1,7 +1,6 @@
 const { config } = require("dotenv");
 const dbConfig = require("../../config/dbconfig");
 const sql = require("mssql");
-
 const poolPromise = new sql.ConnectionPool(dbConfig).connect();
 
 // Function to get bonus points and account details
@@ -282,7 +281,7 @@ async function deleteFeedback(feedbackID, roleName) {
 
     return result.rowsAffected[0] === 1;s
   } catch (error) {
-    console.error("Lỗi SQL:", error);
+    console.error("SQL Error:", error);
     throw error; // Throwing the error for further handling
   }
 }
