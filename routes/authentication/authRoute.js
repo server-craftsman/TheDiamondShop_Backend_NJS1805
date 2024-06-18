@@ -65,7 +65,7 @@ router.post("/login", async (req, res) => {
     );
 
     res.cookie("token", token, { httpOnly: true }); // Set token in cookie
-    res.json({ message: `Hello, ${user.RoleName}!`, token });
+    res.json({ message: `Hello, ${user.RoleName}!`, token, roleName: user.RoleName});
   } catch (err) {
     console.error(err);
     res.status(500).send("Internal server error");
