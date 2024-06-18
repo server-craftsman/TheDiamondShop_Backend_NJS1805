@@ -312,6 +312,7 @@ async function deleteFeedback(feedbackID, roleName) {
 module.exports = {
   getBonusPointAndAccountDetails,
   getAccessOrder,
+  getAccessOrderConfirm,
   getScheduleOfDelivery,
   //schedule for customer and sale, manger
   getAllScheduleAppointments,

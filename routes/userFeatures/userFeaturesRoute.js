@@ -10,6 +10,7 @@ const jwt = require('jsonwebtoken');
 const {
   getBonusPointAndAccountDetails,
   getAccessOrder,
+  getAccessOrderConfirm,
   getScheduleOfDelivery,
   getAllScheduleAppointments,
   getScheduleAppointmentById,
