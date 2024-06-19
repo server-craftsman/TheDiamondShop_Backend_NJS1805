@@ -6,6 +6,7 @@ const {
   getAllDiamonds,
   getAllDiamondRings,
   getAllTimePieces,
+  getAllProduct,
   getAllBanner,
   insertDiamond,
   updateDiamond,
@@ -74,6 +75,16 @@ router.get("/diamond-rings", async (req, response) => {
         console.error('Error fetching diamond rings: ', error);
         response.status(500).send('Error fetching diamond rings');
     });
+});
+
+//View all product
+router.get("/product", async (req, response) => {
+  getAllProduct().then(result =>{
+    response.json(result[0]);
+  }).catch(error => {
+    console.error('Error fetching banners: ', error);
+    response.status(500).send('Error fetching banners');
+  });
 });
 
 //View Banner

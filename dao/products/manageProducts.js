@@ -12,6 +12,133 @@ async function getAllBridals() {
   }
 }
 
+//View All Prodcut
+async function getAllProduct() {
+  try {
+    const pool = await sql.connect(config);
+    const result = await pool
+      .request()
+      .query(`SELECT 
+    DiamondID AS ProductID,
+    'Diamond' AS ProductType,
+    DiamondOrigin AS Origin,
+    CaratWeight,
+    Color,
+    Clarity,
+    Cut,
+    Price,
+    Shape,
+    [Image],
+    Polish,
+    Symmetry,
+    TablePercentage,
+    Depth,
+    Measurements,
+    GIAReportNumber,
+    StockNumber,
+    LabReportNumber,
+    Gemstone,
+    GradingReport,
+    Descriptors,
+    Fluorescence,
+    Inventory
+FROM 
+    Diamond
+
+UNION ALL
+
+SELECT 
+    BridalID AS ProductID,
+    'Bridal' AS ProductType,
+    BridalStyle AS Origin,
+    NULL AS CaratWeight,
+    NULL AS Color,
+    NULL AS Clarity,
+    NULL AS Cut,
+    Price,
+    NULL AS Shape,
+    ImageBridal AS [Image],
+    NULL AS Polish,
+    NULL AS Symmetry,
+    NULL AS TablePercentage,
+    NULL AS Depth,
+    NULL AS Measurements,
+    NULL AS GIAReportNumber,
+    NULL AS StockNumber,
+    NULL AS LabReportNumber,
+    CenterDiamond AS Gemstone,
+    NULL AS GradingReport,
+    Description AS Descriptors,
+    NULL AS Fluorescence,
+    Inventory
+FROM 
+    Bridal
+
+UNION ALL
+
+SELECT 
+    DiamondTimepiecesID AS ProductID,
+    'DiamondTimepieces' AS ProductType,
+    TimepiecesStyle AS Origin,
+    NULL AS CaratWeight,
+    NULL AS Color,
+    NULL AS Clarity,
+    NULL AS Cut,
+    Price,
+    NULL AS Shape,
+    ImageTimepieces AS [Image],
+    NULL AS Polish,
+    NULL AS Symmetry,
+    NULL AS TablePercentage,
+    NULL AS Depth,
+    NULL AS Measurements,
+    NULL AS GIAReportNumber,
+    NULL AS StockNumber,
+    NULL AS LabReportNumber,
+    NULL AS Gemstone,
+    NULL AS GradingReport,
+    Description AS Descriptors,
+    NULL AS Fluorescence,
+    Inventory
+FROM 
+    DiamondTimepieces
+
+UNION ALL
+
+SELECT 
+    DiamondRingsID AS ProductID,
+    'DiamondRings' AS ProductType,
+    RingStyle AS Origin,
+    CenterDiamondCaratWeight AS CaratWeight,
+    CenterDiamondColor AS Color,
+    CenterDiamondClarity AS Clarity,
+    NULL AS Cut,
+    Price,
+    CenterGemstoneShape AS Shape,
+    ImageRings AS [Image],
+    NULL AS Polish,
+    NULL AS Symmetry,
+    NULL AS TablePercentage,
+    NULL AS Depth,
+    NULL AS Measurements,
+    NULL AS GIAReportNumber,
+    NULL AS StockNumber,
+    NULL AS LabReportNumber,
+    CenterGemstone AS Gemstone,
+    NULL AS GradingReport,
+    Description AS Descriptors,
+    Fluorescence,
+    Inventory
+FROM 
+    DiamondRings;
+`);
+    return result.recordsets;
+  } catch (error) {
+    console.error("Connection SQL error:", error);
+    throw error;
+  }
+}
+
 async function getAllBrands() {
   try {
       let pool = await sql.connect(config);
@@ -747,6 +874,7 @@ module.exports = {
   getAllDiamonds,
   getAllDiamondRings,
   getAllTimePieces,
+  getAllProduct,
   getAllBanner,
   insertDiamond,
   updateDiamond,
