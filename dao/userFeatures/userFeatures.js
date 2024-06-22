@@ -89,6 +89,38 @@ JOIN
   }
 }
 
+// View to get orderstatus of delivery
+async function getOrderStatusOfDelivery() {
+  try {
+    let pool = await sql.connect(config)
+    let results = await pool.request().query(`SELECT
+      o.OrderID,
+     a.LastName, 
+    a.FirstName, 
+    a.PhoneNumber, 
+    o.OrderDate, 
+    o.Quantity, 
+    o.OrderStatus, 
+    o.TotalPrice, 
+    od.AttachedAccessories, 
+    od.Shipping, 
+    od.DeliveryAddress
+FROM 
+    Roles r
+JOIN
+	Account a ON r.RoleID = a.RoleID
+JOIN 
+    Orders o ON a.AccountID = o.AccountID
+JOIN 
+    OrderDetails od ON o.OrderID = od.OrderID
+WHERE o.OrderStatus IN ('Confirm', 'Shipped')`);
+return results.recordsets;
+} catch (error) {
+  console.error("Connection SQL error:", error);
+  throw error;
+}
+}
+
 //=========Schedule Appointments============
 
 // Utility function to execute SQL queries
@@ -314,6 +346,7 @@ module.exports = {
   getAccessOrder,
   getAccessOrderConfirm,
   getScheduleOfDelivery,
+  getOrderStatusOfDelivery,
   //schedule for customer and sale, manger
   getAllScheduleAppointments,
   getScheduleAppointmentById,

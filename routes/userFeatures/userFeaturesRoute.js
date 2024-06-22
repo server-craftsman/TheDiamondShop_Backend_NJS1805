@@ -12,6 +12,7 @@ const {
   getAccessOrder,
   getAccessOrderConfirm,
   getScheduleOfDelivery,
+  getOrderStatusOfDelivery,
   getAllScheduleAppointments,
   getScheduleAppointmentById,
   createScheduleAppointment,
@@ -312,6 +313,67 @@ router.put("/update-order-status-sale", async (req, res) => {
 
     res.status(500).send({     message: "Internal Server Error"
   });
+  } finally {
+    if (poolConnect) {
+      poolConnect.release();
+    }
+  }
+});
+
+//Route to get orderstatus of delivery
+router.get("/orderstatus-delivery", async(req, res) => {
+  try {
+    const orderstatusdelivery = await getOrderStatusOfDelivery();
+    res.status(200).send(orderstatusdelivery);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+})
+//Route to update order statu to 'Shipped' and 'Complete' (for delivery)
+router.put("/update-order-status-delivery", async (req, res) => {
+  const { orderID, orderStatus } = req.body;
+  const validStatuses = ["Shipped", "Completed"];
+  
+  if (!validStatuses.includes(orderStatus)) {
+    return res.status(400).send({ message: "Order status must be Shipping and Completed" });
+  }
+  
+  let poolConnect;
+  let transaction;
+
+  try {
+    poolConnect = await pool.connect();
+    transaction = new sql.Transaction(poolConnect);
+    await transaction.begin();
+
+    const request = new sql.Request(transaction);
+    await request
+      .input("OrderID", sql.Int, orderID)
+      .input("OrderStatus", sql.VarChar, orderStatus)
+      .query(
+        "UPDATE Orders SET OrderStatus = @OrderStatus WHERE OrderID = @OrderID"
+      );
+
+    await request
+      .query(
+        "UPDATE OrderDetails SET OrderStatus = @OrderStatus WHERE OrderID = @OrderID"
+      );
+
+    await transaction.commit();
+
+    res.status(200).send({
+      message: "Order status and order detail status updated successfully!",
+    });
+  } catch (error) {
+    console.error("Error updating order status:", error);
+
+    if (transaction) {
+      await transaction.rollback();
+    }
+
+    res.status(500).send({
+      message: "Internal Server Error"
+    });
   } finally {
     if (poolConnect) {
       poolConnect.release();
