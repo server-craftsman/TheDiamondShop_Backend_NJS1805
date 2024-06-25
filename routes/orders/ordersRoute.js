@@ -19,30 +19,34 @@ router.post("/create-order", async (req, res) => {
   }
 });
 
-// Route to cancel an order
-router.put("/cancel-order/:orderId", async (req, res) => {
-  const orderId = req.params.orderId;
+// POST apply voucher to an order
+router.post('/apply-voucher', async (req, res) => {
+  const { orderID, voucherID, totalPrice } = req.body;
 
   try {
-    const canCancel = await checkOrderForCancellation(orderId);
-
-    if (canCancel) {
-      await cancelOrder(orderId);
-      res
-        .status(200)
-        .json({ message: `Order with ID ${orderId} successfully cancelled.` });
-    } else {
-      res
-        .status(400)
-        .json({
-          error: `Cannot cancel order with OrderID ${orderId}. Either it does not exist, is not pending, or has already been paid.`,
-        });
+    // Check if totalPrice meets prerequisites
+    const voucher = await getVoucherById(voucherID);
+    if (!voucher) {
+      return res.status(404).json({ error: 'Voucher not found' });
     }
+
+    if (totalPrice < voucher.Prerequisites) {
+      return res.status(400).json({ error: 'TotalPrice does not meet voucher prerequisites' });
+    }
+
+    // Calculate discounted price
+    const discountedPrice = totalPrice * (1 - voucher.Discount / 100);
+
+    // Update voucher usage
+    await voucherDao.updateVoucherUsage(voucherID);
+
+    // Save voucher in order
+    await voucherDao.saveVoucherInOrder(orderID, voucherID);
+
+    res.json({ discountedPrice });
   } catch (error) {
-    console.error("Error in cancel-order route:", error);
-    res
-      .status(500)
-      .json({ error: "An error occurred while processing your request." });
+    console.error('Error applying voucher:', error);
+    res.status(500).json({ error: 'Error applying voucher' });
   }
 });
 
@@ -115,5 +119,7 @@ router.get("/schedule-appointments", async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+
 
 module.exports = router;

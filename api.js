@@ -25,34 +25,44 @@ const voucherRoute = require("./routes/voucher/voucherRoute");
 const eventRouter = require("./routes/event/eventRouter");
 const certificateRouter = require("./routes/certificate/certificateRouter");
 //---order danger---
-const orderRoute = require("./routes/orders/ordersRoute");
+const orderTest = require("./routes/orders/orderTest");
 //------------------
 //-------//
-const app = express();
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(bodyParser.json());
-app.use(express.json()); //
+// Middleware
+app.use(express.json()); // Body parser for JSON
+app.use(express.urlencoded({ extended: true })); // Body parser for URL-encoded data
+app.use(cookieParser());
+app.use(flash());
 
+/// Session configuration
 app.use(
   session({
-    secret: "huyit",
+    secret: "huyit", // Change this to a secure secret
     resave: false,
     saveUninitialized: true,
+    cookie: {
+      secure: false, // Set to true if using HTTPS
+      httpOnly: true, // Prevent client-side JavaScript from accessing the cookie
+      maxAge: 3600000, // Cookie lifespan in milliseconds (1 hour in this case)
+    },
   })
 );
 
+// CORS configuration
 const corsOptions = {
-  origin: "*", // Cho phép tất cả nguồn Front-end
-  optionsSuccessStatus: 200,
+  origin: "http://localhost:5173", // Update with your actual frontend URL
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true, // Allow cookies to be sent with the request
+  optionsSuccessStatus: 200, // Legacy browser compatibility
 };
 app.use(cors(corsOptions));
-const router = express.Router();
 
-router.use((request, response, next) => {
-  // Logger Middleware
-  console.log("Request received at:", new Date().toLocaleString());
+app.use((req, res, next) => {
+  console.log(`Request received at: ${req.method} ${req.path} - ${new Date().toLocaleString()}`);
   next();
 });
+
 
 // Function to create a unique styled message
 function createStyledMessage(text, colorCode) {
@@ -76,7 +86,7 @@ sql
     app.use("/auth", authRoute, forgotPassword);
     app.use("/features", userFeatures);
     app.use("/products", manageProduct);
-    app.use("/orders", orderRoute);
+    app.use("/orders", orderTest);
     app.use(flash());
     app.use("/", voucherRoute);
     app.use("/events", eventRouter);

@@ -232,12 +232,13 @@ WHERE RoleID = @RoleID;
       const certificatesQuery = `
       SELECT C.*
       FROM Certificate C
-      LEFT JOIN OrderDetails OD ON OD.DiamondID = C.DiamondID OR OD.BridalID = C.BridalID OR OD.DiamondRingsID = C.DiamondRingsID OR OD.DiamondTimepiecesID = C.DiamondTimepiecesID
-      WHERE OD.OrderID = @OrderID
-    `;
+      LEFT JOIN OrderDetails OD ON OD.DiamondID = C.DiamondID
+      WHERE OD.OrderDetailID = @OrderDetailID;
+      `;
+
       const certificatesResult = await transaction
         .request()
-        .input("OrderID", sql.Int, OrderID)
+        .input("OrderDetailID", sql.Int, OrderDetailID)
         .query(certificatesQuery);
 
       const certificates = certificatesResult.recordset;
@@ -245,161 +246,72 @@ WHERE RoleID = @RoleID;
       // Commit the transaction
       await transaction.commit();
 
-      // Save payment details using TotalPrice from createOrder function
-      const paymentSaved = await savePayment(
-        OrderID,
-        totalPrice,
-        "PaymentMethod"
-      );
-
-      // Return success message and relevant data
-      return {
-        message: "Order created successfully",
-        OrderID,
-        certificates,
-        paymentSaved,
-      };
-    } catch (err) {
-      // Rollback the transaction in case of errors
-      await transaction.rollback();
-      throw err; // Rethrow the error to the caller
-    }
-  } catch (err) {
-    console.error("SQL error", err);
-    throw new Error("Error creating order");
-  }
-}
-
-async function updateInventoryAfterOrder(orderData) {
-  const { DiamondID, BridalID, DiamondRingsID, DiamondTimepiecesID, Quantity } =
-    orderData;
-
-  try {
-    const pool = await sql.connect(config);
-    const transaction = new sql.Transaction(pool);
-    await transaction.begin();
-
-    try {
-      // Update Diamond inventory
-      if (DiamondID) {
-        await transaction
-          .request()
-          .input("DiamondID", sql.Int, DiamondID)
-          .input("Quantity", sql.Int, Quantity)
-          .query(
-            "UPDATE Diamond SET Inventory = Inventory - @Quantity WHERE DiamondID = @DiamondID"
-          );
-      }
-
-      // Update Bridal inventory
-      if (BridalID) {
-        await transaction
-          .request()
-          .input("BridalID", sql.Int, BridalID)
-          .input("Quantity", sql.Int, Quantity)
-          .query(
-            "UPDATE Bridal SET Inventory = Inventory - @Quantity WHERE BridalID = @BridalID"
-          );
-      }
-
-      // Update DiamondRings inventory
-      if (DiamondRingsID) {
-        await transaction
-          .request()
-          .input("DiamondRingsID", sql.Int, DiamondRingsID)
-          .input("Quantity", sql.Int, Quantity)
-          .query(
-            "UPDATE DiamondRings SET Inventory = Inventory - @Quantity WHERE DiamondRingsID = @DiamondRingsID"
-          );
-      }
-
-      // Update DiamondTimepieces inventory
-      if (DiamondTimepiecesID) {
-        await transaction
-          .request()
-          .input("DiamondTimepiecesID", sql.Int, DiamondTimepiecesID)
-          .input("Quantity", sql.Int, Quantity)
-          .query(
-            "UPDATE DiamondTimepieces SET Inventory = Inventory - @Quantity WHERE DiamondTimepiecesID = @DiamondTimepiecesID"
-          );
-      }
-
-      // Commit transaction after all updates
-      await transaction.commit();
+      return { OrderID, certificates };
     } catch (error) {
       await transaction.rollback();
-      throw error; // Throw the error for handling in the outer try..catch block
-    }
-  } catch (error) {
-    console.error("Error updating inventory after order:", error.message);
-    throw new Error("Failed to update inventory after order");
-  }
-}
-
-async function savePayment(orderId, paymentAmount, method) {
-  let pool;
-  try {
-    pool = await sql.connect(config);
-    const transaction = await pool.transaction();
-    await transaction.begin();
-
-    try {
-      // Retrieve the totalPrice from the Orders table based on OrderID
-      const getOrderQuery = `
-      SELECT TotalPrice
-      FROM Orders
-      WHERE OrderID = @OrderID
-    `;
-      const orderResult = await transaction
-        .request()
-        .input("OrderID", sql.Int, orderId)
-        .query(getOrderQuery);
-
-      if (orderResult.recordset.length === 0) {
-        throw new Error(`Order with ID ${orderId} not found`);
-      }
-
-      const totalPrice = orderResult.recordset[0].TotalPrice;
-
-      // Insert payment details into Transactions table
-      const insertPaymentQuery = `
-      INSERT INTO Transactions (OrderID, PaymentAmount, Method, PaymentDate)
-      VALUES (@OrderID, @PaymentAmount, @Method, GETDATE());
-    `;
-      const insertResult = await transaction
-        .request()
-        .input("OrderID", sql.Int, orderId)
-        .input("PaymentAmount", sql.Decimal(10, 2), totalPrice) // Use totalPrice as PaymentAmount
-        .input("Method", sql.VarChar(50), method)
-        .query(insertPaymentQuery);
-
-      // Commit the transaction
-      await transaction.commit();
-
-      return insertResult.rowsAffected[0] === 1;
-    } catch (error) {
-      await transaction.rollback();
-      console.error("Error saving payment:", error.message);
       throw error;
     }
   } catch (error) {
-    console.error("Database connection error:", error.message);
-    throw new Error("Failed to save payment");
-  } finally {
-    if (pool) {
-      pool.close();
+    throw error;
+  }
+}
+
+async function updateInventoryAfterOrder({
+  DiamondID,
+  BridalID,
+  DiamondRingsID,
+  DiamondTimepiecesID,
+  Quantity,
+}) {
+  try {
+    const pool = await sql.connect(config);
+
+    if (DiamondID) {
+      await pool
+        .request()
+        .input("DiamondID", sql.Int, DiamondID)
+        .input("Quantity", sql.Int, Quantity)
+        .query(
+          `UPDATE Diamond SET Quantity = Quantity - @Quantity WHERE DiamondID = @DiamondID`
+        );
+    } else if (BridalID) {
+      await pool
+        .request()
+        .input("BridalID", sql.Int, BridalID)
+        .input("Quantity", sql.Int, Quantity)
+        .query(
+          `UPDATE Bridal SET Quantity = Quantity - @Quantity WHERE BridalID = @BridalID`
+        );
+    } else if (DiamondRingsID) {
+      await pool
+        .request()
+        .input("DiamondRingsID", sql.Int, DiamondRingsID)
+        .input("Quantity", sql.Int, Quantity)
+        .query(
+          `UPDATE DiamondRings SET Quantity = Quantity - @Quantity WHERE DiamondRingsID = @DiamondRingsID`
+        );
+    } else if (DiamondTimepiecesID) {
+      await pool
+        .request()
+        .input("DiamondTimepiecesID", sql.Int, DiamondTimepiecesID)
+        .input("Quantity", sql.Int, Quantity)
+        .query(
+          `UPDATE DiamondTimepieces SET Quantity = Quantity - @Quantity WHERE DiamondTimepiecesID = @DiamondTimepiecesID`
+        );
     }
+
+    await sql.close();
+  } catch (error) {
+    throw error;
   }
 }
 
 function generateReportNo() {
-  const randomNumber = Math.floor(100000 + Math.random() * 900000);
-  return `WR0${randomNumber}`;
+  // Implement your logic to generate a unique report number
+  // Example: return a concatenated string based on date/time or a random alphanumeric string
+  return "WR-" + Date.now();
 }
 
 module.exports = {
   createOrder,
-  updateInventoryAfterOrder,
-  savePayment,
-  generateReportNo,
 };
