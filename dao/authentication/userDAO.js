@@ -7,7 +7,7 @@ async function getUserById(accountId) {
     let pool = await sql.connect(config);
     let result = await pool.request()
       .input('AccountID', sql.Int, accountId)
-      .query('SELECT * FROM Account WHERE AccountID = @AccountID');
+      .query('SELECT FirstName, LastName, Gender, Birthday, Email, PhoneNumber, Address, Country, Province, City, PostalCode, r.RoleName, Image FROM Account a JOIN Roles r ON r.RoleID = a.RoleID WHERE AccountID = @AccountID');
     return result.recordset[0];
   } catch (err) {
     console.error('SQL error', err);

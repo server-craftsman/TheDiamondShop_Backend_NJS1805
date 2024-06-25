@@ -26,6 +26,8 @@ const {
 } = require("../../dao/userFeatures/userFeatures");
 
 const { UpdateAccount, accountStatus } = require("../../dao/userFeatures/UpdateAccount");
+const userDAO = require("../../dao/authentication/userDAO");
+const verifyToken = require("../../dao/authentication/middleWare");
 
 const app = express();
 const pool = new sql.ConnectionPool(dbConfig);
@@ -202,6 +204,44 @@ router.put("/update-status", async (req, res) => {
       console.error("Error:", err);
       res.status(500).send("Server Error");
     });
+});
+
+//view profile
+router.get('/view-profile', verifyToken, async (req, res) => {
+  try {
+    // Get user information by decoding token to get accountId
+    const accountId = req.user.accountId; // Assuming accountId is stored in req.user from verifyToken middleware
+
+    // Retrieve user profile using accountId
+    const user = await userDAO.getUserById(accountId);
+
+    // Check if user exists
+    if (!user) {
+      return res.status(404).json({ message: 'User not found.' });
+    }
+
+    // Send the user's profile information
+    res.status(200).json({
+      user: {
+        FirstName: user.FirstName,
+        LastName: user.LastName,
+        Gender: user.Gender,
+        Birthday: user.Birthday,
+        Email: user.Email,
+        PhoneNumber: user.PhoneNumber,
+        Address: user.Address,
+        Country: user.Country,
+        City: user.City,
+        Province: user.Province,
+        PostalCode: user.PostalCode,
+        RoleName: user.RoleName,
+        Image: user.Image
+      }
+    });
+  } catch (error) {
+    console.error('Internal error:', error);
+    res.status(500).json({ message: 'An internal error occurred.' });
+  }
 });
 
 // View Order
