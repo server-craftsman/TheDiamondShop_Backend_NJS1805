@@ -20,6 +20,10 @@ const {
   insertTimepieces,
   updateTimepieces,
   deleteTimepieces,
+  getDiamondById,
+  getBridalById,
+  getRingsById,
+  getTimepiecesById
 } = require("../../dao/products/manageProducts");
 
 // View Bridal
@@ -492,6 +496,40 @@ router.delete("/delete-timepieces", async (req, res) => {
    console.error('Error deleting Timepieces:', error.message);
    res.status(500).json({ error: 'Failed to delete Bridal' });
  }
+});
+
+//view details
+// Get a specific diamond by ID
+router.get('/diamonds/:id', (req, res) => {
+  const diamondId = req.params.id;
+  getDiamondById(diamondId, (err, diamond) => {
+    if (err) return res.status(500).json({ error: 'Failed to retrieve diamond' });
+    res.json(diamond);
+  });
+});
+
+router.get('/bridals/:id', (req, res) => {
+  const bridalId = req.params.id;
+  getBridalById(bridalId, (err, bridal) => {
+    if (err) return res.status(500).json({ error: 'Failed to retrieve bridal' });
+    res.json(bridal);
+  });
+});
+
+router.get('/rings/:id', (req, res) => {
+  const ringsId = req.params.id;
+  getRingsById(ringsId, (err, rings) => {
+    if (err) return res.status(500).json({ error: 'Failed to retrieve rings' });
+    res.json(rings);
+  });
+});
+
+router.get('/timepieces/:id', (req, res) => {
+  const timepiecesId = req.params.id;
+  getTimepiecesById(timepiecesId, (err, timepieces) => {
+    if (err) return res.status(500).json({ error: 'Failed to retrieve timepieces' });
+    res.json(timepieces);
+  });
 });
 
 module.exports = router;

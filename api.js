@@ -16,6 +16,7 @@ const sql = require("mssql");
 const dbConfig = require("./config/dbconfig");
 const session = require("express-session");
 const flash = require("express-flash");
+const cookieParser = require("cookie-parser");
 //import Route
 const authRoute = require("./routes/authentication/authRoute");
 const forgotPassword = require("./routes/userFeatures/view/email/forgotPassword");
@@ -28,6 +29,7 @@ const certificateRouter = require("./routes/certificate/certificateRouter");
 const orderTest = require("./routes/orders/orderTest");
 //------------------
 //-------//
+const app = express();
 // Middleware
 app.use(express.json()); // Body parser for JSON
 app.use(express.urlencoded({ extended: true })); // Body parser for URL-encoded data

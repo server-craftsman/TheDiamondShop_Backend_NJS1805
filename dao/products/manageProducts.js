@@ -868,6 +868,86 @@ const deleteTimepieces = async (timepiecesData) => {
   }
 }
 
+const getDiamondById = async (id, callback) => {
+  try {
+    // Establish the connection
+    let pool = await sql.connect(config);
+    
+    // Prepare the query
+    let result = await pool.request()
+      .input('id', sql.Int, id)
+      .query('SELECT * FROM Diamond WHERE DiamondID = @id');
+    
+    // Return the result
+    callback(null, result.recordset[0]);
+  } catch (err) {
+    callback(err, null);
+  } finally {
+    // Close the connection
+    sql.close();
+  }
+};
+
+const getBridalById = async (id, callback) => {
+  try {
+    // Establish the connection
+    let pool = await sql.connect(config);
+    
+    // Prepare the query
+    let result = await pool.request()
+      .input('id', sql.Int, id)
+      .query('SELECT * FROM Bridal WHERE BridalID = @id');
+    
+    // Return the result
+    callback(null, result.recordset[0]);
+  } catch (err) {
+    callback(err, null);
+  } finally {
+    // Close the connection
+    sql.close();
+  }
+};
+
+const getRingsById = async (id, callback) => {
+  try {
+    // Establish the connection
+    let pool = await sql.connect(config);
+    
+    // Prepare the query
+    let result = await pool.request()
+      .input('id', sql.Int, id)
+      .query('SELECT * FROM DiamondRings WHERE DiamondRingsID = @id');
+    
+    // Return the result
+    callback(null, result.recordset[0]);
+  } catch (err) {
+    callback(err, null);
+  } finally {
+    // Close the connection
+    sql.close();
+  }
+};
+
+const getTimepiecesById = async (id, callback) => {
+  try {
+    // Establish the connection
+    let pool = await sql.connect(config);
+    
+    // Prepare the query
+    let result = await pool.request()
+      .input('id', sql.Int, id)
+      .query('SELECT * FROM DiamondTimepieces WHERE DiamondTimepiecesID = @id');
+    
+    // Return the result
+    callback(null, result.recordset[0]);
+  } catch (err) {
+    callback(err, null);
+  } finally {
+    // Close the connection
+    sql.close();
+  }
+};
+
 module.exports = {
   getAllBridals,
   getAllBrands,
@@ -888,4 +968,8 @@ module.exports = {
   insertTimepieces,
   updateTimepieces,
   deleteTimepieces,
+  getDiamondById,
+  getBridalById,
+  getRingsById,
+  getTimepiecesById,
 };
