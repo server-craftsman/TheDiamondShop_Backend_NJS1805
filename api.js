@@ -25,6 +25,8 @@ const userFeatures = require("./routes/userFeatures/userFeaturesRoute");
 const voucherRoute = require("./routes/voucher/voucherRoute");
 const eventRouter = require("./routes/event/eventRouter");
 const certificateRouter = require("./routes/certificate/certificateRouter");
+const warrantyRoute = require("./routes/warranty/warrantyRoute");
+
 //---order danger---
 const orderTest = require("./routes/orders/orderTest");
 //------------------
@@ -93,6 +95,7 @@ sql
     app.use("/", voucherRoute);
     app.use("/events", eventRouter);
     app.use("/certificate", certificateRouter);
+    app.use("/warranty", warrantyRoute);
 
     const port = process.env.PORT || 8090; // set default port if PORT environment variable is not defined
     app.listen(port, () => {

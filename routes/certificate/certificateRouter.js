@@ -11,13 +11,28 @@ router.put('/add', async (req, res) => {
         res.status(500).send(error.message);
     }
 });
-router.get('/lookup', async (req, res) => {
+// router.get('/lookup', async (req, res) => {
+//     try {
+//         const reportNO = req.body;
+//         const cert = await certificateDAO.getcertByNum(reportNO);
+//         res.json(cert);
+//     } catch (error) {
+//         res.status(500).send(error.message);
+//     }
+// });
+router.get('/:GIAReportNumber', async (req, res) => {
+    const GIAReportNumber = req.params.GIAReportNumber;
+  
     try {
-        const reportNO = req.body;
-        const cert = await certificateDAO.getcertByNum(reportNO);
-        res.json(cert);
-    } catch (error) {
-        res.status(500).send(error.message);
+        const certificate = await certificateDAO.getCertificateByGIAReportNumber(GIAReportNumber);
+        if (certificate) {
+            res.json(certificate);
+        } else {
+            res.status(404).send('Certificate not found');
+        }
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Internal Server Error');
     }
 });
 
