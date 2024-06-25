@@ -121,6 +121,48 @@ return results.recordsets;
 }
 }
 
+//View Delivery ('Shipping')
+async function getDeliveryShipping() {
+  try {
+    let pool = await sql.connect(config)
+    let results = await pool.request().query(`SELECT o.OrderID, 
+       o.Orderdate, 
+       a.Firstname, 
+       a.Lastname, 
+       o.Quantity, 
+       o.TotalPrice, 
+       o.OrderStatus 
+FROM Orders o 
+JOIN Account a ON o.AccountID = a.AccountID 
+WHERE o.OrderStatus = 'Shipped'`);
+return results.recordsets;
+} catch (error) {
+  console.error("Connection SQL error:", error);
+  throw error;
+}
+}
+
+//View Delivery ('Complete')
+async function getDeliveryCompleted() {
+  try {
+    let pool = await sql.connect(config)
+    let results = await pool.request().query(`SELECT o.OrderID, 
+       o.Orderdate, 
+       a.Firstname, 
+       a.Lastname, 
+       o.Quantity, 
+       o.TotalPrice, 
+       o.OrderStatus 
+FROM Orders o 
+JOIN Account a ON o.AccountID = a.AccountID 
+WHERE o.OrderStatus = 'Completed'`);
+return results.recordsets;
+} catch (error) {
+  console.error("Connection SQL error:", error);
+  throw error;
+}
+}
+
 //=========Schedule Appointments============
 
 // Utility function to execute SQL queries
@@ -347,6 +389,8 @@ module.exports = {
   getAccessOrderConfirm,
   getScheduleOfDelivery,
   getOrderStatusOfDelivery,
+  getDeliveryCompleted,
+  getDeliveryShipping,
   //schedule for customer and sale, manger
   getAllScheduleAppointments,
   getScheduleAppointmentById,

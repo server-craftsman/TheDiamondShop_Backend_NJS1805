@@ -12,6 +12,8 @@ const {
   getAccessOrder,
   getAccessOrderConfirm,
   getScheduleOfDelivery,
+  getDeliveryCompleted,
+  getDeliveryShipping,
   getOrderStatusOfDelivery,
   getAllScheduleAppointments,
   getScheduleAppointmentById,
@@ -215,6 +217,26 @@ router.get("/view-order", async (req, response) => {
 //View Order Status Confirm
 router.get("/view-order-confirm", async (req, response) => {
   getAccessOrderConfirm().then(result =>{
+    response.json(result[0]);
+  }).catch(error => {
+    console.error('Error fetching order: ', error);
+    response.status(500).send('Error fetching order');
+  });
+});
+
+// View Delivery Completed
+router.get("/view-order-conpleted", async (req, response) => {
+  getDeliveryCompleted().then(result =>{
+    response.json(result[0]);
+  }).catch(error => {
+    console.error('Error fetching order: ', error);
+    response.status(500).send('Error fetching order');
+  });
+});
+
+// View Delivery Shipping
+router.get("/view-order-shipping", async (req, response) => {
+  getDeliveryShipping().then(result =>{
     response.json(result[0]);
   }).catch(error => {
     console.error('Error fetching order: ', error);
