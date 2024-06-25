@@ -1,9 +1,5 @@
 const express = require("express");
 const jwt = require("jsonwebtoken");
-const {
-  getUserByEmailAndPassword,
-  registerUser,
-} = require("../../dao/authentication/authenticationDAO");
 const router = express.Router();
 const passport = require("passport");
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
@@ -11,33 +7,73 @@ const flash = require("express-flash");
 require("dotenv").config();
 const sql = require("mssql");
 const dbConfig = require("../../config/dbconfig");
-const JWT_SECRET = process.env.JWT_SECRET; // Replace with your own secret key
+const JWT_SECRET = process.env.JWT_SECRET;
+const userDao = require('../../dao/authentication/userDAO');
+const verifyToken = require('../../dao/authentication/middleWare');
+const session = require("express-session");
+const cookieParser = require("cookie-parser");
+// Generate and save token
+router.post('/generate-token', async (req, res) => {
+  const { accountId } = req.body;
 
-// Middleware to authenticate token
-function authenticateToken(req, res, next) {
-  const authHeader = req.headers["authorization"];
-  const token = authHeader && authHeader.split(" ")[1];
-
-  if (!token) {
-    console.log("No token found in request headers");
-    return res.sendStatus(401); // Unauthorized
-  }
-
-  jwt.verify(token, JWT_SECRET, (err, user) => {
-    if (err) {
-      console.error("Token verification failed:", err.message);
-      return res.sendStatus(403); // Forbidden
+  try {
+    const user = await userDao.getUserById(accountId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
     }
-    console.log("Token verified successfully:", user);
-    req.user = user;
-    next();
-  });
-}
 
-router.get("/protected", authenticateToken, (req, res) => {
-  res.send(`Hello, ${req.user.roleName}`);
+    const token = jwt.sign({ id: user.AccountID }, JWT_SECRET, { expiresIn: '1h' });
+    await userDao.saveToken(user.AccountID, token);
+
+    res.status(200).json({ token });
+  } catch (error) {
+    res.status(500).json({ message: 'Database error' });
+  }
 });
 
+// router.post('/verify-token', verifyToken, (req, res) => {
+
+//   const token = req.headers.authorization?.split(' ')[1]; // Get token from Authorization header
+
+//   if (!token) {
+//     return res.status(401).json({ message: 'Unauthorized: No token provided' });
+//   }
+
+//   try {
+//     const decoded = jwt.verify(token, JWT_SECRET);
+//     // decoded now contains the decoded JWT payload
+//     // res.status(200).json(decoded);
+//     res.status(200).json(req.user); // Send back decoded user data or appropriate response
+//   } catch (error) {
+//     console.error('Error verifying token:', error.message);
+//     res.status(401).json({ message: 'Unauthorized: Invalid token' });
+//   }
+// });
+
+
+router.post('/verify-token', verifyToken, (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1]; // Extract token from Authorization header
+  if (!token) {
+    return res.status(401).json({ message: 'Unauthorized: No token provided' });
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET); // Verify and decode the token
+    // Typically, you would save some data associated with the token, such as user information
+    const { userId, username } = decoded; // Extract user ID and other relevant data from decoded token
+
+    // Example: Store user ID in session or database
+    // Replace this with your own logic to store session or user data
+    req.session.userId = userId;
+
+    res.status(200).json({ message: 'Token verified successfully', user: decoded });
+  } catch (error) {
+    console.error('Error verifying token:', error.message);
+    res.status(401).json({ message: 'Unauthorized: Invalid token' });
+  }
+})
+
+// Login route
 router.post("/login", async (req, res) => {
   const { email, password } = req.body;
 
@@ -46,7 +82,7 @@ router.post("/login", async (req, res) => {
   }
 
   try {
-    const users = await getUserByEmailAndPassword(email, password);
+    const users = await userDao.getUserByEmailAndPassword(email, password);
 
     if (users.length === 0) {
       return res.status(401).send("Invalid email or password");
@@ -54,8 +90,12 @@ router.post("/login", async (req, res) => {
 
     const user = users[0];
 
-    if (user.Status === 'Deactivate') {
-      return res.status(403).send("Account is deactivated. Please contact Administrator for support.");
+    if (user.Status === "Deactivate") {
+      return res
+        .status(403)
+        .send(
+          "Account is deactivated. Please contact Administrator for support."
+        );
     }
 
     const token = jwt.sign(
@@ -64,23 +104,40 @@ router.post("/login", async (req, res) => {
       { expiresIn: "1h" }
     );
 
-    res.cookie("token", token, { httpOnly: true }); // Set token in cookie
-    res.json({ message: `Hello, ${user.RoleName}!`, token, roleName: user.RoleName});
+    await userDao.saveToken(user.AccountID, token);
+
+    res.json({
+      message: `Hello, ${user.RoleName}!`,
+      token,
+      roleName: user.RoleName,
+    });
   } catch (err) {
     console.error(err);
     res.status(500).send("Internal server error");
   }
 });
 
-router.post("/logout", (req, res) => {
-  // Clear the token from the client's cookie
-  res.clearCookie("token"); // Clear token cookie
+// Logout route
+router.post("/logout", async (req, res) => {
+  const token = req.cookies.token;
 
-  // Respond with success message
-  res.status(200).json({ message: "Logout successful" });
+  if (!token) {
+    return res.status(400).json({ message: "Token not provided" });
+  }
+
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    await userDao.clearToken(decoded.accountId);
+    res.clearCookie("token");
+    res.status(200).json({ message: "Logout successful" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Internal server error");
+  }
 });
 
-router.post("/register", async (req, res) => {
+// Register route
+router.post('/register', async (req, res) => {
   const {
     firstName,
     lastName,
@@ -96,15 +153,11 @@ router.post("/register", async (req, res) => {
     postalCode,
   } = req.body;
 
-  // Validate required fields
   if (!firstName || !lastName || !email || !password) {
-    return res
-      .status(400)
-      .send("First name, last name, email, and password are required");
+    return res.status(400).send('First name, last name, email, and password are required');
   }
 
   try {
-    // Register user
     await registerUser({
       firstName,
       lastName,
@@ -120,18 +173,69 @@ router.post("/register", async (req, res) => {
       postalCode,
     });
 
-    res.status(201).json({ message: "User registered successfully" });
+    const user = await userDAO.getUserByEmailAndPassword(email, password);
+    if (user.length === 0) {
+      return res.status(404).json({ message: 'User not found after registration' });
+    }
+
+    const newUser = user[0];
+    const token = jwt.sign(
+      { accountId: newUser.AccountID, roleName: newUser.RoleName },
+      JWT_SECRET,
+      { expiresIn: '1h' }
+    );
+
+    await userDao.saveToken(newUser.AccountID, token);
+
+    res.status(201).json({ message: 'User registered successfully', token });
   } catch (err) {
-    console.error("Registration error:", err.message);
-    if (err.message === "Email already exists") {
-      return res.status(409).send("Email already exists");
+    console.error('Registration error:', err.message);
+    if (err.message === 'Email already exists') {
+      return res.status(409).send('Email already exists');
     }
-    if (err.message === "Password must be at least 8 characters long") {
-      return res
-        .status(400)
-        .send("Password must be at least 8 characters long");
+    if (err.message === 'Password must be at least 8 characters long') {
+      return res.status(400).send('Password must be at least 8 characters long');
     }
-    res.status(500).send("Internal server error");
+    res.status(500).send('Internal server error');
+  }
+});
+
+// GET history-order route
+router.get('/history-order', verifyToken, async (req, res) => {
+  const { accountId } = req.user;
+
+  try {
+    const pool = await sql.connect(dbConfig);
+    const query = `
+      SELECT 
+        a.FirstName, a.LastName, a.Email, a.PhoneNumber, 
+        o.OrderID, o.OrderDate, o.Quantity, od.AttachedAccessories, 
+        od.Shipping, od.ReportNo, od.DeliveryAddress, 
+        o.OrderStatus, o.TotalPrice 
+      FROM Orders o 
+      JOIN Account a ON o.AccountID = a.AccountID 
+      JOIN OrderDetails od ON o.OrderID = od.OrderID 
+      WHERE a.AccountID = @AccountId
+    `;
+    const result = await pool.request()
+      .input('AccountId', sql.Int, accountId)
+      .query(query);
+
+    if (result.recordset.length > 0) {
+      res.status(200).json({
+        status: true,
+        message: 'History orders found',
+        historyOrder: result.recordset,
+      });
+    } else {
+      res.status(200).json({
+        status: false,
+        message: 'No history orders found. Buy something luxurious to fill it up.',
+      });
+    }
+  } catch (error) {
+    console.error('Error fetching history orders:', error.message);
+    res.status(500).json({ status: false, message: 'An error occurred', error: error.message });
   }
 });
 
