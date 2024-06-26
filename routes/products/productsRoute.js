@@ -171,14 +171,14 @@ router.post("/add-diamond", async (req, res) => {
 router.put("/edit-diamond", async (req, res) => {
   const diamondData = req.body;
 
-  if (!diamondData.diamondId) {
-    return res.status(400).send("Diamond ID required");
+  if (!diamondData.stockNumber) {
+    return res.status(400).send("Stock Number required");
   }
   try {
     const results = await updateDiamond(diamondData);
-    if(results.rowsAffected && results.rowsAffected[0] >0){
+    if (results.rowsAffected && results.rowsAffected[0] > 0) {
       res.status(200).json({ message: "Diamond updated successfully" });
-    }else{
+    } else {
       res.status(404).json({ message: "Diamond not found" });
     }
   } catch (err) {
@@ -189,23 +189,23 @@ router.put("/edit-diamond", async (req, res) => {
 
 // Delete Diamond
 router.delete("/delete-diamond", async (req, res) => {
-   const dataSource = req.body;
-  // Validate the diamondId
-  if(!dataSource.diamondId){
-    return res.status(400).send("Diamond ID required");
-  }
-  try {
-    // Delete diamond
-    const result = await deleteDiamond(dataSource);
-    if (result.rowsAffected && result.rowsAffected[0] > 0) {
-      res.status(200).json({ message: 'Diamond deleted successfully' });
-    } else {
-      res.status(404).json({ error: 'Diamond not found or already deleted' });
-    }
-  } catch (error) {
-    console.error('Error deleting diamond:', error.message);
-    res.status(500).json({ error: 'Failed to delete diamond' });
-  }
+  const dataSource = req.body;
+ // Validate the diamondId
+ if(!dataSource.diamondId){
+   return res.status(400).send("Diamond ID required");
+ }
+ try {
+   // Delete diamond
+   const result = await deleteDiamond(dataSource);
+   if (result.rowsAffected && result.rowsAffected[0] > 0) {
+     res.status(200).json({ message: 'Diamond deleted successfully' });
+   } else {
+     res.status(404).json({ error: 'Diamond not found or already deleted' });
+   }
+ } catch (error) {
+   console.error('Error deleting diamond:', error.message);
+   res.status(500).json({ error: 'Failed to delete diamond' });
+ }
 });
 
 //Add Diamonds Rings
@@ -273,8 +273,8 @@ router.post("/add-diamond-rings", async (req, res) => {
 router.put("/edit-diamond-rings", async (req, res) => {
   const diamondRingsData = req.body;
 
-  if (!diamondRingsData.diamondRingsId) {
-    return res.status(400).send("Diamond ring ID required");
+  if (!diamondRingsData.ringStyle) {
+    return res.status(400).send("Diamond ring style required");
   }
   try {
     const results = await updateDiamondRings(diamondRingsData);
@@ -291,23 +291,23 @@ router.put("/edit-diamond-rings", async (req, res) => {
 
 // Delete Diamond ring
 router.delete("/delete-diamond-rings", async (req, res) => {
-   const diamondRingsData = req.body;
-  // Validate the diamondId
-  if(!diamondRingsData.diamondRingsId){
-    return res.status(400).send("Diamond ring ID required");
-  }
-  try {
-    // Delete diamond ring
-    const result = await deleteDiamondRings(diamondRingsData);
-    if (result.rowsAffected && result.rowsAffected[0] > 0) {
-      res.status(200).json({ message: 'Diamond ring deleted successfully' });
-    } else {
-      res.status(404).json({ error: 'Diamond ring not found or already deleted' });
-    }
-  } catch (error) {
-    console.error('Error deleting diamond ring:', error.message);
-    res.status(500).json({ error: 'Failed to delete diamond ring' });
-  }
+  const diamondRingsData = req.body;
+ // Validate the diamondId
+ if(!diamondRingsData.diamondRingsId){
+   return res.status(400).send("Diamond ring ID required");
+ }
+ try {
+   // Delete diamond ring
+   const result = await deleteDiamondRings(diamondRingsData);
+   if (result.rowsAffected && result.rowsAffected[0] > 0) {
+     res.status(200).json({ message: 'Diamond ring deleted successfully' });
+   } else {
+     res.status(404).json({ error: 'Diamond ring not found or already deleted' });
+   }
+ } catch (error) {
+   console.error('Error deleting diamond ring:', error.message);
+   res.status(500).json({ error: 'Failed to delete diamond ring' });
+ }
 });
 
 //Add Bridals
@@ -367,7 +367,7 @@ router.post("/add-bridals", async (req, res) => {
 router.put("/edit-bridals", async (req, res) => {
   const bridalsData = req.body;
 
-  if (!bridalsData.bridalId) {
+  if (!bridalsData.bridalStyle) {
     return res.status(400).send("Bridal ID required");
   }
   try {
@@ -382,6 +382,7 @@ router.put("/edit-bridals", async (req, res) => {
     res.status(500).send("Internal server error");
   }
 });
+
 
 // Delete Bridals
 router.delete("/delete-bridals", async (req, res) => {
@@ -461,7 +462,7 @@ router.post("/add-timepieces", async (req, res) => {
 router.put("/edit-timepieces", async (req, res) => {
   const timepiecesData = req.body;
 
-  if (!timepiecesData.diamondTimepiecesId) {
+  if (!timepiecesData.timepiecesStyle) {
     return res.status(400).send("Timepieces ID required");
   }
   try {
@@ -482,7 +483,7 @@ router.delete("/delete-timepieces", async (req, res) => {
   const timepiecesData = req.body;
  // Validate the bridaldId
  if(!timepiecesData.diamondTimepiecesId){
-   return res.status(400).send("Bridals ID required");
+   return res.status(400).send("Timepieces ID required");
  }
  try {
    // Delete Bridal
@@ -497,7 +498,6 @@ router.delete("/delete-timepieces", async (req, res) => {
    res.status(500).json({ error: 'Failed to delete Bridal' });
  }
 });
-
 //view details
 // Get a specific diamond by ID
 router.get('/diamonds/:id', (req, res) => {
