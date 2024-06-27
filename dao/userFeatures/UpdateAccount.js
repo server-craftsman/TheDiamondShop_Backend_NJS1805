@@ -1,7 +1,7 @@
 const dbConfig = require("../../config/dbconfig");
 const sql = require('mssql');
 
-async function UpdateAccount(userData) {
+async function UpdateAccount(accountId, userData) {
     try {
         const {
             FirstName,
@@ -14,16 +14,15 @@ async function UpdateAccount(userData) {
             City,
             Province,
             PostalCode,
-            Email,
-            RoleName,
             Image
         } = userData;
 
-        if (!FirstName || !LastName || !Gender || !Birthday || !Email || !PhoneNumber || !Address || !Country || !City || !Province || !PostalCode || !RoleName) {
-            return { status: false, message: 'Please Input Required field' };
+        if (!FirstName || !LastName || !Gender || !Birthday || !PhoneNumber || !Address || !Country || !City || !Province || !PostalCode) {
+            return { status: false, message: 'Please input required fields' };
         }
 
         const db = await sql.connect(dbConfig);
+
         const updateAccount = await db.request()
             .input("FirstName", sql.NVarChar, FirstName)
             .input("LastName", sql.NVarChar, LastName)
@@ -35,36 +34,37 @@ async function UpdateAccount(userData) {
             .input("City", sql.NVarChar, City)
             .input("Province", sql.NVarChar, Province)
             .input("PostalCode", sql.NVarChar, PostalCode)
-            .input("Image", sql.VarChar, Image)
-            .input("Email", sql.NVarChar, Email)
-            .input("RoleName", sql.NVarChar, RoleName) 
-            .query(`UPDATE Account 
-                    SET FirstName = @FirstName,
-                        LastName = @LastName,
-                        Gender = @Gender,
-                        Birthday = @Birthday,
-                        PhoneNumber = @PhoneNumber,
-                        Address = @Address,
-                        Country = @Country,
-                        City = @City,
-                        Province = @Province,
-                        PostalCode = @PostalCode,
-                        Image = @Image
-                    FROM Account a
-                    JOIN Roles r ON a.RoleID = r.RoleID
-                    WHERE a.Email = @Email AND r.RoleName = @RoleName;`);
+            .input("Image", sql.NVarChar, Image)
+            .input("AccountID", sql.Int, accountId);
 
-        if (updateAccount.rowsAffected[0] > 0) {
-            return { status: true, message: 'Account Updated Successfully' };
+        const query = `UPDATE Account 
+                       SET 
+                           FirstName = @FirstName,
+                           LastName = @LastName,
+                           Gender = @Gender,
+                           Birthday = @Birthday,
+                           PhoneNumber = @PhoneNumber,
+                           Address = @Address,
+                           Country = @Country,
+                           City = @City,
+                           Province = @Province,
+                           PostalCode = @PostalCode,
+                           Image = @Image
+                       WHERE AccountID = @AccountID`;
+
+        const result = await updateAccount.query(query);
+
+        if (result.rowsAffected[0] > 0) {
+            return { status: true, message: 'Account updated successfully' };
         } else {
-            return { status: false, message: 'Account Not Found' };
+            return { status: false, message: 'Account not found' };
         }
-
     } catch (error) {
         console.error("Database query error:", error);
         throw new Error("Database query error");
     }
 }
+
 
 // 0: activated  1: deactivated
 async function accountStatus(account) {

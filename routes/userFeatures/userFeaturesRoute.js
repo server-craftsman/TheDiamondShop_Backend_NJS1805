@@ -67,19 +67,6 @@ router.get("/bonus-account-details", (req, res) => {
     });
 });
 
-// Route to update account
-router.put("/update-account", (req, res) => {
-  const userData = req.body;
-  UpdateAccount(userData)
-    .then((response) => {
-      res.json(response);
-    })
-    .catch((err) => {
-      console.error("Error:", err);
-      res.status(500).send("Server Error");
-    });
-});
-
 // Route to view history orders for a customer
 router.get("/history-order", async (req, res) => {
   const { email } = req.query; // Using query instead of body for GET requests
@@ -242,6 +229,20 @@ router.get('/view-profile', verifyToken, async (req, res) => {
     console.error('Internal error:', error);
     res.status(500).json({ message: 'An internal error occurred.' });
   }
+});
+
+// Route to update account
+router.put("/update-account", verifyToken, (req, res) => {
+  const accountId = req.user.accountId; // Ensure the token contains accountId
+  const userData = req.body;
+  UpdateAccount(accountId, userData)
+    .then((response) => {
+      res.json(response);
+    })
+    .catch((err) => {
+      console.error("Error:", err);
+      res.status(500).send("Server error");
+    });
 });
 
 // View Order
