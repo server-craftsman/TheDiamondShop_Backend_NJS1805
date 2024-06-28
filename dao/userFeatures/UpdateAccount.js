@@ -118,7 +118,7 @@ async function deleteAccount(account) {
         const db = await sql.connect(dbConfig);
         const check = await db.request()
             .input("Email", sql.NVarChar, email)
-            .query("DELETE FROM Account WHERE Email = 'anhba@gmail.com'; DELETE FROM Roles WHERE RoleID NOT IN (SELECT RoleID FROM Account);");
+            .query("SELECT RoleName FROM Roles r JOIN Account a ON r.RoleID = a.RoleID WHERE a.Email = @Email ");
         if (check === "Admin") {
             return { status: false, message: 'Admin cannot be Deleted' };
         } else {
