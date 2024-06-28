@@ -14,6 +14,7 @@ const {
   getScheduleOfDelivery,
   getDeliveryCompleted,
   getDeliveryShipping,
+  getOrderById,
   getOrderStatusOfDelivery,
   getAllScheduleAppointments,
   getScheduleAppointmentById,
@@ -561,4 +562,15 @@ router.delete('/feedback/:feedbackID', async (req, res) => {
   }
 });
 
+// Route to get order by ID
+router.get('/order/:id', (req, res) => {
+  const orderID = req.params.id;
+  getOrderById(orderID, (err, order) => {
+    if (err) {
+      res.status(500).send(err.message);
+    } else {
+      res.json(order);
+    }
+  });
+});
 module.exports = router;

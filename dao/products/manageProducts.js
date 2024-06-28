@@ -248,7 +248,6 @@ const insertDiamond = async (diamondData) => {
       gradingReport,
       descriptors,
       fluorescence,
-      inventory,
     } = diamondData;
 
     let pool = await sql.connect(config);
@@ -274,7 +273,7 @@ const insertDiamond = async (diamondData) => {
       .input("GradingReport", sql.VarChar, gradingReport)
       .input("Descriptors", sql.Text, descriptors)
       .input("Fluorescence", sql.VarChar, fluorescence)
-      .input("Inventory", sql.Int, inventory).query(`
+      .input("Inventory", sql.Int, 1).query(`
         INSERT INTO Diamond (DiamondOrigin, CaratWeight, Color, Clarity, Cut, Price, Shape, Image, Polish, Symmetry, TablePercentage, Depth, Measurements, GIAReportNumber, StockNumber, LabReportNumber, Gemstone, GradingReport, Descriptors, Fluorescence, Inventory)
         VALUES (@DiamondOrigin, @CaratWeight, @Color, @Clarity, @Cut, @Price, @Shape, @Image, @Polish, @Symmetry, @TablePercentage, @Depth, @Measurements, @GIAReportNumber, @StockNumber, @LabReportNumber, @Gemstone, @GradingReport, @Descriptors, @Fluorescence, @Inventory)
       `);
