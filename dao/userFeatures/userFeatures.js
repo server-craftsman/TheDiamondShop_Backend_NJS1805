@@ -185,6 +185,61 @@ return results.recordsets;
 }
 }
 
+//View Order by ID
+const getOrderById = async (id, callback) => {
+  try {
+    // Establish the connection
+    let pool = await sql.connect(dbConfig);
+    
+    // Prepare the query
+    let result = await pool.request()
+      .input('id', sql.Int, id)
+      .query(`
+          SELECT
+            o.OrderID,
+            a.LastName,
+            a.FirstName,
+            a.PhoneNumber,
+            o.OrderDate,
+            d.StockNumber,
+            dr.NameRings,
+            br.NameBridal,
+            t.NameTimepieces,
+            o.Quantity,
+            o.OrderStatus,
+            o.TotalPrice,
+            od.AttachedAccessories,
+            od.Shipping,
+            od.ReportNo,
+            od.DeliveryAddress
+          FROM 
+            Orders o
+          JOIN 
+            Account a ON o.AccountID = a.AccountID
+          JOIN 
+            OrderDetails od ON o.OrderID = od.OrderID
+          JOIN
+            Diamond d ON od.DiamondID = d.DiamondID
+          LEFT JOIN
+            DiamondRings dr ON od.DiamondRingsID = dr.DiamondRingsID
+          LEFT JOIN
+            Bridal br ON od.BridalID = br.BridalID
+          LEFT JOIN
+            DiamondTimepieces t ON od.DiamondTimepiecesID = t.DiamondTimepiecesID
+          WHERE 
+            o.OrderID = @id;
+      `);
+    
+    // Return the result
+    callback(null, result.recordset[0]);
+  } catch (err) {
+    callback(err, null);
+  } finally {
+    // Close the connection
+    sql.close();
+  }
+};
+
 //=========Schedule Appointments============
 
 // Utility function to execute SQL queries
@@ -413,6 +468,7 @@ module.exports = {
   getOrderStatusOfDelivery,
   getDeliveryCompleted,
   getDeliveryShipping,
+  getOrderById,
   //schedule for customer and sale, manger
   getAllScheduleAppointments,
   getScheduleAppointmentById,

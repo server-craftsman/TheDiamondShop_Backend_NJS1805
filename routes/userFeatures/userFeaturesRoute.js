@@ -14,6 +14,7 @@ const {
   getScheduleOfDelivery,
   getDeliveryCompleted,
   getDeliveryShipping,
+  getOrderById,
   getOrderStatusOfDelivery,
   getAllScheduleAppointments,
   getScheduleAppointmentById,
@@ -64,19 +65,6 @@ router.get("/bonus-account-details", (req, res) => {
     .catch((err) => {
       console.error("Failed to get BonusPoint and Account details:", err);
       res.status(500).send("Failed to get BonusPoint and Account details");
-    });
-});
-
-// Route to update account
-router.put("/update-account", (req, res) => {
-  const userData = req.body;
-  UpdateAccount(userData)
-    .then((response) => {
-      res.json(response);
-    })
-    .catch((err) => {
-      console.error("Error:", err);
-      res.status(500).send("Server Error");
     });
 });
 
@@ -242,6 +230,20 @@ router.get('/view-profile', verifyToken, async (req, res) => {
     console.error('Internal error:', error);
     res.status(500).json({ message: 'An internal error occurred.' });
   }
+});
+
+// Route to update account
+router.put("/update-account", verifyToken, (req, res) => {
+  const accountId = req.user.accountId; // Ensure the token contains accountId
+  const userData = req.body;
+  UpdateAccount(accountId, userData)
+    .then((response) => {
+      res.json(response);
+    })
+    .catch((err) => {
+      console.error("Error:", err);
+      res.status(500).send("Server error");
+    });
 });
 
 // View Order
@@ -560,4 +562,15 @@ router.delete('/feedback/:feedbackID', async (req, res) => {
   }
 });
 
+// Route to get order by ID
+router.get('/order/:id', (req, res) => {
+  const orderID = req.params.id;
+  getOrderById(orderID, (err, order) => {
+    if (err) {
+      res.status(500).send(err.message);
+    } else {
+      res.json(order);
+    }
+  });
+});
 module.exports = router;
