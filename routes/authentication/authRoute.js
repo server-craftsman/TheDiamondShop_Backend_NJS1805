@@ -158,7 +158,7 @@ router.post('/register', async (req, res) => {
   }
 
   try {
-    await registerUser({
+    await userDao.registerUser({
       firstName,
       lastName,
       gender,
@@ -173,7 +173,7 @@ router.post('/register', async (req, res) => {
       postalCode,
     });
 
-    const user = await userDAO.getUserByEmailAndPassword(email, password);
+    const user = await userDao.getUserByEmailAndPassword(email, password);
     if (user.length === 0) {
       return res.status(404).json({ message: 'User not found after registration' });
     }
