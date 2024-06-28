@@ -158,7 +158,7 @@ router.post('/register', async (req, res) => {
   }
 
   try {
-    await registerUser({
+    await userDao.registerUser({
       firstName,
       lastName,
       gender,
@@ -173,7 +173,7 @@ router.post('/register', async (req, res) => {
       postalCode,
     });
 
-    const user = await userDAO.getUserByEmailAndPassword(email, password);
+    const user = await userDao.getUserByEmailAndPassword(email, password);
     if (user.length === 0) {
       return res.status(404).json({ message: 'User not found after registration' });
     }
@@ -235,6 +235,47 @@ router.get('/history-order', verifyToken, async (req, res) => {
     }
   } catch (error) {
     console.error('Error fetching history orders:', error.message);
+    res.status(500).json({ status: false, message: 'An error occurred', error: error.message });
+  }
+});
+
+// Route to fetch history orders by OrderID
+router.get('/history-order/:orderId', verifyToken, async (req, res) => {
+  const { accountId } = req.user;
+  const { orderId } = req.params; // Extract orderId from URL parameters
+
+  try {
+    const pool = await sql.connect(dbConfig);
+    const query = `
+      SELECT 
+        a.FirstName, a.LastName, a.Email, a.PhoneNumber, 
+        o.OrderID, o.OrderDate, o.Quantity, od.AttachedAccessories, 
+        od.Shipping, od.ReportNo, od.DeliveryAddress, 
+        o.OrderStatus, o.TotalPrice 
+      FROM Orders o 
+      JOIN Account a ON o.AccountID = a.AccountID 
+      JOIN OrderDetails od ON o.OrderID = od.OrderID 
+      WHERE o.OrderID = @OrderId AND a.AccountID = @AccountId
+    `;
+    const result = await pool.request()
+      .input('OrderId', sql.Int, orderId)
+      .input('AccountId', sql.Int, accountId)
+      .query(query);
+
+    if (result.recordset.length > 0) {
+      res.status(200).json({
+        status: true,
+        message: 'Order details found',
+        orderDetails: result.recordset[0], // Assuming only one order per ID, return the first record
+      });
+    } else {
+      res.status(404).json({
+        status: false,
+        message: 'Order not found',
+      });
+    }
+  } catch (error) {
+    console.error('Error fetching order details:', error.message);
     res.status(500).json({ status: false, message: 'An error occurred', error: error.message });
   }
 });

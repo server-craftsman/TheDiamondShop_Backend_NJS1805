@@ -1,14 +1,3 @@
-//npm install mysql
-//npm install dotenv - module này để quản lí biến môi trường
-//npm install jsonwebtoken
-//npm install express body-parser cors jsonwebtoken dotenv mssql
-//npm install express-session
-//npm install express express-session body-parser
-//npm install googleapis nodemailer
-//npm install ejs
-//npm install express-flash express-session
-//npm install passport-google-oauth20
-
 const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
@@ -17,7 +6,8 @@ const dbConfig = require("./config/dbconfig");
 const session = require("express-session");
 const flash = require("express-flash");
 const cookieParser = require("cookie-parser");
-//import Route
+
+// Import Routes
 const authRoute = require("./routes/authentication/authRoute");
 const forgotPassword = require("./routes/userFeatures/view/email/forgotPassword");
 const manageProduct = require("./routes/products/productsRoute");
@@ -26,19 +16,22 @@ const voucherRoute = require("./routes/voucher/voucherRoute");
 const eventRouter = require("./routes/event/eventRouter");
 const certificateRouter = require("./routes/certificate/certificateRouter");
 const warrantyRoute = require("./routes/warranty/warrantyRoute");
+const paypalRouter = require("./routes/authentication/paypalRoute");
 
 //---order danger---
 const orderTest = require("./routes/orders/orderTest");
 //------------------
-//-------//
+
+// Create an Express app
 const app = express();
+
 // Middleware
 app.use(express.json()); // Body parser for JSON
 app.use(express.urlencoded({ extended: true })); // Body parser for URL-encoded data
 app.use(cookieParser());
 app.use(flash());
 
-/// Session configuration
+// Session configuration
 app.use(
   session({
     secret: "huyit", // Change this to a secure secret
@@ -63,10 +56,13 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 app.use((req, res, next) => {
-  console.log(`Request received at: ${req.method} ${req.path} - ${new Date().toLocaleString()}`);
+  console.log(
+    `Request received at: ${req.method} ${
+      req.path
+    } - ${new Date().toLocaleString()}`
+  );
   next();
 });
-
 
 // Function to create a unique styled message
 function createStyledMessage(text, colorCode) {
@@ -91,13 +87,13 @@ sql
     app.use("/features", userFeatures);
     app.use("/products", manageProduct);
     app.use("/orders", orderTest);
-    app.use(flash());
     app.use("/", voucherRoute);
     app.use("/events", eventRouter);
     app.use("/certificate", certificateRouter);
     app.use("/warranty", warrantyRoute);
+    app.use("/paypal", paypalRouter);
 
-    const port = process.env.PORT || 8090; // set default port if PORT environment variable is not defined
+    const port = process.env.PORT || 8090; // Set default port if PORT environment variable is not defined
     app.listen(port, () => {
       console.log(
         createStyledMessage(

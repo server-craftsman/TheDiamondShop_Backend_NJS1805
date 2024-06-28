@@ -11,15 +11,15 @@ router.put('/add', async (req, res) => {
         res.status(500).send(error.message);
     }
 });
-// router.get('/lookup', async (req, res) => {
-//     try {
-//         const reportNO = req.body;
-//         const cert = await certificateDAO.getcertByNum(reportNO);
-//         res.json(cert);
-//     } catch (error) {
-//         res.status(500).send(error.message);
-//     }
-// });
+router.get('/lookup', async (req, res) => {
+    try {
+        const reportNO = req.body;
+        const cert = await certificateDAO.getcertByNum();
+        res.json(cert);
+    } catch (error) {
+        res.status(500).send(error.message);
+    }
+});
 router.get('/:GIAReportNumber', async (req, res) => {
     const GIAReportNumber = req.params.GIAReportNumber;
   
