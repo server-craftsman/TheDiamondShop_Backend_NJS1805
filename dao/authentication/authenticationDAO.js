@@ -19,6 +19,52 @@ const getUserByEmailAndPassword = async (email, password) => {
   }
 };
 
+//View Warranty Request ("Manger")
+async function viewWarrantyRequestManager() {
+  try {
+    const pool = await sql.connect(dbConfig);
+    const result = await pool.request()
+      .query(`
+        SELECT 
+          a.FirstName, a.LastName, a.Email, a.PhoneNumber, 
+          o.OrderID, o.OrderDate, o.Quantity, od.AttachedAccessories, 
+          od.Shipping, od.ReportNo, od.DeliveryAddress, 
+          o.OrderStatus, o.TotalPrice, od.ResquestWarranty
+        FROM Orders o 
+        JOIN Account a ON o.AccountID = a.AccountID 
+        JOIN OrderDetails od ON o.OrderID = od.OrderID 
+        WHERE od.ResquestWarranty IN ('Request', 'Assign', 'Processing', 'Approved', 'Refused')
+      `);
+    return result.recordsets;
+  } catch (error) {
+    console.error("Error fetching warranty requests:", error);
+    throw error;
+  }
+}
+
+//View Warranty Request ("Sale")
+async function viewWarrantyRequestSale() {
+  try {
+    const pool = await sql.connect(dbConfig);
+    const result = await pool.request()
+      .query(`
+        SELECT 
+          a.FirstName, a.LastName, a.Email, a.PhoneNumber, 
+          o.OrderID, o.OrderDate, o.Quantity, od.AttachedAccessories, 
+          od.Shipping, od.ReportNo, od.DeliveryAddress, 
+          o.OrderStatus, o.TotalPrice, od.ResquestWarranty
+        FROM Orders o 
+        JOIN Account a ON o.AccountID = a.AccountID 
+        JOIN OrderDetails od ON o.OrderID = od.OrderID 
+        WHERE od.ResquestWarranty IN ('Assign', 'Processing', 'Approved', 'Refused')
+      `);
+    return result.recordsets;
+  } catch (error) {
+    console.error("Error fetching warranty requests:", error);
+    throw error;
+  }
+}
+
 const getUserByEmail = async (email) => {
   try {
     let pool = await sql.connect(dbConfig);
@@ -170,4 +216,6 @@ const registerUser = async (userData) => {
 module.exports = {
   getUserByEmailAndPassword,
   registerUser,
+  viewWarrantyRequestManager,
+  viewWarrantyRequestSale,
 };
