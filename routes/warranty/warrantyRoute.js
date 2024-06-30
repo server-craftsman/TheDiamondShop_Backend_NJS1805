@@ -86,4 +86,29 @@ router.put("/update-warranty", async (req, res) => {
           res.status(500).send("Internal server error");
         }
 })
+//Delete Warranty
+router.delete("/delete-warranty", async (req, res) => {
+    const { reportNo } = req.body;
+    
+    if (!reportNo) {
+        return res.status(400).send({ error: 'ReportNo is required' });
+    }
+
+    try {
+        let pool = await sql.connect(config);
+        let result = await pool
+            .request()
+            .input("ReportNo", sql.VarChar, reportNo)
+            .query("DELETE FROM WarrantyReceipt WHERE ReportNo = @ReportNo");
+        
+        if (result.rowsAffected[0] === 0) {
+            return res.status(404).send({ error: 'Warranty not found' });
+        }
+
+        res.status(200).send({ message: 'Warranty deleted successfully' });
+    } catch (err) {
+        console.error("Database query error:", err);
+        res.status(500).send({ error: 'Database query error' });
+    }
+});
 module.exports = router;

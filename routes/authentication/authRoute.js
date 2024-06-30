@@ -253,7 +253,7 @@ router.get('/history-order/:orderId', verifyToken, async (req, res) => {
         a.FirstName, a.LastName, a.Email, a.PhoneNumber, 
         o.OrderID, o.OrderDate, o.Quantity, od.AttachedAccessories, 
         od.Shipping, od.ReportNo, od.DeliveryAddress, 
-        o.OrderStatus, o.TotalPrice 
+        o.OrderStatus, o.TotalPrice, od.ResquestWarranty
       FROM Orders o 
       JOIN Account a ON o.AccountID = a.AccountID 
       JOIN OrderDetails od ON o.OrderID = od.OrderID 
