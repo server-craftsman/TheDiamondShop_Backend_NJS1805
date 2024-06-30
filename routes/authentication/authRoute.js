@@ -13,6 +13,8 @@ const verifyToken = require('../../dao/authentication/middleWare');
 const session = require("express-session");
 const cookieParser = require("cookie-parser");
 const {viewWarrantyRequestManager, viewWarrantyRequestSale} = require ("../../dao/authentication/authenticationDAO");
+const {viewAccount,
+  viewAccoundByEmail} = require ("../../dao/authentication/userDAO");
 
 // Generate and save token
 router.post('/generate-token', async (req, res) => {
@@ -608,5 +610,50 @@ router.get(
   }
 );
 
+//View Account
+router.get('/account', verifyToken, async (req, res) => {
+  try {
+    const result = await viewAccount();
+    if (result.length > 0) {
+      res.status(200).json({
+        status: true,
+        message: 'Account details found',
+        account: result[0],
+      });
+    } else {
+      res.status(200).json({
+        status: false,
+        message: 'No account details found.',
+      });
+    }
+  } catch (error) {
+    console.error("Error fetching account:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+//View Account by Email
+router.get('/account/:email', verifyToken, async (req, res) => {
+  const email = req.params.email;
+
+  try {
+    const result = await viewAccoundByEmail(email);
+    if (result.length > 0) {
+      res.status(200).json({
+        status: true,
+        message: 'Account details found',
+        account: result[0],
+      });
+    } else {
+      res.status(200).json({
+        status: false,
+        message: 'No account details found.',
+      });
+    }
+  } catch (error) {
+    console.error("Error fetching account:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
 
 module.exports = router;
