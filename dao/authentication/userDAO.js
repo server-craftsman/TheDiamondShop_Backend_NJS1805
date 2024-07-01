@@ -95,6 +95,7 @@ const getRoleByName = async (roleName) => {
   }
 };
 
+// insert user to db
 const insertUser = async (userData) => {
   try {
     const {
@@ -129,7 +130,8 @@ const insertUser = async (userData) => {
       .input("Province", sql.NVarChar, province)
       .input("PostalCode", sql.NVarChar, postalCode)
       .input("RoleID", sql.Int, roleId)
-      .input("Status", sql.NVarChar, status).query(`
+      .input("Status", sql.NVarChar, status)
+      .query(`
         INSERT INTO Account (FirstName, LastName, Gender, Birthday, Password, Email, PhoneNumber, Address, Country, City, Province, PostalCode, RoleID, Status)
         VALUES (@FirstName, @LastName, @Gender, @Birthday, @Password, @Email, @PhoneNumber, @Address, @Country, @City, @Province, @PostalCode, @RoleID, @Status)
       `);
@@ -139,6 +141,27 @@ const insertUser = async (userData) => {
     throw new Error("Database query error");
   }
 };
+
+const insertRole = async (roleData) => {
+  try {
+    const { roleName, transportation } = roleData;
+    let pool = await sql.connect(config);
+    let result = await pool
+      .request()
+      .input("RoleName", sql.VarChar, roleName)
+      .input("Transportation", sql.NVarChar, transportation)
+      .query(`
+        INSERT INTO Roles (RoleName, Transportation)
+        VALUES (@RoleName, @Transportation);
+        SELECT SCOPE_IDENTITY() AS RoleID;
+      `);
+    return result.recordset[0].RoleID;
+  } catch (err) {
+    console.error("Database query error:", err);
+    throw new Error("Database query error");
+  }
+};
+// end insert db
 
 const registerUser = async (userData) => {
   try {
@@ -209,6 +232,75 @@ const registerUser = async (userData) => {
   }
 };
 
+// create new account for staff
+const createUser = async (userData, roleData) => {
+  try {
+    const {
+      firstName,
+      lastName,
+      gender,
+      birthday,
+      password,
+      email,
+      phoneNumber,
+      address,
+      country,
+      city,
+      province,
+      postalCode,
+    } = userData;
+
+    const { roleName, transportation } = roleData;
+
+    console.log("Starting user registration...");
+
+    // Check if email already exists
+    console.log(`Checking if email exists: ${email}`);
+    const existingUser = await getUserByEmail(email);
+    if (existingUser) {
+      console.log("Email already exists.");
+      throw new Error("Email already exists");
+    }
+
+    // Check password length
+    console.log("Checking password length...");
+    if (password.length < 8) {
+      console.log("Password is too short.");
+      throw new Error("Password must be at least 8 characters long");
+    }
+
+    // Insert role and get the new RoleID
+    console.log("Inserting new role...");
+    const roleId = await insertRole({ roleName, transportation });
+
+    // Insert new user with the retrieved RoleID
+    console.log("Inserting new user...");
+    const result = await insertUser({
+      firstName,
+      lastName,
+      gender,
+      birthday,
+      password,
+      email,
+      phoneNumber,
+      address,
+      country,
+      city,
+      province,
+      postalCode,
+      roleId, // Use the newly inserted RoleID
+      status: "Enable",
+    });
+
+    console.log("User registered successfully.");
+    return result;
+  } catch (err) {
+    console.error("Error registering user:", err);
+    throw err;
+  }
+};
+
+
 async function clearToken(accountId) {
   try {
     const pool = await sql.connect(dbConfig);
@@ -260,6 +352,9 @@ module.exports = {
   getUserByEmail,
   getRoleByName,
   insertUser,
+  insertRole,
+  registerUser,
+  createUser,
   registerUser,
   clearToken,
 };

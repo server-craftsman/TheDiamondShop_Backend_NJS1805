@@ -204,6 +204,76 @@ router.post('/register', async (req, res) => {
   }
 });
 
+
+// Create Account route
+router.post('/createAccount', async (req, res) => {
+  const {
+    firstName,
+    lastName,
+    gender,
+    birthday,
+    password,
+    email,
+    phoneNumber,
+    address,
+    country,
+    city,
+    province,
+    postalCode,
+    roleName,
+    transportation
+  } = req.body;
+
+  if (!firstName || !lastName || !email || !password || !roleName) {
+    return res.status(400).send('First name, last name, email, password, role name, and transportation are required');
+  }
+
+  try {
+    await createUser({
+      firstName,
+      lastName,
+      gender,
+      birthday,
+      password,
+      email,
+      phoneNumber,
+      address,
+      country,
+      city,
+      province,
+      postalCode,
+    }, {
+      roleName,
+      transportation,
+    });
+
+    const user = await userDAO.getUserByEmailAndPassword(email, password);
+    if (user.length === 0) {
+      return res.status(404).json({ message: 'User not found after registration' });
+    }
+
+    const newUser = user[0];
+    const token = jwt.sign(
+      { accountId: newUser.AccountID, roleName: newUser.RoleName },
+      JWT_SECRET,
+      { expiresIn: '1h' }
+    );
+
+    await userDAO.saveToken(newUser.AccountID, token);
+
+    res.status(201).json({ message: 'User registered successfully', token });
+  } catch (err) {
+    console.error('Registration error:', err.message);
+    if (err.message === 'Email already exists') {
+      return res.status(409).send('Email already exists');
+    }
+    if (err.message === 'Password must be at least 8 characters long') {
+      return res.status(400).send('Password must be at least 8 characters long');
+    }
+    res.status(500).send('Internal server error');
+  }
+});
+
 // GET history-order route
 router.get('/history-order', verifyToken, async (req, res) => {
   const { accountId } = req.user;
