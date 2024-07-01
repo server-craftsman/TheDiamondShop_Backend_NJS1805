@@ -12,6 +12,10 @@ const userDao = require('../../dao/authentication/userDAO');
 const verifyToken = require('../../dao/authentication/middleWare');
 const session = require("express-session");
 const cookieParser = require("cookie-parser");
+const {viewWarrantyRequestManager, viewWarrantyRequestSale} = require ("../../dao/authentication/authenticationDAO");
+const {viewAccount,
+  viewAccoundByEmail} = require ("../../dao/authentication/userDAO");
+
 // Generate and save token
 router.post('/generate-token', async (req, res) => {
   const { accountId } = req.body;
@@ -251,7 +255,7 @@ router.get('/history-order/:orderId', verifyToken, async (req, res) => {
         a.FirstName, a.LastName, a.Email, a.PhoneNumber, 
         o.OrderID, o.OrderDate, o.Quantity, od.AttachedAccessories, 
         od.Shipping, od.ReportNo, od.DeliveryAddress, 
-        o.OrderStatus, o.TotalPrice 
+        o.OrderStatus, o.TotalPrice, od.ResquestWarranty
       FROM Orders o 
       JOIN Account a ON o.AccountID = a.AccountID 
       JOIN OrderDetails od ON o.OrderID = od.OrderID 
@@ -277,6 +281,141 @@ router.get('/history-order/:orderId', verifyToken, async (req, res) => {
   } catch (error) {
     console.error('Error fetching order details:', error.message);
     res.status(500).json({ status: false, message: 'An error occurred', error: error.message });
+  }
+});
+
+// Update request Warranty
+router.put('/update-warranty', verifyToken, async (req, res) => {
+  const { orderId } = req.body;
+  const requestWarranty = 'Request'; // Set RequestWarranty to 'Request'
+
+  if (!orderId || !requestWarranty) {
+    return res.status(400).json({ message: 'orderId and RequestWarranty are required' });
+  }
+
+  try {
+    const pool = await sql.connect(dbConfig);
+    const result = await pool.request()
+      .input('OrderId', sql.Int, orderId)
+      .input('RequestWarranty', sql.VarChar, requestWarranty)
+      .query('UPDATE OrderDetails SET ResquestWarranty = @RequestWarranty WHERE OrderID = @OrderId');
+
+    if (result.rowsAffected[0] > 0) {
+      res.status(200).json({ message: 'Warranty request updated successfully' });
+    } else {
+      res.status(404).json({ message: 'OrderId not found' });
+    }
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+//View request Warranty ("Manger")
+router.get('/view-warranty-manager', verifyToken, async (req, res) => {
+  try {
+    const results = await viewWarrantyRequestManager();
+    if (results.length > 0) {
+      res.status(200).json({
+        status: true,
+        message: 'Warranty requests found',
+        warrantyRequests: results[0],
+      });
+    } else {
+      res.status(200).json({
+        status: false,
+        message: 'No warranty requests found.',
+      });
+    }
+  } catch (error) {
+    console.error("Error fetching warranty requests:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+//Update request warranty ("Manger")
+router.put('/update-warranty-manager', verifyToken, async (req, res) => {
+  const { orderId, requestWarranty } = req.body;
+  const validStatuses = ["Assign", "Processing", "Approved", "Refused"];
+
+  // Debug log to inspect the received value
+
+  if (!orderId || !requestWarranty) {
+    return res.status(400).json({ message: 'orderId and requestWarranty are required' });
+  }
+
+  if (!validStatuses.includes(requestWarranty)) {
+    return res.status(400).send({ message: 'Request Warranty must be Assign, Processing, Approved, or Refused' });
+  }
+
+  try {
+    const pool = await sql.connect(dbConfig);
+    const result = await pool.request()
+      .input('OrderId', sql.Int, orderId)
+      .input('RequestWarranty', sql.VarChar, requestWarranty)
+      .query('UPDATE OrderDetails SET ResquestWarranty = @RequestWarranty WHERE OrderID = @OrderId');
+
+    if (result.rowsAffected[0] > 0) {
+      res.status(200).json({ message: 'Warranty request updated successfully' });
+    } else {
+      res.status(404).json({ message: 'OrderId not found' });
+    }
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+//View request Warranty ("Sale")
+router.get('/view-warranty-sale', verifyToken, async (req, res) => {
+  try {
+    const results = await viewWarrantyRequestSale();
+    if (results.length > 0) {
+      res.status(200).json({
+        status: true,
+        message: 'Warranty requests found',
+        warrantyRequests: results[0],
+      });
+    } else {
+      res.status(200).json({
+        status: false,
+        message: 'No warranty requests found.',
+      });
+    }
+  } catch (error) {
+    console.error("Error fetching warranty requests:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+//Update request warranty ("Sale")
+router.put('/update-warranty-sale', verifyToken, async (req, res) => {
+  const { orderId, requestWarranty } = req.body;
+  const validStatuses = ["Processing", "Approved", "Refused"];
+
+  if (!orderId || !requestWarranty) {
+    return res.status(400).json({ message: 'orderId and requestWarranty are required' });
+  }
+
+  if (!validStatuses.includes(requestWarranty)) {
+    return res.status(400).send({ message: 'Request Warranty must be Assign, Processing, Approved, or Refused' });
+  }
+
+  try {
+    const pool = await sql.connect(dbConfig);
+    const result = await pool.request()
+      .input('OrderId', sql.Int, orderId)
+      .input('RequestWarranty', sql.VarChar, requestWarranty)
+      .query('UPDATE OrderDetails SET ResquestWarranty = @RequestWarranty WHERE OrderID = @OrderId');
+
+    if (result.rowsAffected[0] > 0) {
+      res.status(200).json({ message: 'Warranty request updated successfully' });
+    } else {
+      res.status(404).json({ message: 'OrderId not found' });
+    }
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error' });
   }
 });
 
@@ -471,5 +610,50 @@ router.get(
   }
 );
 
+//View Account
+router.get('/account', verifyToken, async (req, res) => {
+  try {
+    const result = await viewAccount();
+    if (result.length > 0) {
+      res.status(200).json({
+        status: true,
+        message: 'Account details found',
+        account: result[0],
+      });
+    } else {
+      res.status(200).json({
+        status: false,
+        message: 'No account details found.',
+      });
+    }
+  } catch (error) {
+    console.error("Error fetching account:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+//View Account by Email
+router.get('/account/:email', verifyToken, async (req, res) => {
+  const email = req.params.email;
+
+  try {
+    const result = await viewAccoundByEmail(email);
+    if (result.length > 0) {
+      res.status(200).json({
+        status: true,
+        message: 'Account details found',
+        account: result[0],
+      });
+    } else {
+      res.status(200).json({
+        status: false,
+        message: 'No account details found.',
+      });
+    }
+  } catch (error) {
+    console.error("Error fetching account:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
 
 module.exports = router;

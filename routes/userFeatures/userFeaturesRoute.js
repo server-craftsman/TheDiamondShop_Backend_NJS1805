@@ -21,6 +21,7 @@ const {
   createScheduleAppointment,
   updateScheduleAppointment,
   getAllFeedbacksByProductID,
+  getTransaction,
   createFeedback,
   updateFeedback,
   deleteFeedback
@@ -224,6 +225,34 @@ router.get('/view-profile', verifyToken, async (req, res) => {
         PostalCode: user.PostalCode,
         RoleName: user.RoleName,
         Image: user.Image
+      }
+    });
+  } catch (error) {
+    console.error('Internal error:', error);
+    res.status(500).json({ message: 'An internal error occurred.' });
+  }
+});
+
+// view transaction
+
+router.get('/view-transaction', verifyToken, async (req, res) => {
+  try {
+    // Get user information by decoding token to get accountId
+    const accountId = req.user.accountId; 
+    const transaction = await getTransaction(accountId);
+
+    // Check if user exists
+    if (!transaction) {
+      return res.status(404).json({ message: 'Transaction not found.' });
+    }
+
+    // Send the user's profile information
+    res.status(200).json({
+      Transaction: {
+        PaymentID: transaction.PaymentID,
+        orderID: transaction.orderID,
+        Method: transaction.Method,
+        PaymentDate: transaction.PaymentDate,
       }
     });
   } catch (error) {

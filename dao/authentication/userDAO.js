@@ -226,6 +226,32 @@ async function clearToken(accountId) {
   }
 };
 
+//View All
+async function viewAccount() {
+  try {
+    const pool = await sql.connect(config);
+    const results = await pool.request()
+    .query(`SELECT * FROM Account`);
+    return results.recordsets;
+  }catch (error) {
+    console.error('Error fetching account:', error);
+    throw error;
+}
+};
+//View By Email
+async function viewAccoundByEmail(email) {
+  try {
+    const pool = await sql.connect(config);
+    const results = await pool.request()
+    .input("Email", sql.VarChar, email)
+    .query(`SELECT * FROM Account WHERE Email = @Email`);
+    return results.recordset;
+  }catch (error) {
+    console.error('Error fetching account:', error);
+    throw error;
+}
+};
+
 module.exports = {
   getUserById,
   getUserByToken,

@@ -240,6 +240,24 @@ const getOrderById = async (id, callback) => {
   }
 };
 
+//===========Transaction===========
+
+async function getTransaction(accountId) {
+  try {
+    let pool = await sql.connect(config);
+    let result = await pool.request()
+      .input('AccountID', sql.Int, accountId)
+      .query('SELECT t.PaymentID, t.OrderID, t.PaymentAmount, t.Method, t.PaymentDate FROM Transactions t JOIN Orders o ON t.OrderID = o.OrderID JOIN Account a ON a.AccountID = o.AccountID WHERE a.AccountID = @AccountID');
+    return result.recordset[0];
+  } catch (err) {
+    console.error('SQL error', err);
+    throw new Error('Database query error');
+  }
+}
+
+
+//==========end Transaction
+
 //=========Schedule Appointments============
 
 // Utility function to execute SQL queries
@@ -475,6 +493,9 @@ module.exports = {
   createScheduleAppointment,
   updateScheduleAppointment,
   //==========end schedule===============
+  //==========Transaction===========
+  getTransaction,
+  //==========END Transaction
   //============Manage Feedback==========
   getAllFeedbacksByProductID,
   createFeedback,
