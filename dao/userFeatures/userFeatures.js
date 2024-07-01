@@ -356,19 +356,32 @@ async function deleteScheduleAppointment(scheduleId) {
 // Function to get all feedbacks for a specific product type and ID
 async function getAllFeedbacksByProductID(productType, productID) {
   try {
-    let query = "";
+    let query = `
+      SELECT
+          Feedback.*,
+          Account.FirstName,
+          Account.LastName,
+          Account.Image,
+          Roles.RoleName
+      FROM
+          Feedback
+          INNER JOIN Account ON Feedback.AccountID = Account.AccountID
+          INNER JOIN Roles ON Account.RoleID = Roles.RoleID
+      WHERE
+    `;
+
     switch (productType) {
       case "Diamond":
-        query = `SELECT * FROM Feedback WHERE DiamondID = @productID`;
+        query += `Feedback.DiamondID = @productID`;
         break;
       case "Bridal":
-        query = `SELECT * FROM Feedback WHERE BridalID = @productID`;
+        query += `Feedback.BridalID = @productID`;
         break;
       case "DiamondRings":
-        query = `SELECT * FROM Feedback WHERE DiamondRingsID = @productID`;
+        query += `Feedback.DiamondRingsID = @productID`;
         break;
       case "DiamondTimepieces":
-        query = `SELECT * FROM Feedback WHERE DiamondTimepiecesID = @productID`;
+        query += `Feedback.DiamondTimepiecesID = @productID`;
         break;
       default:
         throw new Error("Invalid product type specified");
@@ -377,7 +390,7 @@ async function getAllFeedbacksByProductID(productType, productID) {
     const feedbacks = await executeQuery(query, { productID });
     return feedbacks;
   } catch (error) {
-    console.error("SQL error", error);
+    console.error("DAO error", error);
     throw error;
   }
 }

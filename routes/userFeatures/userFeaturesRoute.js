@@ -529,19 +529,17 @@ router.put("/schedule-appointments/:id", async (req, res) => {
 
 //===========Manage Feedback===========
 // Route to get feedbacks by product type and ID
-router.get("/feedback/:productType/:productID", async (req, res) => {
+router.get("/feedback/:productType/:productID", verifyToken, async (req, res) => {
   const { productType, productID } = req.params;
 
   try {
-    const feedbacks = await getAllFeedbacksByProductID(
-      productType,
-      productID
-    );
+    const feedbacks = await getAllFeedbacksByProductID(productType, productID);
     res.json(feedbacks);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
+
 // Route to create a new feedback
 router.post('/feedback', async (req, res) => {
   const { accountID, diamondID, bridalID, diamondRingsID, diamondTimepiecesID, content, rating } = req.body;
