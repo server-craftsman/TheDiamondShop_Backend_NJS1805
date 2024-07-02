@@ -109,10 +109,54 @@ const updateWarranty = async (warrantyData) => {
         throw new Error("Database query error");
     }
 };
+
+async function getWarrantyByReportNoOrderDetails(reportNo) {
+    try {
+        const pool = await sql.connect(config);
+        const results = await pool.request()
+            .input('reportNo', sql.VarChar, reportNo)  // Use parameterized query
+            .query(`
+                SELECT 
+                    o.OrderDate,
+                    o.Quantity,
+                    o.OrderStatus,
+                    o.TotalPrice,
+                    a.FirstName,
+                    a.LastName,
+                    a.Email,
+                    od.AttachedAccessories,
+                    od.Shipping,
+                    od.OrderStatus AS OrderDetailStatus,
+                    od.ReportNo,
+                    w.Descriptions,
+                    w.Date,
+                    w.PlaceToBuy,
+                    w.Period,
+                    w.WarrantyType,
+                    w.WarrantyConditions,
+                    w.AccompaniedService,
+                    w.Condition
+                FROM 
+                    Orders o
+                JOIN 
+                    Account a ON o.AccountID = a.AccountID
+                JOIN 
+                    OrderDetails od ON o.OrderID = od.OrderID
+                JOIN 
+                    WarrantyReceipt w ON od.OrderDetailID = w.OrderDetailID
+                WHERE 
+                    od.ReportNo = @reportNo
+            `);  // Use @reportNo as the parameter
+        return results.recordset;  // use recordset instead of recordsets[0]
+    } catch (error) {
+        console.error('Error fetching Warranty:', error);
+        throw error;
+    }
+}
 module.exports = {
     getWarranty,
     getWarrantybyReportNo,
     createWarranty,
     updateWarranty,
-    
+    getWarrantyByReportNoOrderDetails,
 }
