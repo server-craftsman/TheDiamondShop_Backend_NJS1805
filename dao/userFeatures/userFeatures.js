@@ -39,7 +39,7 @@ async function getAccessOrder() {
 //View Order Status Confirm
 async function getAccessOrderConfirm(){
   try{
-      let pool = await sql.connect(config);
+      let pool = await sql.connect(dbConfig);
       let order = await pool.request()
       .query(`SELECT o.OrderID, 
        o.Orderdate, 
@@ -61,7 +61,7 @@ WHERE o.OrderStatus = 'Confirm'`);
 //Funciton to get Schedule of delivery
 async function getScheduleOfDelivery() {
   try {
-    let pool = await sql.connect(config);
+    let pool = await sql.connect(dbConfig);
     let results = await pool.request().query(`SELECT 
     r.RoleName, 
     a.LastName, 
@@ -92,7 +92,7 @@ JOIN
 // View to get orderstatus of delivery
 async function getOrderStatusOfDelivery() {
   try {
-    let pool = await sql.connect(config)
+    let pool = await sql.connect(dbConfig)
     let results = await pool.request().query(`SELECT
       o.OrderID,
      a.LastName, 
@@ -124,7 +124,7 @@ return results.recordsets;
 //View Delivery ('Shipping')
 async function getDeliveryShipping() {
   try {
-    let pool = await sql.connect(config)
+    let pool = await sql.connect(dbConfig)
     let results = await pool.request().query(`SELECT
       o.OrderID,
      a.LastName, 
@@ -156,7 +156,7 @@ return results.recordsets;
 //View Delivery ('Complete')
 async function getDeliveryCompleted() {
   try {
-    let pool = await sql.connect(config)
+    let pool = await sql.connect(dbConfig)
     let results = await pool.request().query(`SELECT
       o.OrderID,
      a.LastName, 
