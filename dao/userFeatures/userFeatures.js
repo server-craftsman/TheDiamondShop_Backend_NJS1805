@@ -1,4 +1,3 @@
-const { config } = require("dotenv");
 const dbConfig = require("../../config/dbconfig");
 const sql = require("mssql");
 const poolPromise = new sql.ConnectionPool(dbConfig).connect();
@@ -26,7 +25,7 @@ function getBonusPointAndAccountDetails() {
 // Function to get Access Order
 async function getAccessOrder() {
   try {
-    let pool = await sql.connect(config);
+    let pool = await sql.connect(dbConfig);
     let order = await pool.request()
     .query(`SELECT o.OrderID, o.Orderdate, a.Firstname, a.Lastname, o.Quantity, o.TotalPrice, o.OrderStatus 
       FROM Orders o JOIN Account a ON o.AccountID = a.AccountID WHERE o.OrderStatus = 'Pending'`);
