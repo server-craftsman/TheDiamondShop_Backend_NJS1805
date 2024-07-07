@@ -414,14 +414,14 @@ router.put("/update-order-status-sale", async (req, res) => {
 });
 
 //Route to get orderstatus of delivery
-router.get("/orderstatus-delivery", async(req, res) => {
-  try {
-    const orderstatusdelivery = await getOrderStatusOfDelivery();
-    res.status(200).send(orderstatusdelivery);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-})
+router.get("/orderstatus-delivery", async(req, response) => {
+  getOrderStatusOfDelivery().then(result =>{
+    response.json(result[0]);
+  }).catch(error => {
+    console.error('Error fetching order: ', error);
+    response.status(500).send('Error fetching order');
+  });
+});
 //Route to update order statu to 'Shipped' and 'Complete' (for delivery)
 router.put("/update-order-status-delivery", async (req, res) => {
   const { orderID, orderStatus } = req.body;

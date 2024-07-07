@@ -1,4 +1,3 @@
-const { config } = require("dotenv");
 const dbConfig = require("../../config/dbconfig");
 const sql = require("mssql");
 const poolPromise = new sql.ConnectionPool(dbConfig).connect();
@@ -26,7 +25,7 @@ function getBonusPointAndAccountDetails() {
 // Function to get Access Order
 async function getAccessOrder() {
   try {
-    let pool = await sql.connect(config);
+    let pool = await sql.connect(dbConfig);
     let order = await pool.request()
     .query(`SELECT o.OrderID, o.Orderdate, a.Firstname, a.Lastname, o.Quantity, o.TotalPrice, o.OrderStatus 
       FROM Orders o JOIN Account a ON o.AccountID = a.AccountID WHERE o.OrderStatus = 'Pending'`);
@@ -39,7 +38,7 @@ async function getAccessOrder() {
 //View Order Status Confirm
 async function getAccessOrderConfirm(){
   try{
-      let pool = await sql.connect(config);
+      let pool = await sql.connect(dbConfig);
       let order = await pool.request()
       .query(`SELECT o.OrderID, 
        o.Orderdate, 
@@ -61,7 +60,7 @@ WHERE o.OrderStatus = 'Confirm'`);
 //Funciton to get Schedule of delivery
 async function getScheduleOfDelivery() {
   try {
-    let pool = await sql.connect(config);
+    let pool = await sql.connect(dbConfig);
     let results = await pool.request().query(`SELECT 
     r.RoleName, 
     a.LastName, 
@@ -92,7 +91,7 @@ JOIN
 // View to get orderstatus of delivery
 async function getOrderStatusOfDelivery() {
   try {
-    let pool = await sql.connect(config)
+    let pool = await sql.connect(dbConfig)
     let results = await pool.request().query(`SELECT
       o.OrderID,
      a.LastName, 
@@ -124,7 +123,7 @@ return results.recordsets;
 //View Delivery ('Shipping')
 async function getDeliveryShipping() {
   try {
-    let pool = await sql.connect(config)
+    let pool = await sql.connect(dbConfig)
     let results = await pool.request().query(`SELECT
       o.OrderID,
      a.LastName, 
@@ -156,7 +155,7 @@ return results.recordsets;
 //View Delivery ('Complete')
 async function getDeliveryCompleted() {
   try {
-    let pool = await sql.connect(config)
+    let pool = await sql.connect(dbConfig)
     let results = await pool.request().query(`SELECT
       o.OrderID,
      a.LastName, 
