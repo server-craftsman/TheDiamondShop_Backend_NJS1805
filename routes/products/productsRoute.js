@@ -23,8 +23,11 @@ const {
   getDiamondById,
   getBridalById,
   getRingsById,
-  getTimepiecesById
+  getTimepiecesById,
+  getRingDetailByMaterialAndSize,
+  getBridalDetailByMaterialAndSize
 } = require("../../dao/products/manageProducts");
+const { auth } = require("googleapis/build/src/apis/abusiveexperiencereport");
 
 // View Bridal
 router.get("/bridals", async (req, response) => {
@@ -530,6 +533,58 @@ router.get('/timepieces/:id', (req, res) => {
     if (err) return res.status(500).json({ error: 'Failed to retrieve timepieces' });
     res.json(timepieces);
   });
+});
+
+router.get("/ring-detail", async (req, res) => {
+  const { material, ringSize } = req.query;
+
+  if (!material || !ringSize) {
+    return res
+      .status(400)
+      .json({ message: "Material and ring size are required" });
+  }
+
+  try {
+    const diamondRingsID = await getRingDetailByMaterialAndSize(
+      material,
+      ringSize
+    );
+
+    if (diamondRingsID) {
+      res.json({ DiamondRingsID: diamondRingsID });
+    } else {
+      res.status(404).json({ message: "Ring not found" });
+    }
+  } catch (error) {
+    console.error("Error fetching ring details", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+router.get("/bridal-detail", async (req, res) => {
+  const { material, ringSize } = req.query;
+
+  if (!material || !ringSize) {
+    return res
+      .status(400)
+      .json({ message: "Material and ring size are required" });
+  }
+
+  try {
+    const bridalId = await getBridalDetailByMaterialAndSize(
+      material,
+      ringSize
+    );
+
+    if (bridalId) {
+      res.json({ BridalID: bridalId });
+    } else {
+      res.status(404).json({ message: "Bridal not found" });
+    }
+  } catch (error) {
+    console.error("Error fetching Bridal details", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
 });
 
 module.exports = router;

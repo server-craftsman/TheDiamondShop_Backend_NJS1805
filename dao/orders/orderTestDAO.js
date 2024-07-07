@@ -204,65 +204,6 @@ async function checkInventory(idField, productID, tableName, request) {
   }
 }
 
-// async function updateInventory(orderData, transaction) {
-//   try {
-//     const request = new sql.Request(transaction);
-//     const productType = orderData.ProductType;
-//     const productID = orderData.ProductID;
-//     const quantity = orderData.Quantity;
-//     const diamondId = orderData.DiamondID;
-//     const bridalId = orderData.BridalID;
-//     const diamondRingsId = orderData.DiamondRingsID;
-//     const diamondTimepiecesid = orderData.DiamondTimepiecesID;
-
-//     let updateQuery = "";
-
-//     switch (productType) {
-//       case "Diamond":
-//         updateQuery = `
-//           UPDATE Diamond
-//           SET Inventory = Inventory - @Quantity
-//           WHERE DiamondID = @DiamondID;
-//         `;
-//         break;
-//       case "Bridal":
-//         updateQuery = `
-//           UPDATE Bridal
-//           SET Inventory = Inventory - @Quantity
-//           WHERE BridalID = @ProductID;
-//         `;
-//         break;
-//       case "DiamondTimepieces":
-//         updateQuery = `
-//           UPDATE DiamondTimepieces
-//           SET Inventory = Inventory - @Quantity
-//           WHERE DiamondTimepiecesID = @ProductID;
-//         `;
-//         break;
-//       case "DiamondRings":
-//         updateQuery = `
-//           UPDATE DiamondRings
-//           SET Inventory = Inventory - @Quantity
-//           WHERE DiamondRingsID = @ProductID;
-//         `;
-//         break;
-//       default:
-//         throw new Error("Invalid product type.");
-//     }
-
-//     console.log(`Executing query to update inventory: ${updateQuery}`);
-
-//     const result = await request
-//       .input("ProductID", sql.Int, productID)
-//       .input("Quantity", sql.Int, quantity)
-//       .query(updateQuery);
-
-//     console.log(`Update result: ${JSON.stringify(result)}`);
-//   } catch (error) {
-//     throw new Error(`Error updating inventory: ${error.message}`);
-//   }
-// }
-
 async function updateInventory(orderData, transaction) {
   try {
     const request = new sql.Request(transaction);

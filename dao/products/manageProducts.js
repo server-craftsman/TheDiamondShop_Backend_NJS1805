@@ -16,9 +16,7 @@ async function getAllBridals() {
 async function getAllProduct() {
   try {
     const pool = await sql.connect(config);
-    const result = await pool
-      .request()
-      .query(`SELECT 
+    const result = await pool.request().query(`SELECT 
     DiamondID AS ProductID,
     'Diamond' AS ProductType,
     DiamondOrigin AS Origin,
@@ -141,8 +139,8 @@ FROM
 
 async function getAllBrands() {
   try {
-      let pool = await sql.connect(config);
-      let result = await pool.request().query(`
+    let pool = await sql.connect(config);
+    let result = await pool.request().query(`
           SELECT BrandName, ImageBrand
           FROM Bridal
           
@@ -157,23 +155,26 @@ async function getAllBrands() {
           FROM DiamondRings
       `);
 
-      // Use a JavaScript Map to ensure uniqueness
-      const uniqueBrands = new Map();
-      result.recordset.forEach(record => {
-          if (!uniqueBrands.has(record.BrandName)) {
-              uniqueBrands.set(record.BrandName, record.ImageBrand);
-          }
-      });
+    // Use a JavaScript Map to ensure uniqueness
+    const uniqueBrands = new Map();
+    result.recordset.forEach((record) => {
+      if (!uniqueBrands.has(record.BrandName)) {
+        uniqueBrands.set(record.BrandName, record.ImageBrand);
+      }
+    });
 
-      // Convert the map back to an array of objects
-      const uniqueBrandsArray = Array.from(uniqueBrands, ([BrandName, ImageBrand]) => ({ BrandName, ImageBrand }));
+    // Convert the map back to an array of objects
+    const uniqueBrandsArray = Array.from(
+      uniqueBrands,
+      ([BrandName, ImageBrand]) => ({ BrandName, ImageBrand })
+    );
 
-      return uniqueBrandsArray;
+    return uniqueBrandsArray;
   } catch (error) {
-      console.error("SQL error", error);
-      throw new Error("Database query error");
+    console.error("SQL error", error);
+    throw new Error("Database query error");
   } finally {
-      await sql.close(); // Ensure the connection is closed
+    await sql.close(); // Ensure the connection is closed
   }
 }
 
@@ -215,9 +216,7 @@ async function getAllTimePieces() {
 async function getAllBanner() {
   try {
     const pool = await sql.connect(config);
-    const results = await pool
-    .request()
-    .query("SELECT * FROM Banner");
+    const results = await pool.request().query("SELECT * FROM Banner");
     return results.recordsets;
   } catch (error) {
     console.error("Connection SQL error:", error);
@@ -302,7 +301,7 @@ const updateDiamond = async (diamondData) => {
       depth,
       measurements,
       giaReportNumber,
-      stockNumber,  // Use StockNumber instead of DiamondID
+      stockNumber, // Use StockNumber instead of DiamondID
       labReportNumber,
       gemstone,
       gradingReport,
@@ -328,14 +327,13 @@ const updateDiamond = async (diamondData) => {
       .input("Depth", sql.Decimal, depth)
       .input("Measurements", sql.VarChar, measurements)
       .input("GIAReportNumber", sql.VarChar, giaReportNumber)
-      .input("StockNumber", sql.VarChar, stockNumber)  // Bind StockNumber
+      .input("StockNumber", sql.VarChar, stockNumber) // Bind StockNumber
       .input("LabReportNumber", sql.VarChar, labReportNumber)
       .input("Gemstone", sql.VarChar, gemstone)
       .input("GradingReport", sql.VarChar, gradingReport)
       .input("Descriptors", sql.Text, descriptors)
       .input("Fluorescence", sql.VarChar, fluorescence)
-      .input("Inventory", sql.Int, inventory)
-      .query(`
+      .input("Inventory", sql.Int, inventory).query(`
         UPDATE Diamond
         SET 
           DiamondOrigin = @DiamondOrigin,
@@ -371,14 +369,10 @@ const updateDiamond = async (diamondData) => {
 //Delete Diamond
 const deleteDiamond = async (dataSource) => {
   try {
-    const{
-      diamondId
-    } = dataSource;
-    
+    const { diamondId } = dataSource;
+
     let pool = await sql.connect(config);
-    let results = await pool
-      .request()
-      .input("diamondId", sql.Int, diamondId)
+    let results = await pool.request().input("diamondId", sql.Int, diamondId)
       .query(`
         DELETE FROM Diamond
         WHERE DiamondID = @diamondId
@@ -415,34 +409,34 @@ const insertDiamondRings = async (diamondRingsData) => {
       description,
       imageRings,
       imageBrand,
-      inventory
+      inventory,
     } = diamondRingsData;
     let pool = await sql.connect(config);
     let results = await pool
-    .request()
-    .input("RingStyle", sql.VarChar, ringStyle)
-    .input("NameRings", sql.VarChar, nameRings)
-    .input("Category", sql.VarChar, category)
-    .input("BrandName", sql.VarChar, brandName)
-    .input("Material", sql.VarChar, material)
-    .input("CenterGemstone", sql.VarChar, centerGemstone)
-    .input("CenterGemstoneShape", sql.VarChar, centerGemstoneShape)
-    .input("Width", sql.Decimal, width)
-    .input("CenterDiamondDimension", sql.Int, centerDiamondDimension)
-    .input("Weight", sql.Decimal, weight)
-    .input("GemstoneWeight", sql.Decimal, gemstoneWeight)
-    .input("CenterDiamondColor", sql.VarChar, centerDiamondColor)
-    .input("CenterDiamondClarity", sql.VarChar, centerDiamondClarity)
-    .input("CenterDiamondCaratWeight", sql.Decimal, centerDiamondCaratWeight)
-    .input("RingSize", sql.Decimal, ringSize)
-    .input("Price", sql.Float, price)
-    .input("Gender", sql.VarChar, gender)
-    .input("Fluorescence", sql.VarChar, fluorescence)
-    .input("Description", sql.VarChar, description)
-    .input("ImageRings", sql.VarChar, imageRings)
-    .input("ImageBrand", sql.VarChar, imageBrand)
-    .input("Inventory", sql.Int, inventory)
-    .query(`INSERT INTO DiamondRings (RingStyle, NameRings, Category, BrandName, Material, CenterGemstone, CenterGemstoneShape, Width, CenterDiamondDimension, Weight, GemstoneWeight, CenterDiamondColor, CenterDiamondClarity, CenterDiamondCaratWeight, RingSize, Price, Gender, Fluorescence, Description, ImageRings, ImageBrand, Inventory)
+      .request()
+      .input("RingStyle", sql.VarChar, ringStyle)
+      .input("NameRings", sql.VarChar, nameRings)
+      .input("Category", sql.VarChar, category)
+      .input("BrandName", sql.VarChar, brandName)
+      .input("Material", sql.VarChar, material)
+      .input("CenterGemstone", sql.VarChar, centerGemstone)
+      .input("CenterGemstoneShape", sql.VarChar, centerGemstoneShape)
+      .input("Width", sql.Decimal, width)
+      .input("CenterDiamondDimension", sql.Int, centerDiamondDimension)
+      .input("Weight", sql.Decimal, weight)
+      .input("GemstoneWeight", sql.Decimal, gemstoneWeight)
+      .input("CenterDiamondColor", sql.VarChar, centerDiamondColor)
+      .input("CenterDiamondClarity", sql.VarChar, centerDiamondClarity)
+      .input("CenterDiamondCaratWeight", sql.Decimal, centerDiamondCaratWeight)
+      .input("RingSize", sql.Decimal, ringSize)
+      .input("Price", sql.Float, price)
+      .input("Gender", sql.VarChar, gender)
+      .input("Fluorescence", sql.VarChar, fluorescence)
+      .input("Description", sql.VarChar, description)
+      .input("ImageRings", sql.VarChar, imageRings)
+      .input("ImageBrand", sql.VarChar, imageBrand)
+      .input("Inventory", sql.Int, inventory)
+      .query(`INSERT INTO DiamondRings (RingStyle, NameRings, Category, BrandName, Material, CenterGemstone, CenterGemstoneShape, Width, CenterDiamondDimension, Weight, GemstoneWeight, CenterDiamondColor, CenterDiamondClarity, CenterDiamondCaratWeight, RingSize, Price, Gender, Fluorescence, Description, ImageRings, ImageBrand, Inventory)
             VALUES (@RingStyle, @NameRings, @Category, @BrandName, @Material, @CenterGemstone, @CenterGemstoneShape, @Width, @CenterDiamondDimension, @Weight, @GemstoneWeight, @CenterDiamondColor, @CenterDiamondClarity, @CenterDiamondCaratWeight, @RingSize, @Price, @Gender, @Fluorescence, @Description, @ImageRings, @ImageBrand, @Inventory)
           `);
     return results;
@@ -477,35 +471,34 @@ const updateDiamondRings = async (diamondRingsData) => {
       description,
       imageRings,
       imageBrand,
-      inventory
+      inventory,
     } = diamondRingsData;
 
     let pool = await sql.connect(config);
     let results = await pool
-    .request()
-    .input("RingStyle", sql.VarChar, ringStyle)
-    .input("NameRings", sql.VarChar, nameRings)
-    .input("Category", sql.VarChar, category)
-    .input("BrandName", sql.VarChar, brandName)
-    .input("Material", sql.VarChar, material)
-    .input("CenterGemstone", sql.VarChar, centerGemstone)
-    .input("CenterGemstoneShape", sql.VarChar, centerGemstoneShape)
-    .input("Width", sql.Decimal, width)
-    .input("CenterDiamondDimension", sql.Int, centerDiamondDimension)
-    .input("Weight", sql.Decimal, weight)
-    .input("GemstoneWeight", sql.Decimal, gemstoneWeight)
-    .input("CenterDiamondColor", sql.VarChar, centerDiamondColor)
-    .input("CenterDiamondClarity", sql.VarChar, centerDiamondClarity)
-    .input("CenterDiamondCaratWeight", sql.Decimal, centerDiamondCaratWeight)
-    .input("RingSize", sql.Decimal, ringSize)
-    .input("Price", sql.Float, price)
-    .input("Gender", sql.VarChar, gender)
-    .input("Fluorescence", sql.VarChar, fluorescence)
-    .input("Description", sql.VarChar, description)
-    .input("ImageRings", sql.VarChar, imageRings)
-    .input("ImageBrand", sql.VarChar, imageBrand)
-    .input("Inventory", sql.Int, inventory)
-    .query(`UPDATE DiamondRings
+      .request()
+      .input("RingStyle", sql.VarChar, ringStyle)
+      .input("NameRings", sql.VarChar, nameRings)
+      .input("Category", sql.VarChar, category)
+      .input("BrandName", sql.VarChar, brandName)
+      .input("Material", sql.VarChar, material)
+      .input("CenterGemstone", sql.VarChar, centerGemstone)
+      .input("CenterGemstoneShape", sql.VarChar, centerGemstoneShape)
+      .input("Width", sql.Decimal, width)
+      .input("CenterDiamondDimension", sql.Int, centerDiamondDimension)
+      .input("Weight", sql.Decimal, weight)
+      .input("GemstoneWeight", sql.Decimal, gemstoneWeight)
+      .input("CenterDiamondColor", sql.VarChar, centerDiamondColor)
+      .input("CenterDiamondClarity", sql.VarChar, centerDiamondClarity)
+      .input("CenterDiamondCaratWeight", sql.Decimal, centerDiamondCaratWeight)
+      .input("RingSize", sql.Decimal, ringSize)
+      .input("Price", sql.Float, price)
+      .input("Gender", sql.VarChar, gender)
+      .input("Fluorescence", sql.VarChar, fluorescence)
+      .input("Description", sql.VarChar, description)
+      .input("ImageRings", sql.VarChar, imageRings)
+      .input("ImageBrand", sql.VarChar, imageBrand)
+      .input("Inventory", sql.Int, inventory).query(`UPDATE DiamondRings
         SET 
           NameRings = @NameRings,
           Category = @Category,
@@ -528,26 +521,23 @@ const updateDiamondRings = async (diamondRingsData) => {
           ImageRings = @ImageRings,
           ImageBrand = @ImageBrand,
           Inventory = @Inventory
-        WHERE RingStyle = @RingStyle`)
-        return results;
+        WHERE RingStyle = @RingStyle`);
+    return results;
   } catch (err) {
     console.error("Database query error:", err);
     throw new Error("Database query error");
   }
-}
+};
 
 //Delete Diamond Rings
 const deleteDiamondRings = async (diamondRingsData) => {
   try {
-    const{
-      diamondRingsId
-    } = diamondRingsData;
-    
+    const { diamondRingsId } = diamondRingsData;
+
     let pool = await sql.connect(config);
     let results = await pool
       .request()
-      .input("DiamondRingsId", sql.Int, diamondRingsId)
-      .query(`
+      .input("DiamondRingsId", sql.Int, diamondRingsId).query(`
         DELETE FROM DiamondRings
         WHERE DiamondRingsID = @diamondRingsId
       `);
@@ -561,102 +551,101 @@ const deleteDiamondRings = async (diamondRingsData) => {
 //Add Bridals
 const insertBridals = async (bridalsData) => {
   try {
-    const{
-    bridalStyle,
-    nameBridal,
-    category,
-    brandName,
-    material,
-    settingType,
-    gender,
-    weight,
-    centerDiamond,
-    diamondCaratRange,
-    ringSizeRange,
-    totalCaratweight,
-    totalDiamond,
-    description,
-    price,
-    imageBridal,
-    imageBrand,
-    inventory
-  } = bridalsData;
+    const {
+      bridalStyle,
+      nameBridal,
+      category,
+      brandName,
+      material,
+      settingType,
+      gender,
+      weight,
+      centerDiamond,
+      diamondCaratRange,
+      ringSizeRange,
+      totalCaratweight,
+      totalDiamond,
+      description,
+      price,
+      imageBridal,
+      imageBrand,
+      inventory,
+    } = bridalsData;
 
-  let pool = await sql.connect(config);
-  let results = await pool
-  .request()
-  .input("BridalStyle", sql.VarChar, bridalStyle)
-  .input("NameBridal", sql.VarChar, nameBridal)
-  .input("Category", sql.VarChar, category)
-  .input("BrandName", sql.VarChar, brandName)
-  .input("Material", sql.VarChar, material)
-  .input("SettingType", sql.VarChar, settingType)
-  .input("Gender", sql.VarChar, gender)
-  .input("Weight", sql.Decimal, weight)
-  .input("CenterDiamond", sql.VarChar, centerDiamond)
-  .input("DiamondCaratRange", sql.VarChar, diamondCaratRange)
-  .input("RingSizeRang", sql.Decimal, ringSizeRange)
-  .input("TotalCaratWeight", sql.Decimal, totalCaratweight)
-  .input("TotalDiamond", sql.Int, totalDiamond)
-  .input("Description", sql.VarChar, description)
-  .input("Price", sql.Float, price)
-  .input("ImageBridal", sql.VarChar, imageBridal)
-  //.input("ImageBrand", sql.VarChar, imageBrand)
-  .input("Inventory", sql.Int, inventory)
-  .query(`INSERT INTO Bridal (BridalStyle, NameBridal, Category, BrandName, Material, SettingType, Gender, Weight, CenterDiamond, DiamondCaratRange, RingSizeRang, TotalCaratWeight, TotalDiamond, Description, Price, ImageBridal, ImageBrand, Inventory)
+    let pool = await sql.connect(config);
+    let results = await pool
+      .request()
+      .input("BridalStyle", sql.VarChar, bridalStyle)
+      .input("NameBridal", sql.VarChar, nameBridal)
+      .input("Category", sql.VarChar, category)
+      .input("BrandName", sql.VarChar, brandName)
+      .input("Material", sql.VarChar, material)
+      .input("SettingType", sql.VarChar, settingType)
+      .input("Gender", sql.VarChar, gender)
+      .input("Weight", sql.Decimal, weight)
+      .input("CenterDiamond", sql.VarChar, centerDiamond)
+      .input("DiamondCaratRange", sql.VarChar, diamondCaratRange)
+      .input("RingSizeRang", sql.Decimal, ringSizeRange)
+      .input("TotalCaratWeight", sql.Decimal, totalCaratweight)
+      .input("TotalDiamond", sql.Int, totalDiamond)
+      .input("Description", sql.VarChar, description)
+      .input("Price", sql.Float, price)
+      .input("ImageBridal", sql.VarChar, imageBridal)
+      //.input("ImageBrand", sql.VarChar, imageBrand)
+      .input("Inventory", sql.Int, inventory)
+      .query(`INSERT INTO Bridal (BridalStyle, NameBridal, Category, BrandName, Material, SettingType, Gender, Weight, CenterDiamond, DiamondCaratRange, RingSizeRang, TotalCaratWeight, TotalDiamond, Description, Price, ImageBridal, ImageBrand, Inventory)
             VALUES (@BridalStyle, @NameBridal, @Category, @BrandName, @Material, @SettingType, @Gender, @Weight, @CenterDiamond, @DiamondCaratRange, @RingSizeRang, @TotalCaratWeight, @TotalDiamond, @Description, @Price, @ImageBridal, 'https://collections.jewelryimages.net/collections_logos/00008w.jpg', @Inventory)
           `);
-  return results;
-} catch (err) {
-  console.error("Database query error:", err);
-  throw new Error("Database query error");
-}
-}
+    return results;
+  } catch (err) {
+    console.error("Database query error:", err);
+    throw new Error("Database query error");
+  }
+};
 
 //Update Bridals
 const updateBridals = async (bridalsData) => {
   try {
     const {
-    bridalStyle,
-    nameBridal,
-    category,
-    brandName,
-    material,
-    settingType,
-    gender,
-    weight,
-    centerDiamond,
-    diamondCaratRange,
-    ringSizeRange,
-    totalCaratweight,
-    totalDiamond,
-    description,
-    price,
-    imageBridal,
-    inventory
+      bridalStyle,
+      nameBridal,
+      category,
+      brandName,
+      material,
+      settingType,
+      gender,
+      weight,
+      centerDiamond,
+      diamondCaratRange,
+      ringSizeRange,
+      totalCaratweight,
+      totalDiamond,
+      description,
+      price,
+      imageBridal,
+      inventory,
     } = bridalsData;
 
     let pool = await sql.connect(config);
     let results = await pool
-    .request()
-  .input("BridalStyle", sql.VarChar, bridalStyle)
-  .input("NameBridal", sql.VarChar, nameBridal)
-  .input("Category", sql.VarChar, category)
-  .input("BrandName", sql.VarChar, brandName)
-  .input("Material", sql.VarChar, material)
-  .input("SettingType", sql.VarChar, settingType)
-  .input("Gender", sql.VarChar, gender)
-  .input("Weight", sql.Decimal, weight)
-  .input("CenterDiamond", sql.VarChar, centerDiamond)
-  .input("DiamondCaratRange", sql.VarChar, diamondCaratRange)
-  .input("RingSizeRang", sql.Decimal, ringSizeRange)
-  .input("TotalCaratWeight", sql.Decimal, totalCaratweight)
-  .input("TotalDiamond", sql.Int, totalDiamond)
-  .input("Description", sql.VarChar, description)
-  .input("Price", sql.Float, price)
-  .input("ImageBridal", sql.VarChar, imageBridal)
-  .input("Inventory", sql.Int, inventory)
-    .query(`UPDATE Bridal
+      .request()
+      .input("BridalStyle", sql.VarChar, bridalStyle)
+      .input("NameBridal", sql.VarChar, nameBridal)
+      .input("Category", sql.VarChar, category)
+      .input("BrandName", sql.VarChar, brandName)
+      .input("Material", sql.VarChar, material)
+      .input("SettingType", sql.VarChar, settingType)
+      .input("Gender", sql.VarChar, gender)
+      .input("Weight", sql.Decimal, weight)
+      .input("CenterDiamond", sql.VarChar, centerDiamond)
+      .input("DiamondCaratRange", sql.VarChar, diamondCaratRange)
+      .input("RingSizeRang", sql.Decimal, ringSizeRange)
+      .input("TotalCaratWeight", sql.Decimal, totalCaratweight)
+      .input("TotalDiamond", sql.Int, totalDiamond)
+      .input("Description", sql.VarChar, description)
+      .input("Price", sql.Float, price)
+      .input("ImageBridal", sql.VarChar, imageBridal)
+      .input("Inventory", sql.Int, inventory).query(`UPDATE Bridal
         SET 
           NameBridal = @NameBridal,
           Category = @Category,
@@ -674,25 +663,21 @@ const updateBridals = async (bridalsData) => {
           Price = @Price,
           ImageBridal = @ImageBridal,
           Inventory = @Inventory
-        WHERE BridalStyle = @BridalStyle`)
-        return results;
+        WHERE BridalStyle = @BridalStyle`);
+    return results;
   } catch (err) {
     console.error("Database query error:", err);
     throw new Error("Database query error");
   }
-}
+};
 
 //Delete Bridals
 const deleteBridals = async (bridalsData) => {
   try {
-    const{
-      bridalId
-    } = bridalsData;
-    
+    const { bridalId } = bridalsData;
+
     let pool = await sql.connect(config);
-    let results = await pool
-      .request()
-      .input("BridalID", sql.Int, bridalId)
+    let results = await pool.request().input("BridalID", sql.Int, bridalId)
       .query(`
         DELETE FROM Bridal
         WHERE BridalID = @BridalID
@@ -702,12 +687,12 @@ const deleteBridals = async (bridalsData) => {
     console.error("Database query error:", err);
     throw new Error("Database query error");
   }
-}
+};
 
 //Add Timepieces
 const insertTimepieces = async (timepiecesData) => {
   try {
-    const{
+    const {
       timepiecesStyle,
       nameTimepieces,
       collection,
@@ -725,39 +710,39 @@ const insertTimepieces = async (timepiecesData) => {
       price,
       imageTimepieces,
       imageBrand,
-      inventory
-  } = timepiecesData;
+      inventory,
+    } = timepiecesData;
 
-  let pool = await sql.connect(config);
-  let results = await pool
-  .request()
-  .input("TimepiecesStyle", sql.VarChar, timepiecesStyle)
-  .input("NameTimepieces", sql.VarChar, nameTimepieces)
-  .input("Collection", sql.VarChar, collection)
-  .input("WaterResistance", sql.VarChar, waterResistance)
-  .input("CrystalType", sql.VarChar, crystalType)
-  .input("BraceletMaterial", sql.VarChar, braceletMaterial)
-  .input("CaseSize", sql.VarChar, caseSize)
-  .input("DialColor", sql.VarChar, dialColor)
-  .input("Movement", sql.VarChar, movement)
-  .input("Gender", sql.VarChar, gender)
-  .input("Category", sql.VarChar, category)
-  .input("BrandName", sql.VarChar, brandName)
-  .input("DialType", sql.VarChar, dialType)
-  .input("Description", sql.VarChar, description)
-  .input("Price", sql.Float, price)
-  .input("ImageTimepieces", sql.VarChar, imageTimepieces)
-  .input("ImageBrand", sql.VarChar, imageBrand)
-  .input("Inventory", sql.Int, inventory)
-  .query(`INSERT INTO DiamondTimepieces (TimepiecesStyle, NameTimepieces, Collection, WaterResistance, CrystalType, BraceletMaterial, CaseSize, DialColor, Movement, Gender, Category, BrandName, DialType, Description, Price, ImageTimepieces, ImageBrand, Inventory)
+    let pool = await sql.connect(config);
+    let results = await pool
+      .request()
+      .input("TimepiecesStyle", sql.VarChar, timepiecesStyle)
+      .input("NameTimepieces", sql.VarChar, nameTimepieces)
+      .input("Collection", sql.VarChar, collection)
+      .input("WaterResistance", sql.VarChar, waterResistance)
+      .input("CrystalType", sql.VarChar, crystalType)
+      .input("BraceletMaterial", sql.VarChar, braceletMaterial)
+      .input("CaseSize", sql.VarChar, caseSize)
+      .input("DialColor", sql.VarChar, dialColor)
+      .input("Movement", sql.VarChar, movement)
+      .input("Gender", sql.VarChar, gender)
+      .input("Category", sql.VarChar, category)
+      .input("BrandName", sql.VarChar, brandName)
+      .input("DialType", sql.VarChar, dialType)
+      .input("Description", sql.VarChar, description)
+      .input("Price", sql.Float, price)
+      .input("ImageTimepieces", sql.VarChar, imageTimepieces)
+      .input("ImageBrand", sql.VarChar, imageBrand)
+      .input("Inventory", sql.Int, inventory)
+      .query(`INSERT INTO DiamondTimepieces (TimepiecesStyle, NameTimepieces, Collection, WaterResistance, CrystalType, BraceletMaterial, CaseSize, DialColor, Movement, Gender, Category, BrandName, DialType, Description, Price, ImageTimepieces, ImageBrand, Inventory)
             VALUES (@TimepiecesStyle, @NameTimepieces, @Collection, @WaterResistance, @CrystalType, @BraceletMaterial, @CaseSize, @DialColor, @Movement, @Gender, @Category, @BrandName, @DialType, @Description, @Price, @ImageTimepieces, @ImageBrand, @Inventory)
           `);
-  return results;
-} catch (err) {
-  console.error("Database query error:", err);
-  throw new Error("Database query error");
-}
-}
+    return results;
+  } catch (err) {
+    console.error("Database query error:", err);
+    throw new Error("Database query error");
+  }
+};
 
 //Update Bridals
 const updateTimepieces = async (timepiecesData) => {
@@ -780,31 +765,30 @@ const updateTimepieces = async (timepiecesData) => {
       price,
       imageTimepieces,
       imageBrand,
-      inventory
+      inventory,
     } = timepiecesData;
 
     let pool = await sql.connect(config);
     let results = await pool
-    .request()
-  .input("TimepiecesStyle", sql.VarChar, timepiecesStyle)
-  .input("NameTimepieces", sql.VarChar, nameTimepieces)
-  .input("Collection", sql.VarChar, collection)
-  .input("WaterResistance", sql.VarChar, waterResistance)
-  .input("CrystalType", sql.VarChar, crystalType)
-  .input("BraceletMaterial", sql.VarChar, braceletMaterial)
-  .input("CaseSize", sql.VarChar, caseSize)
-  .input("DialColor", sql.VarChar, dialColor)
-  .input("Movement", sql.VarChar, movement)
-  .input("Gender", sql.VarChar, gender)
-  .input("Category", sql.VarChar, category)
-  .input("BrandName", sql.VarChar, brandName)
-  .input("DialType", sql.VarChar, dialType)
-  .input("Description", sql.VarChar, description)
-  .input("Price", sql.Float, price)
-  .input("ImageTimepieces", sql.VarChar, imageTimepieces)
-  .input("ImageBrand", sql.VarChar, imageBrand)
-  .input("Inventory", sql.Int, inventory)
-    .query(`UPDATE DiamondTimepieces
+      .request()
+      .input("TimepiecesStyle", sql.VarChar, timepiecesStyle)
+      .input("NameTimepieces", sql.VarChar, nameTimepieces)
+      .input("Collection", sql.VarChar, collection)
+      .input("WaterResistance", sql.VarChar, waterResistance)
+      .input("CrystalType", sql.VarChar, crystalType)
+      .input("BraceletMaterial", sql.VarChar, braceletMaterial)
+      .input("CaseSize", sql.VarChar, caseSize)
+      .input("DialColor", sql.VarChar, dialColor)
+      .input("Movement", sql.VarChar, movement)
+      .input("Gender", sql.VarChar, gender)
+      .input("Category", sql.VarChar, category)
+      .input("BrandName", sql.VarChar, brandName)
+      .input("DialType", sql.VarChar, dialType)
+      .input("Description", sql.VarChar, description)
+      .input("Price", sql.Float, price)
+      .input("ImageTimepieces", sql.VarChar, imageTimepieces)
+      .input("ImageBrand", sql.VarChar, imageBrand)
+      .input("Inventory", sql.Int, inventory).query(`UPDATE DiamondTimepieces
         SET 
           TimepiecesStyle = @TimepiecesStyle,
           NameTimepieces = @NameTimepieces,
@@ -824,26 +808,23 @@ const updateTimepieces = async (timepiecesData) => {
           ImageTimepieces = @ImageTimepieces,
           ImageBrand = @ImageBrand,
           Inventory = @Inventory
-        WHERE TimepiecesStyle = @TimepiecesStyle`)
-        return results;
+        WHERE TimepiecesStyle = @TimepiecesStyle`);
+    return results;
   } catch (err) {
     console.error("Database query error:", err);
     throw new Error("Database query error");
   }
-}
+};
 
 //Delete Bridals
 const deleteTimepieces = async (timepiecesData) => {
   try {
-    const{
-      diamondTimepiecesId
-    } = timepiecesData;
-    
+    const { diamondTimepiecesId } = timepiecesData;
+
     let pool = await sql.connect(config);
     let results = await pool
       .request()
-      .input("DiamondTimepiecesID", sql.Int, diamondTimepiecesId)
-      .query(`
+      .input("DiamondTimepiecesID", sql.Int, diamondTimepiecesId).query(`
         DELETE FROM DiamondTimepieces
         WHERE DiamondTimepiecesID = @DiamondTimepiecesID
       `);
@@ -852,17 +833,18 @@ const deleteTimepieces = async (timepiecesData) => {
     console.error("Database query error:", err);
     throw new Error("Database query error");
   }
-}
+};
 const getDiamondById = async (id, callback) => {
   try {
     // Establish the connection
     let pool = await sql.connect(config);
-    
+
     // Prepare the query
-    let result = await pool.request()
-      .input('id', sql.Int, id)
-      .query('SELECT * FROM Diamond WHERE DiamondID = @id');
-    
+    let result = await pool
+      .request()
+      .input("id", sql.Int, id)
+      .query("SELECT * FROM Diamond WHERE DiamondID = @id");
+
     // Return the result
     callback(null, result.recordset[0]);
   } catch (err) {
@@ -877,12 +859,13 @@ const getBridalById = async (id, callback) => {
   try {
     // Establish the connection
     let pool = await sql.connect(config);
-    
+
     // Prepare the query
-    let result = await pool.request()
-      .input('id', sql.Int, id)
-      .query('SELECT * FROM Bridal WHERE BridalID = @id');
-    
+    let result = await pool
+      .request()
+      .input("id", sql.Int, id)
+      .query("SELECT * FROM Bridal WHERE BridalID = @id");
+
     // Return the result
     callback(null, result.recordset[0]);
   } catch (err) {
@@ -897,12 +880,13 @@ const getRingsById = async (id, callback) => {
   try {
     // Establish the connection
     let pool = await sql.connect(config);
-    
+
     // Prepare the query
-    let result = await pool.request()
-      .input('id', sql.Int, id)
-      .query('SELECT * FROM DiamondRings WHERE DiamondRingsID = @id');
-    
+    let result = await pool
+      .request()
+      .input("id", sql.Int, id)
+      .query("SELECT * FROM DiamondRings WHERE DiamondRingsID = @id");
+
     // Return the result
     callback(null, result.recordset[0]);
   } catch (err) {
@@ -916,12 +900,13 @@ const getTimepiecesById = async (id, callback) => {
   try {
     // Establish the connection
     let pool = await sql.connect(config);
-    
+
     // Prepare the query
-    let result = await pool.request()
-      .input('id', sql.Int, id)
-      .query('SELECT * FROM DiamondTimepieces WHERE DiamondTimepiecesID = @id');
-    
+    let result = await pool
+      .request()
+      .input("id", sql.Int, id)
+      .query("SELECT * FROM DiamondTimepieces WHERE DiamondTimepiecesID = @id");
+
     // Return the result
     callback(null, result.recordset[0]);
   } catch (err) {
@@ -931,6 +916,50 @@ const getTimepiecesById = async (id, callback) => {
     sql.close();
   }
 };
+
+async function getRingDetailByMaterialAndSize(material, ringSize) {
+  try {
+    const pool = await sql.connect(config);
+    const result = await pool
+      .request()
+      .input("material", sql.NVarChar, material)
+      .input("ringSize", sql.Decimal, parseFloat(ringSize))
+      .query(
+        `SELECT TOP 1 DiamondRingsID FROM DiamondRings WHERE Material = @material AND RingSize = @ringSize`
+      );
+
+    if (result.recordset.length > 0) {
+      return result.recordset[0].DiamondRingsID;
+    } else {
+      return null; // Return null if no matching ring found
+    }
+  } catch (error) {
+    console.error("Error fetching ring detail", error);
+    throw error;
+  }
+}
+
+async function getBridalDetailByMaterialAndSize(material, ringSize) {
+  try {
+    const pool = await sql.connect(config);
+    const result = await pool
+      .request()
+      .input("material", sql.NVarChar, material)
+      .input("ringSize", sql.Decimal, parseFloat(ringSize))
+      .query(
+        `SELECT TOP 1 BridalID FROM Bridal WHERE Material = @material AND RingSizeRang = @ringSize`
+      );
+
+    if (result.recordset.length > 0) {
+      return result.recordset[0].BridalID;
+    } else {
+      return null; // Return null if no matching bridal found
+    }
+  } catch (error) {
+    console.error("Error fetching bridal detail", error);
+    throw error;
+  }
+}
 
 module.exports = {
   getAllBridals,
@@ -956,4 +985,6 @@ module.exports = {
   getBridalById,
   getRingsById,
   getTimepiecesById,
+  getRingDetailByMaterialAndSize,
+  getBridalDetailByMaterialAndSize
 };
