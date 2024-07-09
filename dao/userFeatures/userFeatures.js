@@ -144,7 +144,7 @@ JOIN
     Orders o ON a.AccountID = o.AccountID
 JOIN 
     OrderDetails od ON o.OrderID = od.OrderID
-WHERE o.OrderStatus IN ('Shipped')`);
+WHERE o.OrderStatus IN ('Shipping')`);
 return results.recordsets;
 } catch (error) {
   console.error("Connection SQL error:", error);
