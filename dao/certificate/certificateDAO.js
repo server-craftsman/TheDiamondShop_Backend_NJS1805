@@ -28,21 +28,20 @@ class certificateDAO {
             throw error;
         }
     }
+    // async getcertByNum(reportNO) {
+    //     try {
+    //         const pool = await sql.connect(config);
+    //         const certNO = await pool.request()
+    //             .input('GIAReportNumber', sql.NVarChar, reportNO.GIAReportNumber)
+    //             .query('SELECT GIAReportNumber, InspectionDate, ClarityGrade, ShapeAndCuttingStyle, Measurements, CaratWeight, ColorGrade, SymmetryGrade, CutGrade, PolishGrade, Fluorescence FROM Certificate WHERE GIAReportNumber = @GIAReportNumber');
+    //         return certNO.recordset;
 
-    async getcertByNum() {
-        try {
-            const pool = await sql.connect(config);
-            const certNO = await pool.request()
-                // .input('GIAReportNumber', sql.NVarChar, reportNO.GIAReportNumber)
-                .query('SELECT GIAReportNumber, InspectionDate, ClarityGrade, ShapeAndCuttingStyle, Measurements, CaratWeight, ColorGrade, SymmetryGrade, CutGrade, PolishGrade, Fluorescence FROM Certificate');
-            return certNO.recordset;
+    //     } catch (err) {
+    //         console.log(err);
+    //         return { message: 'cert not Available' };
+    //     }
+    // }
 
-        } catch (err) {
-            console.log(err);
-            return { message: 'cert not Available' };
-        }
-    }
-    
     async getCertificateByGIAReportNumber(GIAReportNumber) {
         try {
             const pool = await sql.connect(config);
