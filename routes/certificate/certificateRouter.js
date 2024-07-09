@@ -1,6 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const certificateDAO = require('../../dao/certificate/certificateDAO');
+const ejs = require('ejs');
+const path = require('path');
+const certificatePrinter = require('../../dao/certificate/certificatePrinter');
 
 router.put('/add', async (req, res) => {
     try {

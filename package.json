@@ -29,6 +29,7 @@
     "passport-google-oauth20": "^2.0.0",
     "paypal-nvp-api": "^2.0.0-rc1",
     "pdf-creator-node": "^2.3.5",
+    "pdf-lib": "^1.17.1",
     "session": "^0.1.0",
     "tedious": "^18.2.0"
   },
