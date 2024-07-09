@@ -368,7 +368,7 @@ router.put('/update-warranty', verifyToken, async (req, res) => {
     const result = await pool.request()
       .input('OrderId', sql.Int, orderId)
       .input('RequestWarranty', sql.VarChar, requestWarranty)
-      .query('UPDATE OrderDetails SET ResquestWarranty = @RequestWarranty WHERE OrderID = @OrderId');
+      .query('UPDATE OrderDetails SET RequestWarranty = @RequestWarranty WHERE OrderID = @OrderId');
 
     if (result.rowsAffected[0] > 0) {
       res.status(200).json({ message: 'Warranty request updated successfully' });
@@ -423,7 +423,7 @@ router.put('/update-warranty-manager', verifyToken, async (req, res) => {
     const result = await pool.request()
       .input('OrderId', sql.Int, orderId)
       .input('RequestWarranty', sql.VarChar, requestWarranty)
-      .query('UPDATE OrderDetails SET ResquestWarranty = @RequestWarranty WHERE OrderID = @OrderId');
+      .query('UPDATE OrderDetails SET RequestWarranty = @RequestWarranty WHERE OrderID = @OrderId');
 
     if (result.rowsAffected[0] > 0) {
       res.status(200).json({ message: 'Warranty request updated successfully' });

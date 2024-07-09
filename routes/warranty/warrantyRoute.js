@@ -147,7 +147,7 @@ router.get('/view-details-warranty/:orderId', verifyToken, async (req, res) => {
           br.NameBridal, br.BridalStyle, br.Category,
           t.NameTimepieces, t.TimepiecesStyle, t.Collection, od.AttachedAccessories, 
           od.Shipping, od.ReportNo, od.DeliveryAddress, 
-          o.OrderStatus, o.TotalPrice, od.ResquestWarranty
+          o.OrderStatus, o.TotalPrice, od.RequestWarranty
         FROM Orders o 
         JOIN Account a ON o.AccountID = a.AccountID 
         JOIN OrderDetails od ON o.OrderID = od.OrderID 

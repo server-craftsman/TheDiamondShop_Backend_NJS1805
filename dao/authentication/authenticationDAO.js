@@ -29,11 +29,11 @@ async function viewWarrantyRequestManager() {
           a.FirstName, a.LastName, a.Email, a.PhoneNumber, 
           o.OrderID, o.OrderDate, o.Quantity, od.AttachedAccessories, 
           od.Shipping, od.ReportNo, od.DeliveryAddress, 
-          o.OrderStatus, o.TotalPrice, od.ResquestWarranty
+          o.OrderStatus, o.TotalPrice, od.RequestWarranty
         FROM Orders o 
         JOIN Account a ON o.AccountID = a.AccountID 
         JOIN OrderDetails od ON o.OrderID = od.OrderID 
-        WHERE od.ResquestWarranty IN ('Request', 'Assign', 'Processing', 'Approved', 'Refused')
+        WHERE od.RequestWarranty IN ('Request', 'Assign', 'Processing', 'Approved', 'Refused')
       `);
     return result.recordsets;
   } catch (error) {
@@ -52,11 +52,11 @@ async function viewWarrantyRequestSale() {
           a.FirstName, a.LastName, a.Email, a.PhoneNumber, 
           o.OrderID, o.OrderDate, o.Quantity, od.AttachedAccessories, 
           od.Shipping, od.ReportNo, od.DeliveryAddress, 
-          o.OrderStatus, o.TotalPrice, od.ResquestWarranty
+          o.OrderStatus, o.TotalPrice, od.RequestWarranty
         FROM Orders o 
         JOIN Account a ON o.AccountID = a.AccountID 
         JOIN OrderDetails od ON o.OrderID = od.OrderID 
-        WHERE od.ResquestWarranty IN ('Assign', 'Processing', 'Approved', 'Refused')
+        WHERE od.RequestWarranty IN ('Assign', 'Processing', 'Approved', 'Refused')
       `);
     return result.recordsets;
   } catch (error) {
