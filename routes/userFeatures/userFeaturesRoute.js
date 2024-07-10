@@ -94,7 +94,7 @@ router.get("/history-order", async (req, res) => {
       .request()
       .input("Email", sql.NVarChar, email)
       .query(
-        "SELECT a.FirstName, a.LastName, a.Email, a.PhoneNumber, o.OrderID, o.OrderDate, o.Quantity, od.AttachedAccessories, od.Shipping, od.ReportNo, od.DeliveryAddress, o.OrderStatus, o.TotalPrice FROM Orders o JOIN Account a ON o.AccountID = a.AccountID JOIN OrderDetails od ON o.OrderID = od.OrderID WHERE a.Email = @Email"
+        "SELECT a.FirstName, a.LastName, a.Email, a.PhoneNumber, o.OrderID, o.OrderDate, o.Quantity, od.AttachedAccessories, od.Shipping, w.ReportNo, od.DeliveryAddress, o.OrderStatus, o.TotalPrice FROM Orders o JOIN Account a ON o.AccountID = a.AccountID JOIN OrderDetails od ON o.OrderID = od.OrderID JOIN WarrantyReceipt w ON od.OrderDetailID = w.OrderDetailID WHERE a.Email = @Email"
       );
 
     poolConnect.close();

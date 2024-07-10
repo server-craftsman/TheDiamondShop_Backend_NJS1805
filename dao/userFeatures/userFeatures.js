@@ -209,7 +209,7 @@ const getOrderById = async (id, callback) => {
             o.TotalPrice,
             od.AttachedAccessories,
             od.Shipping,
-            od.ReportNo,
+            w.ReportNo,
             od.DeliveryAddress
           FROM 
             Orders o
@@ -219,6 +219,8 @@ const getOrderById = async (id, callback) => {
             OrderDetails od ON o.OrderID = od.OrderID
           JOIN
             Diamond d ON od.DiamondID = d.DiamondID
+          JOIN 
+           WarrantyReceipt w ON od.OrderDetailID = w.OrderDetailID 
           LEFT JOIN
             DiamondRings dr ON od.DiamondRingsID = dr.DiamondRingsID
           LEFT JOIN

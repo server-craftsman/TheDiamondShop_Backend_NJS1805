@@ -127,7 +127,7 @@ async function getWarrantyByReportNoOrderDetails(reportNo) {
                     od.AttachedAccessories,
                     od.Shipping,
                     od.OrderStatus AS OrderDetailStatus,
-                    od.ReportNo,
+                    w.ReportNo,
                     w.Descriptions,
                     w.Date,
                     w.PlaceToBuy,
@@ -145,7 +145,7 @@ async function getWarrantyByReportNoOrderDetails(reportNo) {
                 JOIN 
                     WarrantyReceipt w ON od.OrderDetailID = w.OrderDetailID
                 WHERE 
-                    od.ReportNo = @reportNo
+                    w.ReportNo = @reportNo
             `);  // Use @reportNo as the parameter
         return results.recordset;  // use recordset instead of recordsets[0]
     } catch (error) {

@@ -28,11 +28,12 @@ async function viewWarrantyRequestManager() {
         SELECT 
           a.FirstName, a.LastName, a.Email, a.PhoneNumber, 
           o.OrderID, o.OrderDate, o.Quantity, od.AttachedAccessories, 
-          od.Shipping, od.ReportNo, od.DeliveryAddress, 
+          od.Shipping, w.ReportNo, od.DeliveryAddress, 
           o.OrderStatus, o.TotalPrice, od.RequestWarranty
         FROM Orders o 
         JOIN Account a ON o.AccountID = a.AccountID 
-        JOIN OrderDetails od ON o.OrderID = od.OrderID 
+        JOIN OrderDetails od ON o.OrderID = od.OrderID
+        JOIN WarrantyReceipt w ON od.OrderDetailID = w.OrderDetailID
         WHERE od.RequestWarranty IN ('Request', 'Assign', 'Processing', 'Approved', 'Refused')
       `);
     return result.recordsets;
@@ -51,11 +52,12 @@ async function viewWarrantyRequestSale() {
         SELECT 
           a.FirstName, a.LastName, a.Email, a.PhoneNumber, 
           o.OrderID, o.OrderDate, o.Quantity, od.AttachedAccessories, 
-          od.Shipping, od.ReportNo, od.DeliveryAddress, 
+          od.Shipping, w.ReportNo, od.DeliveryAddress, 
           o.OrderStatus, o.TotalPrice, od.RequestWarranty
         FROM Orders o 
         JOIN Account a ON o.AccountID = a.AccountID 
         JOIN OrderDetails od ON o.OrderID = od.OrderID 
+        JOIN WarrantyReceipt w ON od.OrderDetailID = w.OrderDetailID
         WHERE od.RequestWarranty IN ('Assign', 'Processing', 'Approved', 'Refused')
       `);
     return result.recordsets;

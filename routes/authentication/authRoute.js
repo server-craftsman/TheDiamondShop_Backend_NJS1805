@@ -284,11 +284,12 @@ router.get('/history-order', verifyToken, async (req, res) => {
       SELECT 
         a.FirstName, a.LastName, a.Email, a.PhoneNumber, 
         o.OrderID, o.OrderDate, o.Quantity, od.AttachedAccessories, 
-        od.Shipping, od.ReportNo, od.DeliveryAddress, 
+        od.Shipping, w.ReportNo, od.DeliveryAddress, 
         o.OrderStatus, o.TotalPrice 
       FROM Orders o 
       JOIN Account a ON o.AccountID = a.AccountID 
       JOIN OrderDetails od ON o.OrderID = od.OrderID 
+      JOIN WarrantyReceipt w ON od.OrderDetailID = w.OrderDetailID
       WHERE a.AccountID = @AccountId
     `;
     const result = await pool.request()
@@ -324,11 +325,12 @@ router.get('/history-order/:orderId', verifyToken, async (req, res) => {
       SELECT 
         a.FirstName, a.LastName, a.Email, a.PhoneNumber, 
         o.OrderID, o.OrderDate, o.Quantity, od.AttachedAccessories, 
-        od.Shipping, od.ReportNo, od.DeliveryAddress, 
+        od.Shipping, w.ReportNo, od.DeliveryAddress, 
         o.OrderStatus, o.TotalPrice, od.RequestWarranty
       FROM Orders o 
       JOIN Account a ON o.AccountID = a.AccountID 
       JOIN OrderDetails od ON o.OrderID = od.OrderID 
+      JOIN WarrantyReceipt w ON od.OrderDetailID = w.OrderDetailID
       WHERE o.OrderID = @OrderId AND a.AccountID = @AccountId
     `;
     const result = await pool.request()
