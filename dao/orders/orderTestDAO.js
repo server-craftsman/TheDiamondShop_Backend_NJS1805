@@ -268,7 +268,6 @@ async function updateInventory(orderData, transaction) {
   }
 }
 
-
 /**
  * Applies a voucher to a specific order.
  * @param {number} voucherID - The ID of the voucher to apply.
@@ -452,3 +451,434 @@ async function getVoucherDetails(voucherID) {
 module.exports = {
   createOrder,
 };
+
+
+
+// const config = require("../../config/dbconfig");
+// const sql = require("mssql");
+
+// // Function to establish SQL connection
+// async function connectToDatabase() {
+//   try {
+//     return await sql.connect(config);
+//   } catch (error) {
+//     throw new Error(`Error establishing database connection: ${error.message}`);
+//   }
+// }
+
+// // Function to close SQL connection
+// async function disconnectFromDatabase() {
+//   try {
+//     await sql.close();
+//     console.log("Disconnected from SQL database");
+//   } catch (error) {
+//     console.error("Error closing the SQL connection:", error.message);
+//   }
+// }
+
+// /**
+//  * Creates a new order in the database.
+//  * @param {Object} orderData - The data of the order to create.
+//  * @param {number} accountIDFromToken - The ID of the account placing the order.
+//  * @returns {Promise<Object>} The ID of the newly created order and any associated certificates.
+//  */
+// async function createOrder(orderData, accountIDFromToken) {
+//   let pool;
+//   let transaction;
+
+//   try {
+//     if (!orderData) {
+//       throw new Error("Order data is required.");
+//     }
+
+//     pool = await connectToDatabase();
+//     transaction = new sql.Transaction(pool);
+//     await transaction.begin();
+
+//     const request = new sql.Request(transaction);
+
+//     // Check and throw error if inventory is 0
+//     switch (orderData.ProductType) {
+//       case "Diamond":
+//         await checkInventory("DiamondID", orderData.DiamondID, "Diamond", request);
+//         await checkDuplicateOrderDetail("DiamondID", orderData.DiamondID, request);
+//         break;
+//       case "Bridal":
+//         await checkInventory("BridalID", orderData.BridalID, "Bridal", request);
+//         break;
+//       case "DiamondTimepieces":
+//         await checkInventory("DiamondTimepiecesID", orderData.DiamondTimepiecesID, "DiamondTimepieces", request);
+//         break;
+//       case "DiamondRings":
+//         await checkInventory("DiamondRingsID", orderData.DiamondRingsID, "DiamondRings", request);
+//         break;
+//       default:
+//         throw new Error("Invalid product type specified.");
+//     }
+
+//     const orderDate = new Date();
+//     const totalQuantity = orderData.Quantity || 1;
+//     const totalPrice = orderData.TotalPrice || 0;
+
+//     const orderQuery = `
+//       INSERT INTO Orders (AccountID, OrderDate, Quantity, OrderStatus, TotalPrice)
+//       VALUES (@AccountID, @OrderDate, @Quantity, @OrderStatus, @TotalPrice);
+
+//       SELECT SCOPE_IDENTITY() AS OrderID;
+//     `;
+
+//     const orderResult = await request
+//       .input("AccountID", sql.Int, accountIDFromToken)
+//       .input("OrderDate", sql.Date, orderDate)
+//       .input("Quantity", sql.Int, totalQuantity)
+//       .input("OrderStatus", sql.VarChar(50), "Pending")
+//       .input("TotalPrice", sql.Decimal(10, 2), totalPrice)
+//       .query(orderQuery);
+
+//     const orderID = orderResult.recordset[0].OrderID;
+
+//     const orderDetailsQuery = `
+//       INSERT INTO OrderDetails (OrderID, DeliveryAddress, DiamondID, BridalID, DiamondRingsID, DiamondTimepiecesID, AttachedAccessories, Shipping, OrderStatus)
+//       VALUES (@OrderID, @DeliveryAddress, @DiamondID, @BridalID, @DiamondRingsID, @DiamondTimepiecesID, @AttachedAccessories, @Shipping, @OrderStatusID1);
+
+//       SELECT SCOPE_IDENTITY() AS OrderDetailID;
+//     `;
+
+//     const orderDetailsResult = await request
+//       .input("OrderID", sql.Int, orderID)
+//       .input("DeliveryAddress", sql.NVarChar(100), orderData.DeliveryAddress || "")
+//       .input("DiamondID", sql.Int, orderData.DiamondID || null)
+//       .input("BridalID", sql.Int, orderData.BridalID || null)
+//       .input("DiamondRingsID", sql.Int, orderData.DiamondRingsID || null)
+//       .input("DiamondTimepiecesID", sql.Int, orderData.DiamondTimepiecesID || null)
+//       .input("AttachedAccessories", sql.VarChar(100), "Box, Certificate")
+//       .input("Shipping", sql.VarChar(100), orderData.Shipping || "Standard")
+//       .input("OrderStatusID1", sql.VarChar(50), "Pending")
+//       .query(orderDetailsQuery);
+
+//     const orderDetailID = orderDetailsResult.recordset[0].OrderDetailID;
+
+//     const warrantyDescriptions = `Warranty for Diamond (${orderData.ProductID}) Date ${new Date().getFullYear()}-06-01 (+10 years valid from warranty) Full Warranty No scratches or damages Free annual inspection Brand New`;
+
+//     await generateWarrantyReceipt(
+//       orderDetailID,
+//       warrantyDescriptions,
+//       new Date(),
+//       "Nha van hoa sinh vien",
+//       new Date(new Date().getFullYear() + 10, 5, 1),
+//       "Normal Warranty",
+//       "No scratches or damages",
+//       "Free annual inspection",
+//       "Brand New",
+//       transaction
+//     );
+
+//     if (orderData.VoucherID) {
+//       await applyVoucher(orderData.VoucherID, totalPrice, orderID, transaction);
+//     }
+
+//     await saveTransaction(orderID, totalPrice, orderData.PaymentMethod, transaction);
+
+//     // Update inventory based on ordered product
+//     await updateInventory(orderData, transaction);
+
+//     await transaction.commit();
+
+//     return {
+//       success: true,
+//       message: "Order created successfully",
+//       orderID: orderID,
+//       productType: orderData.ProductType,
+//       productID: orderData.ProductID,
+//       diamondId: orderData.DiamondID,
+//       bridalId: orderData.BridalID,
+//       diamondRingsId: orderData.DiamondRingsID,
+//       diamondTimepiecesId: orderData.DiamondTimepiecesID,
+//     };
+//   } catch (error) {
+//     if (transaction) {
+//       await transaction.rollback();
+//     }
+//     throw new Error(`Error creating order: ${error.message}`);
+//   } finally {
+//     if (pool) {
+//       await disconnectFromDatabase();
+//     }
+//   }
+// }
+
+// async function checkInventory(idField, productID, tableName, request) {
+//   const query = `
+//     SELECT Inventory FROM ${tableName} WHERE ${idField} = @ProductID;
+//   `;
+
+//   const result = await request
+//     .input("ProductID", sql.Int, productID)
+//     .query(query);
+
+//   if (result.recordset.length === 0) {
+//     throw new Error(`Product with ID ${productID} not found in ${tableName}.`);
+//   }
+
+//   const inventory = result.recordset[0].Inventory;
+
+//   if (inventory <= 0) {
+//     throw new Error(`Out of stock. Cannot create order for ${tableName} with ${idField} ${productID}.`);
+//   }
+// }
+
+// async function checkDuplicateOrderDetail(idField, productID, request) {
+//   const query = `
+//     SELECT COUNT(*) AS count FROM OrderDetails WHERE ${idField} = @ProductIDDuplicate;
+//   `;
+
+//   const result = await request
+//     .input("ProductIDDuplicate", sql.Int, productID)
+//     .query(query);
+
+//   if (result.recordset[0].count > 0) {
+//     throw new Error(`Duplicate order detail found for ${idField} with ID ${productID}.`);
+//   }
+// }
+
+// // async function updateInventory(orderData, transaction) {
+// //   try {
+// //     const request = new sql.Request(transaction);
+// //     const productType = orderData.ProductType;
+// //     const quantity = orderData.Quantity;
+
+// //     let updateQuery = "";
+// //     let productIDField = "";
+// //     let productIDValue = null;
+
+// //     switch (productType) {
+// //       case "Diamond":
+// //         updateQuery = `
+// //           UPDATE Diamond
+// //           SET Inventory = Inventory - @Quantity
+// //           WHERE DiamondID = @ProductIDUpdate;
+// //         `;
+// //         productIDField = "DiamondID";
+// //         productIDValue = orderData.DiamondID;
+// //         break;
+// //       case "Bridal":
+// //         updateQuery = `
+// //           UPDATE Bridal
+// //           SET Inventory = Inventory - @Quantity
+// //           WHERE BridalID = @ProductIDUpdate;
+// //         `;
+// //         productIDField = "BridalID";
+// //         productIDValue = orderData.BridalID;
+// //         break;
+// //       case "DiamondTimepieces":
+// //         updateQuery = `
+// //           UPDATE DiamondTimepieces
+// //           SET Inventory = Inventory - @Quantity
+// //           WHERE DiamondTimepiecesID = @ProductIDUpdate;
+// //         `;
+// //         productIDField = "DiamondTimepiecesID";
+// //         productIDValue = orderData.DiamondTimepiecesID;
+// //         break;
+// //       case "DiamondRings":
+// //         updateQuery = `
+// //           UPDATE DiamondRings
+// //           SET Inventory = Inventory - @Quantity
+// //           WHERE DiamondRingsID = @ProductIDUpdate;
+// //         `;
+// //         productIDField = "DiamondRingsID";
+// //         productIDValue = orderData.DiamondRingsID;
+// //         break;
+// //       default:
+// //         throw new Error("Invalid product type specified for inventory update.");
+// //     }
+
+// //     await request
+// //       .input("Quantity", sql.Int, quantity)
+// //       .input("ProductIDUpdate", sql.Int, productIDValue)
+// //       .query(updateQuery);
+// //   } catch (error) {
+// //     throw new Error(`Error updating inventory: ${error.message}`);
+// //   }
+// // }
+// async function updateInventory(orderData, transaction) {
+//   try {
+//     const request = new sql.Request(transaction);
+
+//     // Loop through each product type and update its inventory
+//     for (const productType of Object.keys(orderData)) {
+//       switch (productType) {
+//         case "Diamond":
+//           await updateInventoryForProduct("Diamond", "DiamondID", orderData.DiamondID, orderData.Diamond.Quantity, request);
+//           break;
+//         case "Bridal":
+//           await updateInventoryForProduct("Bridal", "BridalID", orderData.BridalID, orderData.Bridal.Quantity, request);
+//           break;
+//         case "DiamondTimepieces":
+//           await updateInventoryForProduct("DiamondTimepieces", "DiamondTimepiecesID", orderData.DiamondTimepiecesID, orderData.DiamondTimepieces.Quantity, request);
+//           break;
+//         case "DiamondRings":
+//           await updateInventoryForProduct("DiamondRings", "DiamondRingsID", orderData.DiamondRingsID, orderData.DiamondRings.Quantity, request);
+//           break;
+//         default:
+//           throw new Error("Invalid product type specified for inventory update.");
+//       }
+//     }
+//   } catch (error) {
+//     throw new Error(`Error updating inventory: ${error.message}`);
+//   }
+// }
+
+// async function updateInventoryForProduct(tableName, idField, productID, quantity, request) {
+//   const updateQuery = `
+//     UPDATE ${tableName}
+//     SET Inventory = Inventory - @Quantity
+//     WHERE ${idField} = @ProductID;
+//   `;
+
+//   await request
+//     .input("Quantity", sql.Int, quantity)
+//     .input("ProductID", sql.Int, productID)
+//     .query(updateQuery);
+// }
+
+
+
+// async function applyVoucher(voucherID, totalPrice, orderID, transaction) {
+//   try {
+//     const request = new sql.Request(transaction);
+
+//     const voucherQuery = `
+//       SELECT * FROM Voucher WHERE VoucherID = @VoucherID;
+//     `;
+//     const voucherResult = await request
+//       .input("VoucherID", sql.Int, voucherID)
+//       .query(voucherQuery);
+
+//     if (!voucherResult.recordset.length) {
+//       throw new Error("Voucher not found");
+//     }
+
+//     const voucherDetails = voucherResult.recordset[0];
+//     const discountAmount = (voucherDetails.DiscountPercentage / 100) * totalPrice;
+
+//     const applyVoucherQuery = `
+//       INSERT INTO VoucherListInOrder (OrderID, VoucherID)
+//       VALUES (@OrderID, @VoucherIDApply);
+//     `;
+//     await request
+//       .input("OrderID", sql.Int, orderID)
+//       .input("VoucherIDApply", sql.Int, voucherID)
+//       .query(applyVoucherQuery);
+
+//     const updateVoucherQuery = `
+//       UPDATE Voucher
+//       SET UsagedQuantity = UsagedQuantity + 1,
+//           TotalQuantity = TotalQuantity - 1
+//       WHERE VoucherID = @VoucherIDUpdate AND TotalQuantity > 0;
+//     `;
+//     await request
+//       .input("VoucherIDUpdate", sql.Int, voucherID)
+//       .query(updateVoucherQuery);
+//   } catch (error) {
+//     throw new Error(`Error applying voucher: ${error.message}`);
+//   }
+// }
+
+// async function saveTransaction(orderID, totalPrice, paymentMethod, transaction) {
+//   try {
+//     const request = new sql.Request(transaction);
+
+//     const transactionQuery = `
+//       INSERT INTO Transactions (OrderID, PaymentAmount, Method, PaymentDate)
+//       VALUES (@OrderID, @PaymentAmount, @Method, GETDATE());
+//     `;
+
+//     await request
+//       .input("OrderID", sql.Int, orderID)
+//       .input("PaymentAmount", sql.Decimal(10, 2), totalPrice)
+//       .input("Method", sql.VarChar(50), paymentMethod)
+//       .query(transactionQuery);
+//   } catch (error) {
+//     throw new Error(`Error saving transaction: ${error.message}`);
+//   }
+// }
+
+// async function generateWarrantyReceipt(
+//   orderDetailID,
+//   descriptions,
+//   date,
+//   placeToBuy,
+//   period,
+//   warrantyType,
+//   warrantyConditions,
+//   accompaniedService,
+//   condition,
+//   transaction
+// ) {
+//   try {
+//     const request = new sql.Request(transaction);
+
+//     const reportNo = generateReportNo(); // Generate a unique report number
+
+//     const insertWarrantyReceiptQuery = `
+//       INSERT INTO WarrantyReceipt (ReportNo, Descriptions, Date, PlaceToBuy, Period, WarrantyType, WarrantyConditions, AccompaniedService, Condition, OrderDetailID)
+//       VALUES (@ReportNo, @Descriptions, @Date, @PlaceToBuy, @Period, @WarrantyType, @WarrantyConditions, @AccompaniedService, @Condition, @OrderDetailID);
+//     `;
+
+//     await request
+//       .input("ReportNo", sql.VarChar(20), reportNo)
+//       .input("Descriptions", sql.VarChar(255), descriptions)
+//       .input("Date", sql.Date, date)
+//       .input("PlaceToBuy", sql.VarChar(255), placeToBuy)
+//       .input("Period", sql.Date, period)
+//       .input("WarrantyType", sql.VarChar(150), warrantyType)
+//       .input("WarrantyConditions", sql.VarChar(255), warrantyConditions)
+//       .input("AccompaniedService", sql.VarChar(255), accompaniedService)
+//       .input("Condition", sql.VarChar(150), condition)
+//       .input("OrderDetailID", sql.Int, orderDetailID)
+//       .query(insertWarrantyReceiptQuery);
+
+//     const updateOrderDetailsQuery = `
+//       UPDATE OrderDetails
+//       SET ReportNo = @ReportNoUpdate
+//       WHERE OrderDetailID = @OrderDetailIDUpdate;
+//     `;
+
+//     await request
+//       .input("ReportNoUpdate", sql.VarChar(20), reportNo)
+//       .input("OrderDetailIDUpdate", sql.Int, orderDetailID)
+//       .query(updateOrderDetailsQuery);
+//   } catch (error) {
+//     throw new Error(`Error generating warranty receipt: ${error.message}`);
+//   }
+// }
+
+// // Generate a unique report number
+// function generateReportNo() {
+//   return `WR-${Date.now()}`;
+// }
+
+// async function getVoucherDetails(voucherID) {
+//   try {
+//     const pool = await connectToDatabase();
+//     const request = new sql.Request(pool);
+
+//     const query = `
+//       SELECT * FROM Voucher WHERE VoucherID = @VoucherID;
+//     `;
+
+//     const result = await request
+//       .input("VoucherID", sql.Int, voucherID)
+//       .query(query);
+
+//     return result.recordset[0];
+//   } catch (error) {
+//     throw new Error(`Error retrieving voucher details: ${error.message}`);
+//   } finally {
+//     await disconnectFromDatabase();
+//   }
+// }
+
+// module.exports = {
+//   createOrder,
+// };
