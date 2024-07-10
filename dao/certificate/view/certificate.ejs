@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diamond Certificate</title>
+    <style>
+        /* Add your styles here */
+    </style>
+</head>
+<body>
+    <h1>Diamond Certificate</h1>
+    <% if (certificates && certificates.length) { %>
+        <% certificates.forEach(certificate => { %>
+            <div>
+                <h2>Certificate ID: <%= certificate.CertificateID %></h2>
+                <p>Inspection Date: <%= certificate.InspectionDate %></p>
+                <p>Clarity Grade: <%= certificate.ClarityGrade %></p>
+                <p>Shape And Cutting Style: <%= certificate.ShapeAndCuttingStyle %></p>
+                <p>Color Grade: <%= certificate.ColorGrade %></p>
+                <p>Fluorescence: <%= certificate.Fluorescence %></p>
+                <p>Symmetry Grade: <%= certificate.SymmetryGrade %></p>
+                <p>Polish Grade: <%= certificate.PolishGrade %></p>
+                <p>Cut Grade: <%= certificate.CutGrade %></p>
+                <p>Measurements: <%= certificate.Measurements %></p>
+                <p>GIA Report Number: <%= certificate.GIAReportNumber %></p>
+            </div>
+        <% }) %>
+    <% } else { %>
+        <p>No certificate data available.</p>
+    <% } %>
+</body>
+</html>

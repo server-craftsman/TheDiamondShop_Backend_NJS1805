@@ -325,7 +325,7 @@ router.get('/history-order/:orderId', verifyToken, async (req, res) => {
         a.FirstName, a.LastName, a.Email, a.PhoneNumber, 
         o.OrderID, o.OrderDate, o.Quantity, od.AttachedAccessories, 
         od.Shipping, od.ReportNo, od.DeliveryAddress, 
-        o.OrderStatus, o.TotalPrice, od.ResquestWarranty
+        o.OrderStatus, o.TotalPrice, od.RequestWarranty
       FROM Orders o 
       JOIN Account a ON o.AccountID = a.AccountID 
       JOIN OrderDetails od ON o.OrderID = od.OrderID 
@@ -368,7 +368,7 @@ router.put('/update-warranty', verifyToken, async (req, res) => {
     const result = await pool.request()
       .input('OrderId', sql.Int, orderId)
       .input('RequestWarranty', sql.VarChar, requestWarranty)
-      .query('UPDATE OrderDetails SET ResquestWarranty = @RequestWarranty WHERE OrderID = @OrderId');
+      .query('UPDATE OrderDetails SET RequestWarranty = @RequestWarranty WHERE OrderID = @OrderId');
 
     if (result.rowsAffected[0] > 0) {
       res.status(200).json({ message: 'Warranty request updated successfully' });
@@ -423,7 +423,7 @@ router.put('/update-warranty-manager', verifyToken, async (req, res) => {
     const result = await pool.request()
       .input('OrderId', sql.Int, orderId)
       .input('RequestWarranty', sql.VarChar, requestWarranty)
-      .query('UPDATE OrderDetails SET ResquestWarranty = @RequestWarranty WHERE OrderID = @OrderId');
+      .query('UPDATE OrderDetails SET RequestWarranty = @RequestWarranty WHERE OrderID = @OrderId');
 
     if (result.rowsAffected[0] > 0) {
       res.status(200).json({ message: 'Warranty request updated successfully' });
@@ -476,7 +476,7 @@ router.put('/update-warranty-sale', verifyToken, async (req, res) => {
     const result = await pool.request()
       .input('OrderId', sql.Int, orderId)
       .input('RequestWarranty', sql.VarChar, requestWarranty)
-      .query('UPDATE OrderDetails SET ResquestWarranty = @RequestWarranty WHERE OrderID = @OrderId');
+      .query('UPDATE OrderDetails SET RequestWarranty = @RequestWarranty WHERE OrderID = @OrderId');
 
     if (result.rowsAffected[0] > 0) {
       res.status(200).json({ message: 'Warranty request updated successfully' });

@@ -435,7 +435,7 @@ const insertDiamondRings = async (diamondRingsData) => {
       .input("Description", sql.VarChar, description)
       .input("ImageRings", sql.VarChar, imageRings)
       .input("ImageBrand", sql.VarChar, imageBrand)
-      .input("Inventory", sql.Int, inventory)
+      .input("Inventory", sql.Int, 1)
       .query(`INSERT INTO DiamondRings (RingStyle, NameRings, Category, BrandName, Material, CenterGemstone, CenterGemstoneShape, Width, CenterDiamondDimension, Weight, GemstoneWeight, CenterDiamondColor, CenterDiamondClarity, CenterDiamondCaratWeight, RingSize, Price, Gender, Fluorescence, Description, ImageRings, ImageBrand, Inventory)
             VALUES (@RingStyle, @NameRings, @Category, @BrandName, @Material, @CenterGemstone, @CenterGemstoneShape, @Width, @CenterDiamondDimension, @Weight, @GemstoneWeight, @CenterDiamondColor, @CenterDiamondClarity, @CenterDiamondCaratWeight, @RingSize, @Price, @Gender, @Fluorescence, @Description, @ImageRings, @ImageBrand, @Inventory)
           `);
@@ -592,7 +592,7 @@ const insertBridals = async (bridalsData) => {
       .input("Price", sql.Float, price)
       .input("ImageBridal", sql.VarChar, imageBridal)
       //.input("ImageBrand", sql.VarChar, imageBrand)
-      .input("Inventory", sql.Int, inventory)
+      .input("Inventory", sql.Int, 1)
       .query(`INSERT INTO Bridal (BridalStyle, NameBridal, Category, BrandName, Material, SettingType, Gender, Weight, CenterDiamond, DiamondCaratRange, RingSizeRang, TotalCaratWeight, TotalDiamond, Description, Price, ImageBridal, ImageBrand, Inventory)
             VALUES (@BridalStyle, @NameBridal, @Category, @BrandName, @Material, @SettingType, @Gender, @Weight, @CenterDiamond, @DiamondCaratRange, @RingSizeRang, @TotalCaratWeight, @TotalDiamond, @Description, @Price, @ImageBridal, 'https://collections.jewelryimages.net/collections_logos/00008w.jpg', @Inventory)
           `);
@@ -733,7 +733,7 @@ const insertTimepieces = async (timepiecesData) => {
       .input("Price", sql.Float, price)
       .input("ImageTimepieces", sql.VarChar, imageTimepieces)
       .input("ImageBrand", sql.VarChar, imageBrand)
-      .input("Inventory", sql.Int, inventory)
+      .input("Inventory", sql.Int, 1)
       .query(`INSERT INTO DiamondTimepieces (TimepiecesStyle, NameTimepieces, Collection, WaterResistance, CrystalType, BraceletMaterial, CaseSize, DialColor, Movement, Gender, Category, BrandName, DialType, Description, Price, ImageTimepieces, ImageBrand, Inventory)
             VALUES (@TimepiecesStyle, @NameTimepieces, @Collection, @WaterResistance, @CrystalType, @BraceletMaterial, @CaseSize, @DialColor, @Movement, @Gender, @Category, @BrandName, @DialType, @Description, @Price, @ImageTimepieces, @ImageBrand, @Inventory)
           `);

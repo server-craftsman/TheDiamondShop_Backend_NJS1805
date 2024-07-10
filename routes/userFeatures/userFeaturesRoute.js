@@ -422,10 +422,10 @@ router.get("/orderstatus-delivery", async(req, response) => {
     response.status(500).send('Error fetching order');
   });
 });
-//Route to update order statu to 'Shipped' and 'Complete' (for delivery)
+//Route to update order statu to 'Shipping' and 'Complete' (for delivery)
 router.put("/update-order-status-delivery", async (req, res) => {
   const { orderID, orderStatus } = req.body;
-  const validStatuses = ["Shipped", "Completed"];
+  const validStatuses = ["Shipping", "Completed"];
   
   if (!validStatuses.includes(orderStatus)) {
     return res.status(400).send({ message: "Order status must be Shipping and Completed" });

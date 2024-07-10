@@ -6,6 +6,8 @@ const dbConfig = require("./config/dbconfig");
 const session = require("express-session");
 const flash = require("express-flash");
 const cookieParser = require("cookie-parser");
+const expressLayouts = require('express-ejs-layouts');
+const path = require('path');
 
 // Import Routes
 const authRoute = require("./routes/authentication/authRoute");
@@ -63,6 +65,14 @@ app.use((req, res, next) => {
   );
   next();
 });
+
+//printer
+app.use(expressLayouts);
+app.set('view engine', 'ejs');
+
+app.use(express.static(path.join(__dirname, 'public')));
+
+//
 
 // Function to create a unique styled message
 function createStyledMessage(text, colorCode) {

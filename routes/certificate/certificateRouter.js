@@ -1,6 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const certificateDAO = require('../../dao/certificate/certificateDAO');
+const ejs = require('ejs');
+const path = require('path');
+const certificatePrinter = require('../../dao/certificate/certificatePrinter');
 
 router.put('/add', async (req, res) => {
     try {
@@ -36,13 +39,22 @@ router.get('/:GIAReportNumber', async (req, res) => {
     }
 });
 
-router.put('/update-event/:ReportNumber', async (req, res) => {
+router.put('/update-cert/:ReportNumber', async (req, res) => {
     try {
         const cert = req.body;
         const updatecert = await certificateDAO.updatecert(req.params.ReportNumber, cert);
         res.json(updatecert);
     } catch (error) {
         res.status(500).send(error.message);
+    }
+});
+
+router.post('/print-certificate', async (req, res) => {
+    try {
+        await certificatePrinter.generatePdf(req, res);
+    } catch (error) {
+        console.error('Error generating certificate:', error);
+        res.status(500).send('Internal server error');
     }
 });
 
