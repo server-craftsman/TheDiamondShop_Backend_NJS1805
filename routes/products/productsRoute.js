@@ -563,7 +563,7 @@ router.get("/ring-detail", async (req, res) => {
 });
 
 //-----Bridal and Ring------//
-router.get("/bridal-materials", async (req, response) => {
+router.get("/material-details", async (req, response) => {
   getBridalByMaterial()
     .then((result) => {
       response.json(result[0]);
@@ -574,7 +574,7 @@ router.get("/bridal-materials", async (req, response) => {
     });
 });
 
-router.get("/bridal-ring-sizes", async (req, response) => {
+router.get("/ring-size-details", async (req, response) => {
   getBridalByRingSize()
     .then((result) => {
       response.json(result[0]);
