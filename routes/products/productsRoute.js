@@ -1,5 +1,7 @@
 const express = require("express");
 const router = express.Router();
+const multer = require("multer");
+const path = require("path");
 const {
   getAllBrands,
   getAllBridals,
@@ -29,6 +31,39 @@ const {
   getBridalByRingSize
 } = require("../../dao/products/manageProducts");
 const { auth } = require("googleapis/build/src/apis/abusiveexperiencereport");
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, path.join(__dirname, "uploads")); // Destination folder for uploaded files
+  },
+  filename: function (req, file, cb) {
+    cb(null, `${Date.now()}_${file.originalname}`); // Unique filename for each uploaded file
+  },
+});
+
+const upload = multer({ storage: storage });
+
+// const fileFilter = (req, file, cb) => {
+//   // Accept only image files
+//   if (file.mimetype.startsWith("image/")) {
+//     cb(null, true);
+//   } else {
+//     cb(new Error("Only image files are allowed!"), false);
+//   }
+// };
+
+// const upload = multer({
+//   storage: storage,
+//   fileFilter: fileFilter,
+// });
+
+router.post("/upload-image", upload.single("image"), (req, res) => {
+  const file = req.file;
+  if (!file) {
+    return res.status(400).send("No file uploaded.");
+  }
+  const imageUrl = `http://localhost:8090/uploads/${file.filename}`;
+  res.status(201).json({ imageUrl: imageUrl });
+});
 
 // View Bridal
 router.get("/bridals", async (req, response) => {
