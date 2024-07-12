@@ -855,16 +855,40 @@ const getDiamondById = async (id, callback) => {
   }
 };
 
+// const getBridalById = async (id, callback) => {
+//   try {
+//     // Establish the connection
+//     let pool = await sql.connect(config);
+
+//     // Prepare the query
+//     let result = await pool
+//       .request()
+//       .input("id", sql.Int, id)
+//       .query("SELECT * FROM Bridal WHERE BridalID = @id");
+
+//     // Return the result
+//     callback(null, result.recordset[0]);
+//   } catch (err) {
+//     callback(err, null);
+//   } finally {
+//     // Close the connection
+//     sql.close();
+//   }
+// };
+
 const getBridalById = async (id, callback) => {
   try {
     // Establish the connection
     let pool = await sql.connect(config);
 
     // Prepare the query
-    let result = await pool
-      .request()
-      .input("id", sql.Int, id)
-      .query("SELECT * FROM Bridal WHERE BridalID = @id");
+    let result = await pool.request().input("id", sql.Int, id)
+      .query(`SELECT * FROM Bridal b
+      LEFT JOIN BridalMaterial bm ON b.BridalID = bm.BridalID
+      LEFT JOIN Material m ON bm.MaterialID = m.MaterialID
+      LEFT JOIN BridalRingSize bs ON b.BridalID = bs.BridalID
+      LEFT JOIN RingSize rs ON bs.RingSizeID = rs.RingSizeID 
+      WHERE b.BridalID = @id`);
 
     // Return the result
     callback(null, result.recordset[0]);
@@ -875,7 +899,6 @@ const getBridalById = async (id, callback) => {
     sql.close();
   }
 };
-
 const getRingsById = async (id, callback) => {
   try {
     // Establish the connection
@@ -986,5 +1009,5 @@ module.exports = {
   getRingsById,
   getTimepiecesById,
   getRingDetailByMaterialAndSize,
-  getBridalDetailByMaterialAndSize
+  getBridalDetailByMaterialAndSize,
 };
