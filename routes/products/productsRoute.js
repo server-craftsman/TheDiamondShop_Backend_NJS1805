@@ -25,7 +25,8 @@ const {
   getRingsById,
   getTimepiecesById,
   getRingDetailByMaterialAndSize,
-  getBridalDetailByMaterialAndSize
+  getBridalByMaterial,
+  getBridalByRingSize
 } = require("../../dao/products/manageProducts");
 const { auth } = require("googleapis/build/src/apis/abusiveexperiencereport");
 
@@ -561,30 +562,27 @@ router.get("/ring-detail", async (req, res) => {
   }
 });
 
-router.get("/bridal-detail", async (req, res) => {
-  const { material, ringSize } = req.query;
+//-----Bridal and Ring------//
+router.get("/bridal-materials", async (req, response) => {
+  getBridalByMaterial()
+    .then((result) => {
+      response.json(result[0]);
+    })
+    .catch((error) => {
+      console.error("Error fetching bridal and ring of materials: ", error);
+      response.status(500).send("Error fetching bridal and ring materials");
+    });
+});
 
-  if (!material || !ringSize) {
-    return res
-      .status(400)
-      .json({ message: "Material and ring size are required" });
-  }
-
-  try {
-    const bridalId = await getBridalDetailByMaterialAndSize(
-      material,
-      ringSize
-    );
-
-    if (bridalId) {
-      res.json({ BridalID: bridalId });
-    } else {
-      res.status(404).json({ message: "Bridal not found" });
-    }
-  } catch (error) {
-    console.error("Error fetching Bridal details", error);
-    res.status(500).json({ message: "Internal server error" });
-  }
+router.get("/bridal-ring-sizes", async (req, response) => {
+  getBridalByRingSize()
+    .then((result) => {
+      response.json(result[0]);
+    })
+    .catch((error) => {
+      console.error("Error fetching bridal ring sizes: ", error);
+      response.status(500).send("Error fetching bridal ring sizes");
+    });
 });
 
 module.exports = router;

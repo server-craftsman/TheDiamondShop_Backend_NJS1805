@@ -962,27 +962,30 @@ async function getRingDetailByMaterialAndSize(material, ringSize) {
   }
 }
 
-async function getBridalDetailByMaterialAndSize(material, ringSize) {
+//----Bridal Material / Size-----//
+async function getBridalByMaterial() {
   try {
-    const pool = await sql.connect(config);
-    const result = await pool
-      .request()
-      .input("material", sql.NVarChar, material)
-      .input("ringSize", sql.Decimal, parseFloat(ringSize))
-      .query(
-        `SELECT TOP 1 BridalID FROM Bridal WHERE Material = @material AND RingSizeRang = @ringSize`
-      );
-
-    if (result.recordset.length > 0) {
-      return result.recordset[0].BridalID;
-    } else {
-      return null; // Return null if no matching bridal found
-    }
+    let pool = await sql.connect(config);
+    let products = await pool.request().query("SELECT * FROM Material");
+    return products.recordsets;
   } catch (error) {
-    console.error("Error fetching bridal detail", error);
+    console.error("SQL error", error);
     throw error;
   }
 }
+
+async function getBridalByRingSize() {
+  try {
+    let pool = await sql.connect(config);
+    let products = await pool.request().query("SELECT * FROM RingSize");
+    return products.recordsets;
+  } catch (error) {
+    console.error("SQL error", error);
+    throw error;
+  }
+}
+
+
 
 module.exports = {
   getAllBridals,
@@ -1009,5 +1012,6 @@ module.exports = {
   getRingsById,
   getTimepiecesById,
   getRingDetailByMaterialAndSize,
-  getBridalDetailByMaterialAndSize,
+  getBridalByMaterial,
+  getBridalByRingSize
 };
