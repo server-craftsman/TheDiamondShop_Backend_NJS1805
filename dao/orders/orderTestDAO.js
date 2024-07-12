@@ -1,5 +1,5 @@
-const config = require("../../config/dbconfig");
 const sql = require("mssql");
+const config = require("../../config/dbconfig");
 
 // Function to establish SQL connection
 async function connectToDatabase() {
@@ -20,264 +20,161 @@ async function disconnectFromDatabase() {
   }
 }
 
-/**
- * Creates a new order in the database.
- * @param {Object} orderData - The data of the order to create.
- * @param {number} accountID - The ID of the account placing the order.
- * @returns {Promise<Object>} The ID of the newly created order and any associated certificates.
- */
-async function createOrder(orderData, accountIDFromToken) {
-  let pool;
-  let transaction;
-
-  try {
-    if (!orderData) {
-      throw new Error("Order data is required.");
-    }
-
-    pool = await connectToDatabase();
-    transaction = new sql.Transaction(pool);
-    await transaction.begin();
-
-    const request = new sql.Request(transaction);
-
-    // Kiểm tra và ném lỗi nếu lượng tồn kho bằng 0
-    switch (orderData.ProductType) {
-      case "Diamond":
-        await checkInventory(
-          "DiamondID",
-          orderData.DiamondID,
-          "Diamond",
-          request
-        );
-        break;
-      case "Bridal":
-        await checkInventory("BridalID", orderData.BridalID, "Bridal", request);
-        break;
-      case "DiamondTimepieces":
-        await checkInventory(
-          "DiamondTimepiecesID",
-          orderData.DiamondTimepiecesID,
-          "DiamondTimepieces",
-          request
-        );
-        break;
-      case "DiamondRings":
-        await checkInventory(
-          "DiamondRingsID",
-          orderData.DiamondRingsID,
-          "DiamondRings",
-          request
-        );
-        break;
-      default:
-        throw new Error("Invalid product type specified.");
-    }
-
-    const orderDate = new Date();
-    const totalQuantity = orderData.Quantity || 1;
-    const totalPrice = orderData.TotalPrice || 0;
-
-    const orderQuery = `
-      INSERT INTO Orders (AccountID, OrderDate, Quantity, OrderStatus, TotalPrice)
-      VALUES (@AccountID, @OrderDate, @Quantity, @OrderStatus, @TotalPrice);
-
-      SELECT SCOPE_IDENTITY() AS OrderID;
-    `;
-
-    const orderResult = await request
-      .input("AccountID", sql.Int, accountIDFromToken)
-      .input("OrderDate", sql.Date, orderDate)
-      .input("Quantity", sql.Int, totalQuantity)
-      .input("OrderStatus", sql.VarChar(50), "Pending")
-      .input("TotalPrice", sql.Decimal(10, 2), totalPrice)
-      .query(orderQuery);
-
-    const orderID = orderResult.recordset[0].OrderID;
-
-    const orderDetailsQuery = `
-      INSERT INTO OrderDetails (OrderID, DeliveryAddress, DiamondID, BridalID, DiamondRingsID, DiamondTimepiecesID, AttachedAccessories, Shipping, OrderStatus)
-      VALUES (@OrderID, @DeliveryAddress, @DiamondID, @BridalID, @DiamondRingsID, @DiamondTimepiecesID, @AttachedAccessories, @Shipping, @OrderStatusID1);
-
-      SELECT SCOPE_IDENTITY() AS OrderDetailID;
-    `;
-
-    const orderDetailsResult = await request
-      .input("OrderID", sql.Int, orderID)
-      .input(
-        "DeliveryAddress",
-        sql.NVarChar(100),
-        orderData.DeliveryAddress || ""
-      )
-      .input("DiamondID", sql.Int, orderData.DiamondID || null)
-      .input("BridalID", sql.Int, orderData.BridalID || null)
-      .input("DiamondRingsID", sql.Int, orderData.DiamondRingsID || null)
-      .input(
-        "DiamondTimepiecesID",
-        sql.Int,
-        orderData.DiamondTimepiecesID || null
-      )
-      .input("AttachedAccessories", sql.VarChar(100), "Box, Certificate")
-      .input("Shipping", sql.VarChar(100), orderData.Shipping || "Standard")
-      .input("OrderStatusID1", sql.VarChar(50), "Pending")
-      .query(orderDetailsQuery);
-
-    const orderDetailID = orderDetailsResult.recordset[0].OrderDetailID;
-
-    const warrantyDescriptions = `Warranty for ${orderData.ProductType} (${
-      orderData.ProductID
-    }) Date ${new Date().getFullYear()}-06-01 (+10 years valid from warranty) Full Warranty No scratches or damages Free annual inspection Brand New`;
-
-    await generateWarrantyReceipt(
-      orderDetailID,
-      warrantyDescriptions,
-      new Date(),
-      "Random Diamond Store",
-      new Date(new Date().getFullYear() + 10, 5, 1),
-      "Default Warranty Type",
-      "Default Warranty Conditions",
-      "Default Accompanied Service",
-      "Default Condition",
-      transaction
-    );
-
-    if (orderData.VoucherID) {
-      await applyVoucher(orderData.VoucherID, totalPrice, orderID, transaction);
-    }
-
-    await saveTransaction(
-      orderID,
-      totalPrice,
-      orderData.PaymentMethod,
-      transaction
-    );
-
-    // Cập nhật lượng tồn kho dựa trên sản phẩm đã đặt hàng
-    await updateInventory(orderData, transaction);
-
-    await transaction.commit();
-
-    return {
-      success: true,
-      message: "Order created successfully",
-      orderID: orderID,
-      productType: orderData.ProductType,
-      productID: orderData.ProductID,
-      diamondId: orderData.DiamondID,
-      bridalId: orderData.BridalID,
-      diamondRingsId: orderData.DiamondRingsID,
-      diamondTimepiecesId: orderData.DiamondTimepiecesID,
-      // attachedAccessories: orderData.AttachedAccessories,
-      // shipping: orderData.Shipping,
-    };
-  } catch (error) {
-    if (transaction) {
-      await transaction.rollback();
-    }
-    throw new Error(`Error creating order: ${error.message}`);
-  } finally {
-    if (pool) {
-      await disconnectFromDatabase();
-    }
-  }
-}
-
-async function checkInventory(idField, productID, tableName, request) {
-  const query = `
-    SELECT Inventory FROM ${tableName} WHERE ${idField} = @ProductID;
-  `;
-
-  const result = await request
-    .input("ProductID", sql.Int, productID)
-    .query(query);
-
-  if (result.recordset.length === 0) {
-    throw new Error(`Product with ID ${productID} not found in ${tableName}.`);
-  }
-
-  const inventory = result.recordset[0].Inventory;
-
-  if (inventory <= 0) {
-    throw new Error(
-      `Out of stock. Cannot create order for ${tableName} with ${idField} ${productID}.`
-    );
-  }
-}
-
-async function updateInventory(orderData, transaction) {
+// Function to check inventory for a given product
+async function checkInventory(productID, tableName, transaction) {
   try {
     const request = new sql.Request(transaction);
-    const productType = orderData.ProductType;
-    const quantity = orderData.Quantity;
 
-    let updateQuery = "";
-    let productIDField = "";
-    let productIDValue = null;
-
-    switch (productType) {
-      case "Diamond":
-        updateQuery = `
-          UPDATE Diamond
-          SET Inventory = Inventory - @Quantity
-          WHERE DiamondID = @ProductID;
-        `;
-        productIDField = "DiamondID";
-        productIDValue = orderData.DiamondID;
-        break;
-      case "Bridal":
-        updateQuery = `
-          UPDATE Bridal
-          SET Inventory = Inventory - @Quantity
-          WHERE BridalID = @ProductID;
-        `;
-        productIDField = "BridalID";
-        productIDValue = orderData.BridalID;
-        break;
-      case "DiamondTimepieces":
-        updateQuery = `
-          UPDATE DiamondTimepieces
-          SET Inventory = Inventory - @Quantity
-          WHERE DiamondTimepiecesID = @ProductID;
-        `;
-        productIDField = "DiamondTimepiecesID";
-        productIDValue = orderData.DiamondTimepiecesID;
-        break;
-      case "DiamondRings":
-        updateQuery = `
-          UPDATE DiamondRings
-          SET Inventory = Inventory - @Quantity
-          WHERE DiamondRingsID = @ProductID;
-        `;
-        productIDField = "DiamondRingsID";
-        productIDValue = orderData.DiamondRingsID;
-        break;
-      default:
-        throw new Error("Invalid product type.");
+    // Ensure productID is valid and convert it to integer
+    const parsedProductID = parseInt(productID, 10);
+    if (isNaN(parsedProductID) || parsedProductID <= 0) {
+      throw new Error(`Invalid productID: ${productID}`);
     }
 
-    console.log(`Executing query to update inventory: ${updateQuery}`);
+    const query = `
+      SELECT Inventory FROM ${tableName} WHERE ${tableName}ID = @productID;
+    `;
 
     const result = await request
-      .input("ProductID", sql.Int, productIDValue)
-      .input("Quantity", sql.Int, quantity)
-      .query(updateQuery);
+      .input("productID", sql.Int, parsedProductID)
+      .query(query);
 
-    console.log(`Update result: ${JSON.stringify(result)}`);
+    if (result.recordset.length === 0) {
+      throw new Error(`Product with ID ${parsedProductID} not found in ${tableName}.`);
+    }
+
+    const inventory = result.recordset[0].Inventory;
+
+    if (inventory <= 0) {
+      throw new Error(`Out of stock. Cannot create order for ${tableName} with ID ${parsedProductID}.`);
+    }
   } catch (error) {
-    throw new Error(`Error updating inventory: ${error.message}`);
+    throw new Error(`Error checking inventory: ${error.message}`);
   }
 }
 
-/**
- * Applies a voucher to a specific order.
- * @param {number} voucherID - The ID of the voucher to apply.
- * @param {number} totalPrice - The total price of the order to which the voucher applies.
- * @param {number} orderID - The ID of the order to apply the voucher to.
- * @param {Object} transaction - The SQL transaction object.
- */
+// Function to update inventory after creating an order
+// Function to update inventory after creating an order
+// async function updateInventory(orderData, transaction) {
+//     try {
+//       const request = new sql.Request(transaction);
+  
+//       const productUpdates = [
+//         { idField: "DiamondID", tableName: "Diamond" },
+//         { idField: "BridalID", tableName: "Bridal" },
+//         { idField: "DiamondTimepiecesID", tableName: "DiamondTimepieces" },
+//         { idField: "DiamondRingsID", tableName: "DiamondRings" },
+//       ];
+  
+//       for (const productUpdate of productUpdates) {
+//         const productIDs = orderData[productUpdate.idField];
+//         if (productIDs && productIDs.length > 0) {
+//           for (const productID of productIDs) {
+//             const updateQuery = `
+//               UPDATE ${productUpdate.tableName}
+//               SET Inventory = Inventory - 1
+//               WHERE ${productUpdate.tableName}ID = @${productUpdate.idField};
+//             `;
+  
+//             await request
+//               .input(productUpdate.idField, sql.Int, productID)  // Use idField as parameter name
+//               .query(updateQuery);
+//           }
+//         }
+//       }
+//     } catch (error) {
+//       throw new Error(`Error updating inventory: ${error.message}`);
+//     }
+//   }
+
+// Function to update inventory after creating an order
+async function updateInventory(orderData, transaction) {
+    try {
+      const request = new sql.Request(transaction);
+  
+      const productUpdates = [
+        { idField: "DiamondID", tableName: "Diamond" },
+        { idField: "BridalID", tableName: "Bridal" },
+        { idField: "DiamondTimepiecesID", tableName: "DiamondTimepieces" },
+        { idField: "DiamondRingsID", tableName: "DiamondRings" },
+      ];
+  
+      for (const productUpdate of productUpdates) {
+        const productIDs = orderData[productUpdate.idField];
+        if (productIDs && productIDs.length > 0) {
+          for (const productID of productIDs) {
+            const paramName = `${productUpdate.idField}_${productID}`;  // Create unique parameter name
+            const updateQuery = `
+              UPDATE ${productUpdate.tableName}
+              SET Inventory = Inventory - 1
+              WHERE ${productUpdate.tableName}ID = @${paramName};
+            `;
+  
+            await request
+              .input(paramName, sql.Int, productID)  // Use unique parameter name
+              .query(updateQuery);
+          }
+        }
+      }
+    } catch (error) {
+      throw new Error(`Error updating inventory: ${error.message}`);
+    }
+  }
+  
+  
+
+// Function to generate a warranty receipt for an order detail
+async function generateWarrantyReceipt(
+  orderDetailID,
+  warrantyDescriptions,
+  warrantyDate,
+  warrantyProvider,
+  warrantyExpiry,
+  warrantyType,
+  warrantyConditions,
+  accompaniedService,
+  condition,
+  transaction
+) {
+  try {
+    const request = new sql.Request(transaction);
+
+    // Generate the new ReportNo
+    const reportNoQuery = `
+      SELECT MAX(CAST(SUBSTRING(ReportNo, 4, LEN(ReportNo) - 3) AS BIGINT)) AS LastNumber
+      FROM WarrantyReceipt;
+    `;
+
+    const result = await request.query(reportNoQuery);
+    const lastNumber = result.recordset[0].LastNumber || 0;
+    const newReportNo = `WR0${lastNumber + 1}`;
+
+    const warrantyReceiptQuery = `
+      INSERT INTO WarrantyReceipt (OrderDetailID, Descriptions, Date, PlaceToBuy, Period, WarrantyType, WarrantyConditions, AccompaniedService, Condition, ReportNo)
+      VALUES (@OrderDetailID, @Descriptions, @Date, @PlaceToBuy, @Period, @WarrantyType, @WarrantyConditions, @AccompaniedService, @Condition, @ReportNo);
+    `;
+
+    await request
+      .input("OrderDetailID", sql.Int, orderDetailID)
+      .input("Descriptions", sql.NVarChar(sql.MAX), warrantyDescriptions)
+      .input("Date", sql.Date, warrantyDate)
+      .input("PlaceToBuy", sql.NVarChar(255), warrantyProvider)
+      .input("Period", sql.Date, warrantyExpiry)
+      .input("WarrantyType", sql.NVarChar(255), warrantyType)
+      .input("WarrantyConditions", sql.NVarChar(sql.MAX), warrantyConditions)
+      .input("AccompaniedService", sql.NVarChar(sql.MAX), accompaniedService)
+      .input("Condition", sql.NVarChar(sql.MAX), condition)
+      .input("ReportNo", sql.NVarChar(50), newReportNo)
+      .query(warrantyReceiptQuery);
+  } catch (error) {
+    throw new Error(`Error generating warranty receipt: ${error.message}`);
+  }
+}
+
+// Function to apply a voucher to an order
 async function applyVoucher(voucherID, totalPrice, orderID, transaction) {
   try {
-    const request = transaction.request();
+    const request = new sql.Request(transaction);
 
     // Retrieve voucher details
     const voucherQuery = `
@@ -292,17 +189,16 @@ async function applyVoucher(voucherID, totalPrice, orderID, transaction) {
     }
 
     const voucherDetails = voucherResult.recordset[0];
-    const discountAmount =
-      (voucherDetails.DiscountPercentage / 100) * totalPrice;
+    const discountAmount = (voucherDetails.DiscountPercentage / 100) * totalPrice;
 
     // Apply voucher to the order
     const applyVoucherQuery = `
       INSERT INTO VoucherListInOrder (OrderID, VoucherID)
-      VALUES (@OrderID, @VoucherID);
+      VALUES (@OrderID, @VoucherID1);
     `;
     await request
       .input("OrderID", sql.Int, orderID)
-      .input("VoucherID2", sql.Int, voucherID) // Renamed to ensure uniqueness
+      .input("VoucherID1", sql.Int, voucherID)
       .query(applyVoucherQuery);
 
     // Update the Voucher table for usage and total quantities
@@ -310,39 +206,29 @@ async function applyVoucher(voucherID, totalPrice, orderID, transaction) {
       UPDATE Voucher
       SET UsagedQuantity = UsagedQuantity + 1,
           TotalQuantity = TotalQuantity - 1
-      WHERE VoucherID = @VoucherID3 AND TotalQuantity > 0;
+      WHERE VoucherID = @VoucherID2 AND TotalQuantity > 0;
     `;
     await request
-      .input("VoucherID3", sql.Int, voucherID) // Renamed to ensure uniqueness
+      .input("VoucherID2", sql.Int, voucherID)
       .query(updateVoucherQuery);
   } catch (error) {
     throw new Error(`Error applying voucher: ${error.message}`);
   }
 }
 
-/**
- * Saves transaction details after an order is placed.
- * @param {number} orderID - The ID of the order.
- * @param {number} totalPrice - The total price of the order.
- * @param {string} paymentMethod - The payment method used.
- * @param {Object} transaction - The SQL transaction object.
- */
-async function saveTransaction(
-  orderID,
-  totalPrice,
-  paymentMethod,
-  transaction
-) {
+// Function to save transaction details for an order
+async function saveTransaction(orderID, totalPrice, paymentMethod, transaction) {
   try {
-    const request = transaction.request();
+    const request = new sql.Request(transaction);
 
     const transactionQuery = `
-      INSERT INTO Transactions (OrderID, PaymentAmount, Method, PaymentDate)
-      VALUES (@OrderID, @PaymentAmount, @Method, GETDATE());
+      INSERT INTO Transactions (OrderID, PaymentDate, PaymentAmount, Method)
+      VALUES (@OrderID, @PaymentDate, @PaymentAmount, @Method);
     `;
 
     await request
       .input("OrderID", sql.Int, orderID)
+      .input("PaymentDate", sql.DateTime, new Date())
       .input("PaymentAmount", sql.Decimal(10, 2), totalPrice)
       .input("Method", sql.VarChar(50), paymentMethod)
       .query(transactionQuery);
@@ -351,534 +237,274 @@ async function saveTransaction(
   }
 }
 
-/**
- * Generates a warranty receipt for an order detail.
- * @param {number} orderDetailID - The ID of the order detail.
- * @param {string} descriptions - The descriptions for the warranty.
- * @param {Date} date - The date of the warranty.
- * @param {string} placeToBuy - The place of purchase for the warranty.
- * @param {Date} period - The period of the warranty.
- * @param {string} warrantyType - The type of warranty.
- * @param {string} warrantyConditions - The conditions of the warranty.
- * @param {string} accompaniedService - The accompanied service.
- * @param {string} condition - The condition of the warranty.
- * @param {Object} transaction - The SQL transaction object.
- */
-async function generateWarrantyReceipt(
-  orderDetailID,
-  descriptions,
-  date,
-  placeToBuy,
-  period,
-  warrantyType,
-  warrantyConditions,
-  accompaniedService,
-  condition,
-  transaction
-) {
-  try {
-    const request = transaction.request();
+// Function to create a new order in the database
+// async function createOrder(orderData, accountID) {
+//     let pool;
+//     let transaction;
+  
+//     try {
+//       // Input validation
+//       if (!orderData || !orderData.BridalID || !Array.isArray(orderData.BridalID)) {
+//         throw new Error("Order data is invalid or BridalID is missing or not an array.");
+//       }
+  
+//       // Connect to the database
+//       pool = await connectToDatabase();
+//       transaction = new sql.Transaction(pool);
+//       await transaction.begin();
+  
+//       const request = new sql.Request(transaction);
+  
+//       // Insert into Orders table
+//       const orderQuery = `
+//         INSERT INTO Orders (AccountID, OrderDate, Quantity, OrderStatus, TotalPrice)
+//         OUTPUT inserted.OrderID
+//         VALUES (@AccountID, @OrderDate, @Quantity, @OrderStatus, @TotalPrice);
+//       `;
+  
+//       const orderResult = await request
+//         .input("AccountID", sql.Int, accountID)
+//         .input("OrderDate", sql.DateTime, new Date())
+//         .input("Quantity", sql.Int, orderData.Quantity || 1)
+//         .input("OrderStatus", sql.VarChar(50), "Pending")
+//         .input("TotalPrice", sql.Decimal(10, 2), orderData.TotalPrice || 0)
+//         .query(orderQuery);
+  
+//       const orderID = orderResult.recordset[0].OrderID;
+  
+//       // Insert into OrderDetails table
+//       const orderDetailsQuery = `
+//         INSERT INTO OrderDetails (OrderID, DeliveryAddress, DiamondID, BridalID, DiamondRingsID, DiamondTimepiecesID, AttachedAccessories, Shipping, MaterialID, RingSizeID, OrderStatus)
+//         VALUES (@OrderID, @DeliveryAddress, @DiamondID, @BridalID, @DiamondRingsID, @DiamondTimepiecesID, @AttachedAccessories, @Shipping, @MaterialID, @RingSizeID @OrderStatus2);
+//       `;
+  
+//       await request
+//         .input("OrderID", sql.Int, orderID)
+//         .input("DeliveryAddress", sql.NVarChar(100), orderData.DeliveryAddress || "")
+//         .input("DiamondID", sql.Int, orderData.DiamondID || null)
+//         .input("BridalID", sql.Int, orderData.BridalID || null)
+//         .input("DiamondRingsID", sql.Int, orderData.DiamondRingsID || null)
+//         .input("DiamondTimepiecesID", sql.Int, orderData.DiamondTimepiecesID || null)
+//         .input("AttachedAccessories", sql.VarChar(100), "Box, Certificate")
+//         .input("Shipping", sql.VarChar(100), orderData.Shipping || "Standard")
+//         .input("MaterialID", sql.Int, orderData.MaterialID || null)
+//         .input("RingSizeID", sql.Int, orderData.RingSizeID || null)
+//         .input("OrderStatus2", sql.VarChar(50), "Pending")
+//         .query(orderDetailsQuery);
+  
+//       // Check inventory and update for each product type
+//       const productTypes = [
+//         { type: "Diamond", idField: "DiamondID" },
+//         { type: "Bridal", idField: "BridalID" },
+//         { type: "DiamondTimepieces", idField: "DiamondTimepiecesID" },
+//         { type: "DiamondRings", idField: "DiamondRingsID" },
+//       ];
+  
+//       for (const productType of productTypes) {
+//         if (orderData[productType.idField]) {
+//           await checkInventory(orderData[productType.idField], productType.type, transaction);
+//         }
+//       }
+  
+//       // Update inventory after successful inventory checks
+//       await updateInventory(orderData, transaction);
+  
+//       // Generate warranty receipt if applicable
+//       if (orderData.Warranty && orderData.Warranty.length > 0) {
+//         for (const warranty of orderData.Warranty) {
+//           await generateWarrantyReceipt(
+//             orderID,
+//             warranty.Descriptions,
+//             warranty.Date,
+//             warranty.PlaceToBuy,
+//             warranty.Period,
+//             warranty.WarrantyType,
+//             warranty.WarrantyConditions,
+//             warranty.AccompaniedService,
+//             warranty.Condition,
+//             transaction
+//           );
+//         }
+//       }
+  
+//       // Apply voucher if provided
+//       if (orderData.VoucherID) {
+//         await applyVoucher(orderData.VoucherID, orderData.TotalPrice, orderID, transaction);
+//       }
+  
+//       // Save transaction details
+//       await saveTransaction(orderID, orderData.TotalPrice, orderData.PaymentMethod, transaction);
+  
+//       // Commit transaction
+//       await transaction.commit();
+  
+//       return { success: true, orderID };
+//     } catch (error) {
+//       if (transaction) {
+//         try {
+//           // Rollback transaction if error occurs
+//           await transaction.rollback();
+//         } catch (rollbackError) {
+//           console.error("Error rolling back transaction:", rollbackError.message);
+//         }
+//       }
+//       throw new Error(`Error creating order: ${error.message}`);
+//     } finally {
+//       // Close database connection
+//       if (pool) {
+//         try {
+//           await disconnectFromDatabase();
+//         } catch (disconnectError) {
+//           console.error("Error disconnecting from database:", disconnectError.message);
+//         }
+//       }
+//     }
+//   }
+  
 
-    const reportNo = generateReportNo(); // Generate a unique report number
+async function createOrder(orderData, accountID) {
+    let pool;
+    let transaction;
 
-    // Insert into WarrantyReceipt table
-    const insertWarrantyReceiptQuery = `
-      INSERT INTO WarrantyReceipt (ReportNo, Descriptions, Date, PlaceToBuy, Period, WarrantyType, WarrantyConditions, AccompaniedService, Condition, OrderDetailID)
-      VALUES (@ReportNo, @Descriptions, @Date, @PlaceToBuy, @Period, @WarrantyType, @WarrantyConditions, @AccompaniedService, @Condition, @OrderDetailID);
-    `;
+    try {
+        // Input validation
+        if (!orderData || !orderData.BridalID || !Array.isArray(orderData.BridalID) || !orderData.DiamondRingsID || !Array.isArray(orderData.DiamondRingsID)) {
+            throw new Error("Order data is invalid or ProductID is missing or not an array.");
+        }
 
-    await request
-      .input("ReportNo", sql.VarChar(20), reportNo)
-      .input("Descriptions", sql.VarChar(255), descriptions)
-      .input("Date", sql.Date, date)
-      .input("PlaceToBuy", sql.VarChar(255), placeToBuy)
-      .input("Period", sql.Date, period)
-      .input("WarrantyType", sql.VarChar(150), warrantyType)
-      .input("WarrantyConditions", sql.VarChar(255), warrantyConditions)
-      .input("AccompaniedService", sql.VarChar(255), accompaniedService)
-      .input("Condition", sql.VarChar(150), condition)
-      .input("OrderDetailID", sql.Int, orderDetailID)
-      .query(insertWarrantyReceiptQuery);
+        // Connect to the database
+        pool = await connectToDatabase();
+        transaction = new sql.Transaction(pool);
+        await transaction.begin();
 
-    // Update OrderDetails table with ReportNo
-    const updateOrderDetailsQuery = `
-      UPDATE OrderDetails
-      SET ReportNo = @ReportNo
-      WHERE OrderDetailID = @OrderDetailID;
-    `;
+        // Prepare the OrderQuery template
+        const orderQuery = `
+            INSERT INTO Orders (AccountID, OrderDate, Quantity, OrderStatus, TotalPrice)
+            OUTPUT inserted.OrderID
+            VALUES (@AccountID, @OrderDate, @Quantity, @OrderStatus, @TotalPrice);
+        `;
 
-    await request
-      .input("ReportNoID1", sql.VarChar(20), reportNo)
-      .input("OrderDetailID2", sql.Int, orderDetailID)
-      .query(updateOrderDetailsQuery);
-  } catch (error) {
-    throw new Error(`Error generating warranty receipt: ${error.message}`);
-  }
+        const requestOrder = new sql.Request(transaction);
+
+        // Set inputs for the OrderQuery
+        requestOrder.input("AccountID", sql.Int, accountID);
+        requestOrder.input("OrderDate", sql.DateTime, new Date());
+        requestOrder.input("Quantity", sql.Int, orderData.Quantity || 1);
+        requestOrder.input("OrderStatus", sql.VarChar(50), "Pending");
+        requestOrder.input("TotalPrice", sql.Decimal(10, 2), orderData.TotalPrice || 0);
+
+        const orderResult = await requestOrder.query(orderQuery);
+        const orderID = orderResult.recordset[0].OrderID;
+
+        // Loop through BridalID array and execute individual queries
+        for (let i = 0; i < orderData.BridalID.length; i++) {
+            const bridalID = orderData.BridalID[i];
+
+            // Prepare the OrderDetailsQuery template
+            const orderDetailsQuery = `
+                INSERT INTO OrderDetails (OrderID, DeliveryAddress, BridalID, AttachedAccessories, Shipping, OrderStatus, MaterialID, RingSizeID)
+                VALUES (@OrderID, @DeliveryAddress, @BridalID, @AttachedAccessories, @Shipping, @OrderStatus, @MaterialID, @RingSizeID);
+            `;
+
+            const requestDetails = new sql.Request(transaction);
+
+            // Set inputs for the OrderDetailsQuery
+            requestDetails.input("OrderID", sql.Int, orderID);
+            requestDetails.input("DeliveryAddress", sql.NVarChar(100), orderData.DeliveryAddress || "");
+            requestDetails.input("BridalID", sql.Int, bridalID);
+            requestDetails.input("AttachedAccessories", sql.VarChar(100), "Box, Certificate");
+            requestDetails.input("Shipping", sql.VarChar(100), orderData.Shipping || "Standard");
+            requestDetails.input("OrderStatus", sql.VarChar(50), "Pending");
+            requestDetails.input("MaterialID", sql.Int, orderData.MaterialID || null);
+            requestDetails.input("RingSizeID", sql.Int, orderData.RingSizeID || null);
+
+            // Execute the query inside the loop
+            await requestDetails.query(orderDetailsQuery);
+
+            //continue
+        }       
+
+        // Check inventory and update for each product type
+        const productTypes = [
+            { type: "Diamond", idField: "DiamondID" },
+            { type: "Bridal", idField: "BridalID" },
+            { type: "DiamondTimepieces", idField: "DiamondTimepiecesID" },
+            { type: "DiamondRings", idField: "DiamondRingsID" },
+        ];
+
+        for (const productType of productTypes) {
+            if (orderData[productType.idField]) {
+                await checkInventory(orderData[productType.idField], productType.type, transaction);
+            }
+        }
+
+        // Update inventory after successful inventory checks
+        await updateInventory(orderData, transaction);
+
+        // Generate warranty receipt if applicable
+        if (orderData.Warranty && orderData.Warranty.length > 0) {
+            for (const warranty of orderData.Warranty) {
+                await generateWarrantyReceipt(
+                    orderID,
+                    warranty.Descriptions,
+                    warranty.Date,
+                    warranty.PlaceToBuy,
+                    warranty.Period,
+                    warranty.WarrantyType,
+                    warranty.WarrantyConditions,
+                    warranty.AccompaniedService,
+                    warranty.Condition,
+                    transaction
+                );
+            }
+        }
+
+
+        // Apply voucher if provided
+        if (orderData.VoucherID) {
+            await applyVoucher(orderData.VoucherID, orderData.TotalPrice, orderID, transaction);
+        }
+
+        // Save transaction details
+        await saveTransaction(orderID, orderData.TotalPrice, orderData.PaymentMethod, transaction);
+    
+        // Commit transaction
+        await transaction.commit();
+
+        return { success: true, orderID };
+    } catch (error) {
+        if (transaction) {
+            try {
+                // Rollback transaction if error occurs
+                await transaction.rollback();
+            } catch (rollbackError) {
+                console.error("Error rolling back transaction:", rollbackError.message);
+            }
+        }
+        throw new Error(`Error creating order: ${error.message}`);
+    } finally {
+        // Close database connection
+        if (pool) {
+            try {
+                await disconnectFromDatabase();
+            } catch (disconnectError) {
+                console.error("Error disconnecting from database:", disconnectError.message);
+            }
+        }
+    }
 }
 
-// Generate a unique report number
-function generateReportNo() {
-  return `WR-${Date.now()}`;
-}
 
-/**
- * Retrieves voucher details from the database.
- * @param {number} voucherID - The ID of the voucher to retrieve.
- * @returns {Promise<Object>} The details of the voucher.
- */
 
-async function getVoucherDetails(voucherID) {
-  try {
-    const pool = await connectToDatabase();
-    const request = new sql.Request(pool);
 
-    const query = `
-      SELECT * FROM Voucher WHERE VoucherID = @VoucherID;
-    `;
 
-    const result = await request
-      .input("VoucherID", sql.Int, voucherID)
-      .query(query);
 
-    return result.recordset[0];
-  } catch (error) {
-    throw new Error(`Error retrieving voucher details: ${error.message}`);
-  } finally {
-    await disconnectFromDatabase();
-  }
-}
+  
+  
+  
+
+  
 
 module.exports = {
   createOrder,
 };
-
-
-
-// const config = require("../../config/dbconfig");
-// const sql = require("mssql");
-
-// // Function to establish SQL connection
-// async function connectToDatabase() {
-//   try {
-//     return await sql.connect(config);
-//   } catch (error) {
-//     throw new Error(`Error establishing database connection: ${error.message}`);
-//   }
-// }
-
-// // Function to close SQL connection
-// async function disconnectFromDatabase() {
-//   try {
-//     await sql.close();
-//     console.log("Disconnected from SQL database");
-//   } catch (error) {
-//     console.error("Error closing the SQL connection:", error.message);
-//   }
-// }
-
-// /**
-//  * Creates a new order in the database.
-//  * @param {Object} orderData - The data of the order to create.
-//  * @param {number} accountIDFromToken - The ID of the account placing the order.
-//  * @returns {Promise<Object>} The ID of the newly created order and any associated certificates.
-//  */
-// async function createOrder(orderData, accountIDFromToken) {
-//   let pool;
-//   let transaction;
-
-//   try {
-//     if (!orderData) {
-//       throw new Error("Order data is required.");
-//     }
-
-//     pool = await connectToDatabase();
-//     transaction = new sql.Transaction(pool);
-//     await transaction.begin();
-
-//     const request = new sql.Request(transaction);
-
-//     // Check and throw error if inventory is 0
-//     switch (orderData.ProductType) {
-//       case "Diamond":
-//         await checkInventory("DiamondID", orderData.DiamondID, "Diamond", request);
-//         await checkDuplicateOrderDetail("DiamondID", orderData.DiamondID, request);
-//         break;
-//       case "Bridal":
-//         await checkInventory("BridalID", orderData.BridalID, "Bridal", request);
-//         break;
-//       case "DiamondTimepieces":
-//         await checkInventory("DiamondTimepiecesID", orderData.DiamondTimepiecesID, "DiamondTimepieces", request);
-//         break;
-//       case "DiamondRings":
-//         await checkInventory("DiamondRingsID", orderData.DiamondRingsID, "DiamondRings", request);
-//         break;
-//       default:
-//         throw new Error("Invalid product type specified.");
-//     }
-
-//     const orderDate = new Date();
-//     const totalQuantity = orderData.Quantity || 1;
-//     const totalPrice = orderData.TotalPrice || 0;
-
-//     const orderQuery = `
-//       INSERT INTO Orders (AccountID, OrderDate, Quantity, OrderStatus, TotalPrice)
-//       VALUES (@AccountID, @OrderDate, @Quantity, @OrderStatus, @TotalPrice);
-
-//       SELECT SCOPE_IDENTITY() AS OrderID;
-//     `;
-
-//     const orderResult = await request
-//       .input("AccountID", sql.Int, accountIDFromToken)
-//       .input("OrderDate", sql.Date, orderDate)
-//       .input("Quantity", sql.Int, totalQuantity)
-//       .input("OrderStatus", sql.VarChar(50), "Pending")
-//       .input("TotalPrice", sql.Decimal(10, 2), totalPrice)
-//       .query(orderQuery);
-
-//     const orderID = orderResult.recordset[0].OrderID;
-
-//     const orderDetailsQuery = `
-//       INSERT INTO OrderDetails (OrderID, DeliveryAddress, DiamondID, BridalID, DiamondRingsID, DiamondTimepiecesID, AttachedAccessories, Shipping, OrderStatus)
-//       VALUES (@OrderID, @DeliveryAddress, @DiamondID, @BridalID, @DiamondRingsID, @DiamondTimepiecesID, @AttachedAccessories, @Shipping, @OrderStatusID1);
-
-//       SELECT SCOPE_IDENTITY() AS OrderDetailID;
-//     `;
-
-//     const orderDetailsResult = await request
-//       .input("OrderID", sql.Int, orderID)
-//       .input("DeliveryAddress", sql.NVarChar(100), orderData.DeliveryAddress || "")
-//       .input("DiamondID", sql.Int, orderData.DiamondID || null)
-//       .input("BridalID", sql.Int, orderData.BridalID || null)
-//       .input("DiamondRingsID", sql.Int, orderData.DiamondRingsID || null)
-//       .input("DiamondTimepiecesID", sql.Int, orderData.DiamondTimepiecesID || null)
-//       .input("AttachedAccessories", sql.VarChar(100), "Box, Certificate")
-//       .input("Shipping", sql.VarChar(100), orderData.Shipping || "Standard")
-//       .input("OrderStatusID1", sql.VarChar(50), "Pending")
-//       .query(orderDetailsQuery);
-
-//     const orderDetailID = orderDetailsResult.recordset[0].OrderDetailID;
-
-//     const warrantyDescriptions = `Warranty for Diamond (${orderData.ProductID}) Date ${new Date().getFullYear()}-06-01 (+10 years valid from warranty) Full Warranty No scratches or damages Free annual inspection Brand New`;
-
-//     await generateWarrantyReceipt(
-//       orderDetailID,
-//       warrantyDescriptions,
-//       new Date(),
-//       "Nha van hoa sinh vien",
-//       new Date(new Date().getFullYear() + 10, 5, 1),
-//       "Normal Warranty",
-//       "No scratches or damages",
-//       "Free annual inspection",
-//       "Brand New",
-//       transaction
-//     );
-
-//     if (orderData.VoucherID) {
-//       await applyVoucher(orderData.VoucherID, totalPrice, orderID, transaction);
-//     }
-
-//     await saveTransaction(orderID, totalPrice, orderData.PaymentMethod, transaction);
-
-//     // Update inventory based on ordered product
-//     await updateInventory(orderData, transaction);
-
-//     await transaction.commit();
-
-//     return {
-//       success: true,
-//       message: "Order created successfully",
-//       orderID: orderID,
-//       productType: orderData.ProductType,
-//       productID: orderData.ProductID,
-//       diamondId: orderData.DiamondID,
-//       bridalId: orderData.BridalID,
-//       diamondRingsId: orderData.DiamondRingsID,
-//       diamondTimepiecesId: orderData.DiamondTimepiecesID,
-//     };
-//   } catch (error) {
-//     if (transaction) {
-//       await transaction.rollback();
-//     }
-//     throw new Error(`Error creating order: ${error.message}`);
-//   } finally {
-//     if (pool) {
-//       await disconnectFromDatabase();
-//     }
-//   }
-// }
-
-// async function checkInventory(idField, productID, tableName, request) {
-//   const query = `
-//     SELECT Inventory FROM ${tableName} WHERE ${idField} = @ProductID;
-//   `;
-
-//   const result = await request
-//     .input("ProductID", sql.Int, productID)
-//     .query(query);
-
-//   if (result.recordset.length === 0) {
-//     throw new Error(`Product with ID ${productID} not found in ${tableName}.`);
-//   }
-
-//   const inventory = result.recordset[0].Inventory;
-
-//   if (inventory <= 0) {
-//     throw new Error(`Out of stock. Cannot create order for ${tableName} with ${idField} ${productID}.`);
-//   }
-// }
-
-// async function checkDuplicateOrderDetail(idField, productID, request) {
-//   const query = `
-//     SELECT COUNT(*) AS count FROM OrderDetails WHERE ${idField} = @ProductIDDuplicate;
-//   `;
-
-//   const result = await request
-//     .input("ProductIDDuplicate", sql.Int, productID)
-//     .query(query);
-
-//   if (result.recordset[0].count > 0) {
-//     throw new Error(`Duplicate order detail found for ${idField} with ID ${productID}.`);
-//   }
-// }
-
-// // async function updateInventory(orderData, transaction) {
-// //   try {
-// //     const request = new sql.Request(transaction);
-// //     const productType = orderData.ProductType;
-// //     const quantity = orderData.Quantity;
-
-// //     let updateQuery = "";
-// //     let productIDField = "";
-// //     let productIDValue = null;
-
-// //     switch (productType) {
-// //       case "Diamond":
-// //         updateQuery = `
-// //           UPDATE Diamond
-// //           SET Inventory = Inventory - @Quantity
-// //           WHERE DiamondID = @ProductIDUpdate;
-// //         `;
-// //         productIDField = "DiamondID";
-// //         productIDValue = orderData.DiamondID;
-// //         break;
-// //       case "Bridal":
-// //         updateQuery = `
-// //           UPDATE Bridal
-// //           SET Inventory = Inventory - @Quantity
-// //           WHERE BridalID = @ProductIDUpdate;
-// //         `;
-// //         productIDField = "BridalID";
-// //         productIDValue = orderData.BridalID;
-// //         break;
-// //       case "DiamondTimepieces":
-// //         updateQuery = `
-// //           UPDATE DiamondTimepieces
-// //           SET Inventory = Inventory - @Quantity
-// //           WHERE DiamondTimepiecesID = @ProductIDUpdate;
-// //         `;
-// //         productIDField = "DiamondTimepiecesID";
-// //         productIDValue = orderData.DiamondTimepiecesID;
-// //         break;
-// //       case "DiamondRings":
-// //         updateQuery = `
-// //           UPDATE DiamondRings
-// //           SET Inventory = Inventory - @Quantity
-// //           WHERE DiamondRingsID = @ProductIDUpdate;
-// //         `;
-// //         productIDField = "DiamondRingsID";
-// //         productIDValue = orderData.DiamondRingsID;
-// //         break;
-// //       default:
-// //         throw new Error("Invalid product type specified for inventory update.");
-// //     }
-
-// //     await request
-// //       .input("Quantity", sql.Int, quantity)
-// //       .input("ProductIDUpdate", sql.Int, productIDValue)
-// //       .query(updateQuery);
-// //   } catch (error) {
-// //     throw new Error(`Error updating inventory: ${error.message}`);
-// //   }
-// // }
-// async function updateInventory(orderData, transaction) {
-//   try {
-//     const request = new sql.Request(transaction);
-
-//     // Loop through each product type and update its inventory
-//     for (const productType of Object.keys(orderData)) {
-//       switch (productType) {
-//         case "Diamond":
-//           await updateInventoryForProduct("Diamond", "DiamondID", orderData.DiamondID, orderData.Diamond.Quantity, request);
-//           break;
-//         case "Bridal":
-//           await updateInventoryForProduct("Bridal", "BridalID", orderData.BridalID, orderData.Bridal.Quantity, request);
-//           break;
-//         case "DiamondTimepieces":
-//           await updateInventoryForProduct("DiamondTimepieces", "DiamondTimepiecesID", orderData.DiamondTimepiecesID, orderData.DiamondTimepieces.Quantity, request);
-//           break;
-//         case "DiamondRings":
-//           await updateInventoryForProduct("DiamondRings", "DiamondRingsID", orderData.DiamondRingsID, orderData.DiamondRings.Quantity, request);
-//           break;
-//         default:
-//           throw new Error("Invalid product type specified for inventory update.");
-//       }
-//     }
-//   } catch (error) {
-//     throw new Error(`Error updating inventory: ${error.message}`);
-//   }
-// }
-
-// async function updateInventoryForProduct(tableName, idField, productID, quantity, request) {
-//   const updateQuery = `
-//     UPDATE ${tableName}
-//     SET Inventory = Inventory - @Quantity
-//     WHERE ${idField} = @ProductID;
-//   `;
-
-//   await request
-//     .input("Quantity", sql.Int, quantity)
-//     .input("ProductID", sql.Int, productID)
-//     .query(updateQuery);
-// }
-
-
-
-// async function applyVoucher(voucherID, totalPrice, orderID, transaction) {
-//   try {
-//     const request = new sql.Request(transaction);
-
-//     const voucherQuery = `
-//       SELECT * FROM Voucher WHERE VoucherID = @VoucherID;
-//     `;
-//     const voucherResult = await request
-//       .input("VoucherID", sql.Int, voucherID)
-//       .query(voucherQuery);
-
-//     if (!voucherResult.recordset.length) {
-//       throw new Error("Voucher not found");
-//     }
-
-//     const voucherDetails = voucherResult.recordset[0];
-//     const discountAmount = (voucherDetails.DiscountPercentage / 100) * totalPrice;
-
-//     const applyVoucherQuery = `
-//       INSERT INTO VoucherListInOrder (OrderID, VoucherID)
-//       VALUES (@OrderID, @VoucherIDApply);
-//     `;
-//     await request
-//       .input("OrderID", sql.Int, orderID)
-//       .input("VoucherIDApply", sql.Int, voucherID)
-//       .query(applyVoucherQuery);
-
-//     const updateVoucherQuery = `
-//       UPDATE Voucher
-//       SET UsagedQuantity = UsagedQuantity + 1,
-//           TotalQuantity = TotalQuantity - 1
-//       WHERE VoucherID = @VoucherIDUpdate AND TotalQuantity > 0;
-//     `;
-//     await request
-//       .input("VoucherIDUpdate", sql.Int, voucherID)
-//       .query(updateVoucherQuery);
-//   } catch (error) {
-//     throw new Error(`Error applying voucher: ${error.message}`);
-//   }
-// }
-
-// async function saveTransaction(orderID, totalPrice, paymentMethod, transaction) {
-//   try {
-//     const request = new sql.Request(transaction);
-
-//     const transactionQuery = `
-//       INSERT INTO Transactions (OrderID, PaymentAmount, Method, PaymentDate)
-//       VALUES (@OrderID, @PaymentAmount, @Method, GETDATE());
-//     `;
-
-//     await request
-//       .input("OrderID", sql.Int, orderID)
-//       .input("PaymentAmount", sql.Decimal(10, 2), totalPrice)
-//       .input("Method", sql.VarChar(50), paymentMethod)
-//       .query(transactionQuery);
-//   } catch (error) {
-//     throw new Error(`Error saving transaction: ${error.message}`);
-//   }
-// }
-
-// async function generateWarrantyReceipt(
-//   orderDetailID,
-//   descriptions,
-//   date,
-//   placeToBuy,
-//   period,
-//   warrantyType,
-//   warrantyConditions,
-//   accompaniedService,
-//   condition,
-//   transaction
-// ) {
-//   try {
-//     const request = new sql.Request(transaction);
-
-//     const reportNo = generateReportNo(); // Generate a unique report number
-
-//     const insertWarrantyReceiptQuery = `
-//       INSERT INTO WarrantyReceipt (ReportNo, Descriptions, Date, PlaceToBuy, Period, WarrantyType, WarrantyConditions, AccompaniedService, Condition, OrderDetailID)
-//       VALUES (@ReportNo, @Descriptions, @Date, @PlaceToBuy, @Period, @WarrantyType, @WarrantyConditions, @AccompaniedService, @Condition, @OrderDetailID);
-//     `;
-
-//     await request
-//       .input("ReportNo", sql.VarChar(20), reportNo)
-//       .input("Descriptions", sql.VarChar(255), descriptions)
-//       .input("Date", sql.Date, date)
-//       .input("PlaceToBuy", sql.VarChar(255), placeToBuy)
-//       .input("Period", sql.Date, period)
-//       .input("WarrantyType", sql.VarChar(150), warrantyType)
-//       .input("WarrantyConditions", sql.VarChar(255), warrantyConditions)
-//       .input("AccompaniedService", sql.VarChar(255), accompaniedService)
-//       .input("Condition", sql.VarChar(150), condition)
-//       .input("OrderDetailID", sql.Int, orderDetailID)
-//       .query(insertWarrantyReceiptQuery);
-
-//     const updateOrderDetailsQuery = `
-//       UPDATE OrderDetails
-//       SET ReportNo = @ReportNoUpdate
-//       WHERE OrderDetailID = @OrderDetailIDUpdate;
-//     `;
-
-//     await request
-//       .input("ReportNoUpdate", sql.VarChar(20), reportNo)
-//       .input("OrderDetailIDUpdate", sql.Int, orderDetailID)
-//       .query(updateOrderDetailsQuery);
-//   } catch (error) {
-//     throw new Error(`Error generating warranty receipt: ${error.message}`);
-//   }
-// }
-
-// // Generate a unique report number
-// function generateReportNo() {
-//   return `WR-${Date.now()}`;
-// }
-
-// async function getVoucherDetails(voucherID) {
-//   try {
-//     const pool = await connectToDatabase();
-//     const request = new sql.Request(pool);
-
-//     const query = `
-//       SELECT * FROM Voucher WHERE VoucherID = @VoucherID;
-//     `;
-
-//     const result = await request
-//       .input("VoucherID", sql.Int, voucherID)
-//       .query(query);
-
-//     return result.recordset[0];
-//   } catch (error) {
-//     throw new Error(`Error retrieving voucher details: ${error.message}`);
-//   } finally {
-//     await disconnectFromDatabase();
-//   }
-// }
-
-// module.exports = {
-//   createOrder,
-// };
