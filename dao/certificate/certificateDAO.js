@@ -53,6 +53,18 @@ class certificateDAO {
             throw new Error('Error fetching certificate: ' + err.message);
         }
     }
+
+    async  getCertificate() {
+        try {
+          let pool = await sql.connect(config);
+          let products = await pool.request().query("SELECT * FROM Certificate");
+          return products.recordsets;
+        } catch (error) {
+          console.error("SQL error", error);
+          throw error;
+        }
+      }
+
     async updatecert (ReportNumber, cert){
         try {
             let pool = await sql.connect(config);

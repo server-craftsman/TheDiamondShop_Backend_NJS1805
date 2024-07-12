@@ -14,15 +14,16 @@ router.put('/add', async (req, res) => {
         res.status(500).send(error.message);
     }
 });
-router.get('/lookup', async (req, res) => {
-    try {
-        const reportNO = req.body;
-        const cert = await certificateDAO.getcertByNum();
-        res.json(cert);
-    } catch (error) {
-        res.status(500).send(error.message);
-    }
-});
+router.get("/lookup", async (req, response) => {
+    certificateDAO.getCertificate()
+      .then((result) => {
+        response.json(result[0]);
+      })
+      .catch((error) => {
+        console.error("Error fetching certificate: ", error);
+        response.status(500).send("Error fetching certificate");
+      });
+  });
 router.get('/:GIAReportNumber', async (req, res) => {
     const GIAReportNumber = req.params.GIAReportNumber;
   
