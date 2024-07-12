@@ -927,7 +927,28 @@ const getRingsById = async (id, callback) => {
 
     // Prepare the query
     let result = await pool.request().input("id", sql.Int, id)
-      .query(`SELECT * FROM DiamondRings dr
+      .query(`SELECT dr.DiamondRingsID,
+	dr.RingStyle,
+	dr.NameRings,
+	dr.Category,
+	dr.BrandName,
+	dr.CenterGemstone,
+	dr.CenterGemstoneShape,
+	dr.Width,
+	dr.CenterDiamondDimension,
+	dr.Weight,
+	dr.GemstoneWeight,
+	dr.CenterDiamondColor,
+	dr.CenterDiamondClarity,
+	dr.CenterDiamondCaratWeight,
+	dr.Gender,
+  dr.Price,
+	dr.Fluorescence,
+	dr.Description,
+	dr.ImageRings,
+	dr.ImageBrand,
+	dr.Inventory
+	FROM DiamondRings dr
 LEFT JOIN ListRingMaterial lrm ON dr.DiamondRingsID = lrm.DiamondRingsID
 LEFT JOIN RingsMaterial rm ON lrm.MaterialID = rm.MaterialID
 LEFT JOIN DiamondRingsSize drs ON dr.DiamondRingsID = drs.DiamondRingsID
