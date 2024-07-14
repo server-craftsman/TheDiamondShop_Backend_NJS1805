@@ -206,6 +206,8 @@ async function createOrder(orderData, accountID) {
     async function insertOrderDetails(productIDs, idField, productType) {
       for (let i = 0; i < productIDs.length; i++) {
         const productID = productIDs[i];
+        const size = sizes[i] || null;
+        const material = materials[i] || null;
 
         const orderDetailsQuery = `
             INSERT INTO OrderDetails (OrderID, DeliveryAddress, ${idField}, AttachedAccessories, Shipping, OrderStatus, MaterialID, RingSizeID)
@@ -235,12 +237,12 @@ async function createOrder(orderData, accountID) {
         requestDetails.input(
           "MaterialID",
           sql.Int,
-          orderData.MaterialID || null
+          material
         );
         requestDetails.input(
           "RingSizeID",
           sql.Int,
-          orderData.RingSizeID || null
+          size
         );
 
         const orderDetailsResult = await requestDetails.query(
@@ -275,14 +277,19 @@ async function createOrder(orderData, accountID) {
     }
 
     if (orderData.BridalID && orderData.BridalID.length > 0) {
-      await insertOrderDetails(orderData.BridalID, "BridalID", "Bridal");
+      await insertOrderDetails(orderData.BridalID, "BridalID", "Bridal",
+        orderData.BridalsSizes,
+          orderData.BridalsMaterials
+      );
     }
 
     if (orderData.DiamondRingsID && orderData.DiamondRingsID.length > 0) {
       await insertOrderDetails(
         orderData.DiamondRingsID,
         "DiamondRingsID",
-        "DiamondRings"
+        "DiamondRings",
+        orderData.DiamondRingSizes,
+          orderData.DiamondRingsMaterials
       );
     }
 
