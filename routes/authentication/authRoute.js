@@ -107,7 +107,7 @@ router.post("/login", async (req, res) => {
     const token = jwt.sign(
       { accountId: user.AccountID, roleName: user.RoleName },
       JWT_SECRET,
-      { expiresIn: "1h" }
+      { expiresIn: "10h" }
     );
 
     await userDao.saveToken(user.AccountID, token);

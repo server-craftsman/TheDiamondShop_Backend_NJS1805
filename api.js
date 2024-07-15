@@ -19,6 +19,7 @@ const eventRouter = require("./routes/event/eventRouter");
 const certificateRouter = require("./routes/certificate/certificateRouter");
 const warrantyRoute = require("./routes/warranty/warrantyRoute");
 const paypalRouter = require("./routes/authentication/paypalRoute");
+const manageAccount = require("./routes/userFeatures/testManageAccountRoute");
 
 //---order danger---
 const orderTest = require("./routes/orders/orderTest");
@@ -94,7 +95,7 @@ sql
 
     // Use Routes
     app.use("/auth", authRoute, forgotPassword);
-    app.use("/features", userFeatures);
+    app.use("/features", userFeatures, manageAccount);
     app.use("/products", manageProduct);
     app.use("/orders", orderTest);
     app.use("/", voucherRoute);
