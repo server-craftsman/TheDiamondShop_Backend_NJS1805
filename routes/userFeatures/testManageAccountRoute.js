@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const { createAccount } = require('../../dao/userFeatures/testManageAccount');
+const verifyToken = require("../../dao/authentication/middleWare")
+const { createAccount, updateAccountInfo } = require('../../dao/userFeatures/testManageAccount');
 
 router.post('/add-account', async (req, res) => {
   const accountData = req.body;
@@ -16,5 +17,20 @@ router.post('/add-account', async (req, res) => {
     res.status(500).json({ error: 'Failed to create account' });
   }
 });
+
+
+router.put('/update', verifyToken, async (req, res) => {
+    const accountData = req.body;
+    
+    console.log(`Request received at: PUT /auth/update - ${new Date().toLocaleString()}`);
+    
+    try {
+      const result = await updateAccountInfo(accountData, req.userId);
+      res.status(200).json(result);
+    } catch (err) {
+      console.error('Failed to update account information:', err);
+      res.status(500).json({ error: 'Failed to update account information' });
+    }
+  });
 
 module.exports = router;
