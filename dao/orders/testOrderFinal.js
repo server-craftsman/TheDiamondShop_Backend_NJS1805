@@ -212,9 +212,9 @@ async function createOrder(orderData, accountID) {
         const material = materials[i] || null;
 
         const orderDetailsQuery = `
-            INSERT INTO OrderDetails (OrderID, DeliveryAddress, ${idField}, AttachedAccessories, Shipping, OrderStatus, MaterialID, RingSizeID)
+            INSERT INTO OrderDetails (OrderID, DeliveryAddress, ${idField}, AttachedAccessories, Shipping, OrderStatus, MaterialID, RingSizeID, FirstName, LastName, PhoneNumber)
             OUTPUT inserted.OrderDetailID
-            VALUES (@OrderID, @DeliveryAddress, @ProductID, @AttachedAccessories, @Shipping, @OrderStatus, @MaterialID, @RingSizeID);
+            VALUES (@OrderID, @DeliveryAddress, @ProductID, @AttachedAccessories, @Shipping, @OrderStatus, @MaterialID, @RingSizeID, @FirstName, @LastName, @PhoneNumber);
           `;
         const requestDetails = new sql.Request(transaction);
 
@@ -238,6 +238,9 @@ async function createOrder(orderData, accountID) {
         requestDetails.input("OrderStatus", sql.VarChar(50), "Pending");
         requestDetails.input("MaterialID", sql.Int, material);
         requestDetails.input("RingSizeID", sql.Int, size);
+        requestDetails.input("FirstName", sql.NVarChar(50), orderData.FirstName || "");
+        requestDetails.input("LastName", sql.NVarChar(50), orderData.LastName || "");
+        requestDetails.input("PhoneNumber", sql.NVarChar(15), orderData.PhoneNumber || "");
 
         const orderDetailsResult = await requestDetails.query(orderDetailsQuery);
         const orderDetailID = orderDetailsResult.recordset[0].OrderDetailID;
