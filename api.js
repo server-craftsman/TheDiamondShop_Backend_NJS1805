@@ -51,7 +51,7 @@ app.use(
 const corsOptions = {
   origin: "http://localhost:5173", // Update with your actual frontend URL
   methods: ["GET", "POST", "PUT", "DELETE"],
-  allowedHeaders: ["Content-Type", "Authorization"],
+  allowedHeaders: ["Content-Type", "Authorization", "x-requested-with"],
   credentials: true, // Allow cookies to be sent with the request
   optionsSuccessStatus: 200, // Legacy browser compatibility
 };
