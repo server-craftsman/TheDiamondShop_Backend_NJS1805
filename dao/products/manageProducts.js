@@ -1009,27 +1009,50 @@ async function getRingDetailByMaterialAndSize(material, ringSize) {
 }
 
 //----Bridal Material / Size-----//
-async function getBridalByMaterial() {
-  try {
-    let pool = await sql.connect(config);
-    let products = await pool.request().query("SELECT * FROM Material");
-    return products.recordsets;
-  } catch (error) {
-    console.error("SQL error", error);
-    throw error;
-  }
-}
+// async function getBridalByMaterial() {
+//   try {
+//     let pool = await sql.connect(config);
+//     let products = await pool.request().query("SELECT * FROM Material");
+//     return products.recordsets;
+//   } catch (error) {
+//     console.error("SQL error", error);
+//     throw error;
+//   }
+// }
 
-async function getBridalByRingSize() {
+// async function getBridalByRingSize() {
+//   try {
+//     let pool = await sql.connect(config);
+//     let products = await pool.request().query("SELECT * FROM RingSize");
+//     return products.recordsets;
+//   } catch (error) {
+//     console.error("SQL error", error);
+//     throw error;
+//   }
+// }
+
+
+// Function to fetch material details
+const getMaterialDetails = async () => {
   try {
-    let pool = await sql.connect(config);
-    let products = await pool.request().query("SELECT * FROM RingSize");
-    return products.recordsets;
+    const pool = await sql.connect(config);
+    const result = await pool.request().query("SELECT * FROM RingsMaterial"); // Replace with your actual query
+    return result.recordset;
   } catch (error) {
-    console.error("SQL error", error);
-    throw error;
+    throw new Error(`Error fetching material details: ${error.message}`);
   }
-}
+};
+
+// Function to fetch ring size details
+const getRingSizeDetails = async () => {
+  try {
+    const pool = await sql.connect(config);
+    const result = await pool.request().query("SELECT * FROM ListRingsSize"); // Replace with your actual query
+    return result.recordset;
+  } catch (error) {
+    throw new Error(`Error fetching ring size details: ${error.message}`);
+  }
+};
 
 
 
@@ -1058,6 +1081,6 @@ module.exports = {
   getRingsById,
   getTimepiecesById,
   getRingDetailByMaterialAndSize,
-  getBridalByMaterial,
-  getBridalByRingSize
+  getMaterialDetails,
+  getRingSizeDetails,
 };

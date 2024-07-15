@@ -24,6 +24,7 @@ router.get("/lookup", async (req, response) => {
         response.status(500).send("Error fetching certificate");
       });
   });
+  
 router.get('/:GIAReportNumber', async (req, res) => {
     const GIAReportNumber = req.params.GIAReportNumber;
   

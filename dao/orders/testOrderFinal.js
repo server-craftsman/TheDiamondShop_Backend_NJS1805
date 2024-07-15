@@ -171,7 +171,9 @@ async function createOrder(orderData, accountID) {
     if (
       !orderData ||
       (!Array.isArray(orderData.BridalID) &&
-        !Array.isArray(orderData.DiamondRingsID) && !Array.isArray(orderData.DiamondID) && !Array.isArray(orderData.DiamondTimepiecesID))
+        !Array.isArray(orderData.DiamondRingsID) &&
+        !Array.isArray(orderData.DiamondID) &&
+        !Array.isArray(orderData.DiamondTimepiecesID))
     ) {
       throw new Error(
         "Order data is invalid. At least one of BridalID or DiamondRingsID or DiamondID or DiamondTimepiecesID must be an array."
@@ -203,9 +205,11 @@ async function createOrder(orderData, accountID) {
     const orderResult = await requestOrder.query(orderQuery);
     const orderID = orderResult.recordset[0].OrderID;
 
-    async function insertOrderDetails(productIDs, idField, productType) {
+    async function insertOrderDetails(productIDs, idField, productType, sizes = [], materials = []) {
       for (let i = 0; i < productIDs.length; i++) {
         const productID = productIDs[i];
+        const size = sizes[i] || null;
+        const material = materials[i] || null;
 
         const orderDetailsQuery = `
             INSERT INTO OrderDetails (OrderID, DeliveryAddress, ${idField}, AttachedAccessories, Shipping, OrderStatus, MaterialID, RingSizeID)
@@ -232,20 +236,10 @@ async function createOrder(orderData, accountID) {
           orderData.Shipping || "Standard"
         );
         requestDetails.input("OrderStatus", sql.VarChar(50), "Pending");
-        requestDetails.input(
-          "MaterialID",
-          sql.Int,
-          orderData.MaterialID || null
-        );
-        requestDetails.input(
-          "RingSizeID",
-          sql.Int,
-          orderData.RingSizeID || null
-        );
+        requestDetails.input("MaterialID", sql.Int, material);
+        requestDetails.input("RingSizeID", sql.Int, size);
 
-        const orderDetailsResult = await requestDetails.query(
-          orderDetailsQuery
-        );
+        const orderDetailsResult = await requestDetails.query(orderDetailsQuery);
         const orderDetailID = orderDetailsResult.recordset[0].OrderDetailID;
 
         await generateWarrantyReceipt(
@@ -275,33 +269,36 @@ async function createOrder(orderData, accountID) {
     }
 
     if (orderData.BridalID && orderData.BridalID.length > 0) {
-      await insertOrderDetails(orderData.BridalID, "BridalID", "Bridal");
+      await insertOrderDetails(orderData.BridalID, "BridalID", "Bridal",
+          orderData.BridalsSizes,
+        orderData.BridalsMaterials
+      );
     }
 
     if (orderData.DiamondRingsID && orderData.DiamondRingsID.length > 0) {
       await insertOrderDetails(
         orderData.DiamondRingsID,
         "DiamondRingsID",
-        "DiamondRings"
+        "DiamondRings",
+        orderData.DiamondRingSizes,
+        orderData.DiamondRingsMaterials
       );
     }
 
     if (orderData.DiamondID && orderData.DiamondID.length > 0) {
-        await insertOrderDetails(
-          orderData.DiamondID,
-          "DiamondID",
-          "Diamond"
-        );
-      }
+      await insertOrderDetails(orderData.DiamondID, "DiamondID", "Diamond");
+    }
 
-      if (orderData.DiamondTimepiecesID && orderData.DiamondTimepiecesID.length > 0) {
-        await insertOrderDetails(
-          orderData.DiamondTimepiecesID,
-          "DiamondTimepiecesID",
-          "DiamondTimepieces"
-        );
-      }
-  
+    if (
+      orderData.DiamondTimepiecesID &&
+      orderData.DiamondTimepiecesID.length > 0
+    ) {
+      await insertOrderDetails(
+        orderData.DiamondTimepiecesID,
+        "DiamondTimepiecesID",
+        "DiamondTimepieces"
+      );
+    }
 
     await updateInventory(orderData, transaction);
 

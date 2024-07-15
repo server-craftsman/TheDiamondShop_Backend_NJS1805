@@ -6,6 +6,7 @@ module.exports = {
   password: process.env.DB_PASSWORD,
   server: process.env.DB_SERVER,
   database: process.env.DB_DATABASE,
+  // requestTimeout: 30000, 
   options: {
     trustServerCertificate: true,
     encrypt: true, // If you're using Azure

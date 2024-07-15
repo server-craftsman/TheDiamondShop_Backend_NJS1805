@@ -25,8 +25,8 @@ const {
   getRingsById,
   getTimepiecesById,
   getRingDetailByMaterialAndSize,
-  getBridalByMaterial,
-  getBridalByRingSize
+  getMaterialDetails,
+  getRingSizeDetails
 } = require("../../dao/products/manageProducts");
 const { auth } = require("googleapis/build/src/apis/abusiveexperiencereport");
 
@@ -563,26 +563,48 @@ router.get("/ring-detail", async (req, res) => {
 });
 
 //-----Bridal and Ring------//
-router.get("/material-details", async (req, response) => {
-  getBridalByMaterial()
-    .then((result) => {
-      response.json(result[0]);
-    })
-    .catch((error) => {
-      console.error("Error fetching bridal and ring of materials: ", error);
-      response.status(500).send("Error fetching bridal and ring materials");
-    });
+// router.get("/material-details", async (req, response) => {
+//   getBridalByMaterial()
+//     .then((result) => {
+//       response.json(result[0]);
+//     })
+//     .catch((error) => {
+//       console.error("Error fetching bridal and ring of materials: ", error);
+//       response.status(500).send("Error fetching bridal and ring materials");
+//     });
+// });
+
+// router.get("/ring-size-details", async (req, response) => {
+//   getBridalByRingSize()
+//     .then((result) => {
+//       response.json(result[0]);
+//     })
+//     .catch((error) => {
+//       console.error("Error fetching bridal ring sizes: ", error);
+//       response.status(500).send("Error fetching bridal ring sizes");
+//     });
+// });
+
+// Route to fetch material details
+router.get("/material-details", async (req, res) => {
+  try {
+    const materials = await getMaterialDetails();
+    res.json(materials);
+  } catch (error) {
+    console.error("Error fetching material details:", error);
+    res.status(500).send("Error fetching material details");
+  }
 });
 
-router.get("/ring-size-details", async (req, response) => {
-  getBridalByRingSize()
-    .then((result) => {
-      response.json(result[0]);
-    })
-    .catch((error) => {
-      console.error("Error fetching bridal ring sizes: ", error);
-      response.status(500).send("Error fetching bridal ring sizes");
-    });
+// Route to fetch ring size details
+router.get("/ring-size-details", async (req, res) => {
+  try {
+    const ringSizes = await getRingSizeDetails();
+    res.json(ringSizes);
+  } catch (error) {
+    console.error("Error fetching ring size details:", error);
+    res.status(500).send("Error fetching ring size details");
+  }
 });
 
 module.exports = router;

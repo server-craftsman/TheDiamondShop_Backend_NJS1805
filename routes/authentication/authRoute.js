@@ -16,6 +16,8 @@ const {viewWarrantyRequestManager, viewWarrantyRequestSale} = require ("../../da
 const {viewAccount,
   viewAccoundByEmail} = require ("../../dao/authentication/userDAO");
 
+  const register = require("../../dao/authentication/testRegister");
+
 // Generate and save token
 router.post('/generate-token', async (req, res) => {
   const { accountId } = req.body;
@@ -141,66 +143,83 @@ router.post("/logout", async (req, res) => {
 });
 
 // Register route
+// router.post('/register', async (req, res) => {
+//   const {
+//     firstName,
+//     lastName,
+//     gender,
+//     birthday,
+//     password,
+//     email,
+//     phoneNumber,
+//     address,
+//     country,
+//     city,
+//     province,
+//     postalCode,
+//   } = req.body;
+
+//   if (!firstName || !lastName || !email || !password) {
+//     return res.status(400).send('First name, last name, email, and password are required');
+//   }
+
+//   try {
+//     await userDao.registerUser({
+//       firstName,
+//       lastName,
+//       gender,
+//       birthday,
+//       password,
+//       email,
+//       phoneNumber,
+//       address,
+//       country,
+//       city,
+//       province,
+//       postalCode,
+//     });
+
+//     const user = await userDao.getUserByEmailAndPassword(email, password);
+//     if (user.length === 0) {
+//       return res.status(404).json({ message: 'User not found after registration' });
+//     }
+
+//     const newUser = user[0];
+//     const token = jwt.sign(
+//       { accountId: newUser.AccountID, roleName: newUser.RoleName },
+//       JWT_SECRET,
+//       { expiresIn: '1h' }
+//     );
+
+//     await userDao.saveToken(newUser.AccountID, token);
+
+//     res.status(201).json({ message: 'User registered successfully', token });
+//   } catch (err) {
+//     console.error('Registration error:', err.message);
+//     if (err.message === 'Email already exists') {
+//       return res.status(409).send('Email already exists');
+//     }
+//     if (err.message === 'Password must be at least 8 characters long') {
+//       return res.status(400).send('Password must be at least 8 characters long');
+//     }
+//     res.status(500).send('Internal server error');
+//   }
+// });
+
+// test Debug
+// POST /register endpoint for guest registration
+// POST route to register a guest
 router.post('/register', async (req, res) => {
-  const {
-    firstName,
-    lastName,
-    gender,
-    birthday,
-    password,
-    email,
-    phoneNumber,
-    address,
-    country,
-    city,
-    province,
-    postalCode,
-  } = req.body;
-
-  if (!firstName || !lastName || !email || !password) {
-    return res.status(400).send('First name, last name, email, and password are required');
-  }
-
+  const guestData = req.body;
+  
+  console.log(`Request received at: POST /auth/register - ${new Date().toLocaleString()}`);
+  
   try {
-    await userDao.registerUser({
-      firstName,
-      lastName,
-      gender,
-      birthday,
-      password,
-      email,
-      phoneNumber,
-      address,
-      country,
-      city,
-      province,
-      postalCode,
-    });
-
-    const user = await userDao.getUserByEmailAndPassword(email, password);
-    if (user.length === 0) {
-      return res.status(404).json({ message: 'User not found after registration' });
-    }
-
-    const newUser = user[0];
-    const token = jwt.sign(
-      { accountId: newUser.AccountID, roleName: newUser.RoleName },
-      JWT_SECRET,
-      { expiresIn: '1h' }
-    );
-
-    await userDao.saveToken(newUser.AccountID, token);
-
-    res.status(201).json({ message: 'User registered successfully', token });
+    const token = await register.insertNewRoleAndGuestAccount(guestData);
+    res.status(200).json({ token });
   } catch (err) {
-    console.error('Registration error:', err.message);
-    if (err.message === 'Email already exists') {
-      return res.status(409).send('Email already exists');
-    }
-    if (err.message === 'Password must be at least 8 characters long') {
-      return res.status(400).send('Password must be at least 8 characters long');
-    }
-    res.status(500).send('Internal server error');
+    console.error('Failed to register guest:', err);
+    res.status(500).json({ error: 'Failed to register guest' });
   }
 });
 
