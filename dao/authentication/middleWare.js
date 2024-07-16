@@ -50,4 +50,22 @@ const verifyToken = (req, res, next) => {
   }
 };
 
+// function verifyToken(req, res, next) {
+//   const token = req.headers['authorization'];
+
+//   if (!token) {
+//     return res.status(403).json({ error: 'No token provided.' });
+//   }
+
+//   jwt.verify(token.split(' ')[1], config.secret, (err, decoded) => {
+//     if (err) {
+//       return res.status(500).json({ error: 'Failed to authenticate token.' });
+//     }
+
+//     req.accountId = decoded.id; // Assuming the token contains the account ID as `id`
+//     console.log(`Decoded AccountID: ${req.accountId}`); // Log the AccountID
+//     next();
+//   });
+// }
+
 module.exports = verifyToken;

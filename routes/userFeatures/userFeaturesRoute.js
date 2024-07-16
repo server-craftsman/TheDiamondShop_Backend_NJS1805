@@ -238,7 +238,7 @@ router.get('/view-profile', verifyToken, async (req, res) => {
 router.get('/view-transaction', verifyToken, async (req, res) => {
   try {
     // Get user information by decoding token to get accountId
-    const accountId = req.user.accountId; 
+    const accountId = req.user.accountId;
     const transaction = await getTransaction(accountId);
 
     // Check if user exists
@@ -277,7 +277,7 @@ router.put("/update-account", verifyToken, (req, res) => {
 
 // View Order
 router.get("/view-order", async (req, response) => {
-  getAccessOrder().then(result =>{
+  getAccessOrder().then(result => {
     response.json(result[0]);
   }).catch(error => {
     console.error('Error fetching order: ', error);
@@ -287,7 +287,7 @@ router.get("/view-order", async (req, response) => {
 
 //View Order Status Confirm
 router.get("/view-order-confirm", async (req, response) => {
-  getAccessOrderConfirm().then(result =>{
+  getAccessOrderConfirm().then(result => {
     response.json(result[0]);
   }).catch(error => {
     console.error('Error fetching order: ', error);
@@ -297,7 +297,7 @@ router.get("/view-order-confirm", async (req, response) => {
 
 // View Delivery Completed
 router.get("/view-order-conpleted", async (req, response) => {
-  getDeliveryCompleted().then(result =>{
+  getDeliveryCompleted().then(result => {
     response.json(result[0]);
   }).catch(error => {
     console.error('Error fetching order: ', error);
@@ -307,7 +307,7 @@ router.get("/view-order-conpleted", async (req, response) => {
 
 // View Delivery Shipping
 router.get("/view-order-shipping", async (req, response) => {
-  getDeliveryShipping().then(result =>{
+  getDeliveryShipping().then(result => {
     response.json(result[0]);
   }).catch(error => {
     console.error('Error fetching order: ', error);
@@ -404,8 +404,9 @@ router.put("/update-order-status-sale", async (req, res) => {
       await transaction.rollback();
     }
 
-    res.status(500).send({     message: "Internal Server Error"
-  });
+    res.status(500).send({
+      message: "Internal Server Error"
+    });
   } finally {
     if (poolConnect) {
       poolConnect.release();
@@ -414,8 +415,8 @@ router.put("/update-order-status-sale", async (req, res) => {
 });
 
 //Route to get orderstatus of delivery
-router.get("/orderstatus-delivery", async(req, response) => {
-  getOrderStatusOfDelivery().then(result =>{
+router.get("/orderstatus-delivery", async (req, response) => {
+  getOrderStatusOfDelivery().then(result => {
     response.json(result[0]);
   }).catch(error => {
     console.error('Error fetching order: ', error);
@@ -426,11 +427,11 @@ router.get("/orderstatus-delivery", async(req, response) => {
 router.put("/update-order-status-delivery", async (req, res) => {
   const { orderID, orderStatus } = req.body;
   const validStatuses = ["Shipping", "Completed"];
-  
+
   if (!validStatuses.includes(orderStatus)) {
     return res.status(400).send({ message: "Order status must be Shipping and Completed" });
   }
-  
+
   let poolConnect;
   let transaction;
 
@@ -542,12 +543,34 @@ router.get("/feedback/:productType/:productID", verifyToken, async (req, res) =>
 
 // Route to create a new feedback
 
-router.post('/feedback', async (req, res) => {
+// POST /feedback endpoint
+// POST /feedback endpoint
+router.post('/feedback', verifyToken, async (req, res) => {
   const { orderDetailID, feedbackContent, rating, diamondId, bridalId, diamondRingsId, diamondTimepiecesId } = req.body;
 
   try {
-    const result = await createFeedback(orderDetailID, feedbackContent, rating, diamondId, bridalId, diamondRingsId, diamondTimepiecesId);
-    
+    const accountID = req.user.accountId; // Extract accountID from the decoded token
+    console.log(`Received AccountID: ${accountID}`); // Log the AccountID
+
+    // Connect to SQL Server
+    let pool = await sql.connect(dbConfig);
+    const query = `
+      INSERT INTO Feedback (AccountID, OrderDetailID, Content, Rating, DiamondID, BridalID, DiamondRingsID, DiamondTimepiecesID)
+      VALUES (@accountID, @orderDetailID, @feedbackContent, @rating, @diamondId, @bridalId, @diamondRingsId, @diamondTimepiecesId);
+    `;
+
+    const request = pool.request()
+      .input('accountID', sql.Int, accountID)
+      .input('orderDetailID', sql.Int, orderDetailID)
+      .input('feedbackContent', sql.NVarChar, feedbackContent || null)
+      .input('rating', sql.Int, rating)
+      .input('diamondId', sql.Int, diamondId || null)
+      .input('bridalId', sql.Int, bridalId || null)
+      .input('diamondRingsId', sql.Int, diamondRingsId || null)
+      .input('diamondTimepiecesId', sql.Int, diamondTimepiecesId || null);
+
+    const result = await request.query(query);
+
     if (result.rowsAffected > 0) {
       res.status(201).json({ message: 'Feedback created successfully.' });
     } else {
@@ -558,7 +581,6 @@ router.post('/feedback', async (req, res) => {
     res.status(500).json({ error: 'Failed to create feedback. Please try again later.' });
   }
 });
-
 
 
 // Update feedback endpoint

@@ -398,15 +398,16 @@ async function getAllFeedbacksByProductID(productType, productID) {
 }
 
 // Function to create a new feedback
-async function createFeedback(orderDetailID, feedbackContent, rating, diamondId, bridalId, diamondRingsId, diamondTimepiecesId) {
+async function createFeedback(accountID, orderDetailID, feedbackContent, rating, diamondId, bridalId, diamondRingsId, diamondTimepiecesId) {
   try {
     let pool = await sql.connect(config);
     const query = `
-      INSERT INTO Feedback (OrderDetailID, Content, Rating, DiamondID, BridalID, DiamondRingsID, DiamondTimepiecesID)
-      VALUES (@orderDetailID, @feedbackContent, @rating, @diamondId, @bridalId, @diamondRingsId, @diamondTimepiecesId);
+      INSERT INTO Feedback (AccountID, OrderDetailID, Content, Rating, DiamondID, BridalID, DiamondRingsID, DiamondTimepiecesID)
+      VALUES (@accountID, @orderDetailID, @feedbackContent, @rating, @diamondId, @bridalId, @diamondRingsId, @diamondTimepiecesId);
     `;
 
     const request = pool.request()
+      .input('accountID', sql.Int, accountID)
       .input('orderDetailID', sql.Int, orderDetailID)
       .input('feedbackContent', sql.NVarChar, feedbackContent || null)
       .input('rating', sql.Int, rating)
@@ -421,6 +422,7 @@ async function createFeedback(orderDetailID, feedbackContent, rating, diamondId,
     throw new Error(`Error creating feedback: ${error.message}`);
   }
 }
+
 
 
 
