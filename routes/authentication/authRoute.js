@@ -8,32 +8,50 @@ require("dotenv").config();
 const sql = require("mssql");
 const dbConfig = require("../../config/dbconfig");
 const JWT_SECRET = process.env.JWT_SECRET;
-const userDao = require('../../dao/authentication/userDAO');
-const verifyToken = require('../../dao/authentication/middleWare');
+const userDao = require("../../dao/authentication/userDAO");
+const verifyToken = require("../../dao/authentication/middleWare");
 const session = require("express-session");
 const cookieParser = require("cookie-parser");
-const {viewWarrantyRequestManager, viewWarrantyRequestSale} = require ("../../dao/authentication/authenticationDAO");
-const {viewAccount,
-  viewAccoundByEmail} = require ("../../dao/authentication/userDAO");
+const {
+  viewWarrantyRequestManager,
+  viewWarrantyRequestSale,
+} = require("../../dao/authentication/authenticationDAO");
+const {
+  viewAccount,
+  viewAccoundByEmail,
+} = require("../../dao/authentication/userDAO");
 
-  const register = require("../../dao/authentication/testRegister");
-
+const register = require("../../dao/authentication/testRegister");
+let pool = null;
+const config = require("../../config/dbconfig");
+async function connectDB() {
+  try {
+    if (!pool) {
+      pool = await sql.connect(config);
+    }
+  } catch (err) {
+    console.error("Error connecting to database:", err.message);
+    throw err;
+  }
+}
 // Generate and save token
-router.post('/generate-token', async (req, res) => {
+router.post("/generate-token", async (req, res) => {
   const { accountId } = req.body;
 
   try {
     const user = await userDao.getUserById(accountId);
     if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+      return res.status(404).json({ message: "User not found" });
     }
 
-    const token = jwt.sign({ id: user.AccountID }, JWT_SECRET, { expiresIn: '1h' });
+    const token = jwt.sign({ id: user.AccountID }, JWT_SECRET, {
+      expiresIn: "1h",
+    });
     await userDao.saveToken(user.AccountID, token);
 
     res.status(200).json({ token });
   } catch (error) {
-    res.status(500).json({ message: 'Database error' });
+    res.status(500).json({ message: "Database error" });
   }
 });
 
@@ -56,11 +74,10 @@ router.post('/generate-token', async (req, res) => {
 //   }
 // });
 
-
-router.post('/verify-token', verifyToken, (req, res) => {
-  const token = req.headers.authorization?.split(' ')[1]; // Extract token from Authorization header
+router.post("/verify-token", verifyToken, (req, res) => {
+  const token = req.headers.authorization?.split(" ")[1]; // Extract token from Authorization header
   if (!token) {
-    return res.status(401).json({ message: 'Unauthorized: No token provided' });
+    return res.status(401).json({ message: "Unauthorized: No token provided" });
   }
 
   try {
@@ -72,12 +89,14 @@ router.post('/verify-token', verifyToken, (req, res) => {
     // Replace this with your own logic to store session or user data
     req.session.userId = userId;
 
-    res.status(200).json({ message: 'Token verified successfully', user: decoded });
+    res
+      .status(200)
+      .json({ message: "Token verified successfully", user: decoded });
   } catch (error) {
-    console.error('Error verifying token:', error.message);
-    res.status(401).json({ message: 'Unauthorized: Invalid token' });
+    console.error("Error verifying token:", error.message);
+    res.status(401).json({ message: "Unauthorized: Invalid token" });
   }
-})
+});
 
 // Login route
 router.post("/login", async (req, res) => {
@@ -209,23 +228,69 @@ router.post("/logout", async (req, res) => {
 // test Debug
 // POST /register endpoint for guest registration
 // POST route to register a guest
-router.post('/register', async (req, res) => {
+router.post("/register", async (req, res) => {
   const guestData = req.body;
-  
-  console.log(`Request received at: POST /auth/register - ${new Date().toLocaleString()}`);
-  
+
+  console.log(
+    `Request received at: POST /auth/register - ${new Date().toLocaleString()}`
+  );
+
+  //   try {
+  //     const token = await register.insertNewRoleAndGuestAccount(guestData);
+  //     res.status(200).json({ token });
+  //   } catch (err) {
+  //     console.error('Failed to register guest:', err);
+  //     if (err.message === 'Email already exists.') {
+  //       // Respond with a 400 status code if the email already exists
+  //       res.status(400).json({ error: 'Email already exists.' });
+  //     } else {
+  //       // Respond with a 500 status code for other errors
+  //       res.status(500).json({ error: 'Failed to register guest' });
+  //     }
+  //   }
+  // });
   try {
-    const token = await register.insertNewRoleAndGuestAccount(guestData);
-    res.status(200).json({ token });
+    await connectDB();
+
+    // Start a transaction
+    let transaction = await new sql.Transaction(pool);
+    await transaction.begin();
+
+    // Check if the email already exists in Account table
+    let checkEmailQuery = `
+      SELECT COUNT(*) AS CountEmail
+      FROM Account
+      WHERE Email = @Email
+    `;
+    let emailCheckResult = await transaction
+      .request()
+      .input("Email", sql.VarChar(100), guestData.Email)
+      .query(checkEmailQuery);
+
+    if (emailCheckResult.recordset[0].CountEmail > 0) {
+      await transaction.rollback();
+      console.error("Email already exists.");
+      return res.status(400).json({ error: "Email already exists." });
+    }
+
+    // If email is unique, proceed to insert new role and guest account
+    try {
+      const token = await register.insertNewRoleAndGuestAccount(transaction, guestData);
+      await transaction.commit();
+      res.status(200).json({ token });
+    } catch (err) {
+      await transaction.rollback();
+      console.error("Failed to register guest:", err);
+      res.status(500).json({ error: "Failed to register guest" });
+    }
   } catch (err) {
-    console.error('Failed to register guest:', err);
-    res.status(500).json({ error: 'Failed to register guest' });
+    console.error("Failed to register guest:", err);
+    res.status(500).json({ error: "Failed to register guest" });
   }
 });
 
-
 // Create Account route
-router.post('/createAccount', async (req, res) => {
+router.post("/createAccount", async (req, res) => {
   const {
     firstName,
     lastName,
@@ -240,61 +305,72 @@ router.post('/createAccount', async (req, res) => {
     province,
     postalCode,
     roleName,
-    transportation
+    transportation,
   } = req.body;
 
   if (!firstName || !lastName || !email || !password || !roleName) {
-    return res.status(400).send('First name, last name, email, password, role name, and transportation are required');
+    return res
+      .status(400)
+      .send(
+        "First name, last name, email, password, role name, and transportation are required"
+      );
   }
 
   try {
-    await createUser({
-      firstName,
-      lastName,
-      gender,
-      birthday,
-      password,
-      email,
-      phoneNumber,
-      address,
-      country,
-      city,
-      province,
-      postalCode,
-    }, {
-      roleName,
-      transportation,
-    });
+    await createUser(
+      {
+        firstName,
+        lastName,
+        gender,
+        birthday,
+        password,
+        email,
+        phoneNumber,
+        address,
+        country,
+        city,
+        province,
+        postalCode,
+      },
+      {
+        roleName,
+        transportation,
+      }
+    );
 
     const user = await userDAO.getUserByEmailAndPassword(email, password);
     if (user.length === 0) {
-      return res.status(404).json({ message: 'User not found after registration' });
+      return res
+        .status(404)
+        .json({ message: "User not found after registration" });
     }
 
     const newUser = user[0];
     const token = jwt.sign(
       { accountId: newUser.AccountID, roleName: newUser.RoleName },
       JWT_SECRET,
-      { expiresIn: '1h' }
+      { expiresIn: "1h" }
     );
 
     await userDAO.saveToken(newUser.AccountID, token);
 
-    res.status(201).json({ message: 'User registered successfully', token });
+    res.status(201).json({ message: "User registered successfully", token });
   } catch (err) {
-    console.error('Registration error:', err.message);
-    if (err.message === 'Email already exists') {
-      return res.status(409).send('Email already exists');
+    console.error("Registration error:", err.message);
+    if (err.message === "Email already exists") {
+      return res.status(409).send("Email already exists");
     }
-    if (err.message === 'Password must be at least 8 characters long') {
-      return res.status(400).send('Password must be at least 8 characters long');
+    if (err.message === "Password must be at least 8 characters long") {
+      return res
+        .status(400)
+        .send("Password must be at least 8 characters long");
     }
-    res.status(500).send('Internal server error');
+    res.status(500).send("Internal server error");
   }
 });
 
 // GET history-order route
-router.get('/history-order', verifyToken, async (req, res) => {
+router.get("/history-order", verifyToken, async (req, res) => {
   const { accountId } = req.user;
 
   try {
@@ -311,30 +387,38 @@ router.get('/history-order', verifyToken, async (req, res) => {
       JOIN WarrantyReceipt w ON od.OrderDetailID = w.OrderDetailID
       WHERE a.AccountID = @AccountId
     `;
-    const result = await pool.request()
-      .input('AccountId', sql.Int, accountId)
+    const result = await pool
+      .request()
+      .input("AccountId", sql.Int, accountId)
       .query(query);
 
     if (result.recordset.length > 0) {
       res.status(200).json({
         status: true,
-        message: 'History orders found',
+        message: "History orders found",
         historyOrder: result.recordset,
       });
     } else {
       res.status(200).json({
         status: false,
-        message: 'No history orders found. Buy something luxurious to fill it up.',
+        message:
+          "No history orders found. Buy something luxurious to fill it up.",
       });
     }
   } catch (error) {
-    console.error('Error fetching history orders:', error.message);
-    res.status(500).json({ status: false, message: 'An error occurred', error: error.message });
+    console.error("Error fetching history orders:", error.message);
+    res
+      .status(500)
+      .json({
+        status: false,
+        message: "An error occurred",
+        error: error.message,
+      });
   }
 });
 
 // Route to fetch history orders by OrderID
-router.get('/history-order/:orderId', verifyToken, async (req, res) => {
+router.get("/history-order/:orderId", verifyToken, async (req, res) => {
   const { accountId } = req.user;
   const { orderId } = req.params; // Extract orderId from URL parameters
 
@@ -352,70 +436,84 @@ router.get('/history-order/:orderId', verifyToken, async (req, res) => {
       JOIN WarrantyReceipt w ON od.OrderDetailID = w.OrderDetailID
       WHERE o.OrderID = @OrderId AND a.AccountID = @AccountId
     `;
-    const result = await pool.request()
-      .input('OrderId', sql.Int, orderId)
-      .input('AccountId', sql.Int, accountId)
+    const result = await pool
+      .request()
+      .input("OrderId", sql.Int, orderId)
+      .input("AccountId", sql.Int, accountId)
       .query(query);
 
     if (result.recordset.length > 0) {
       res.status(200).json({
         status: true,
-        message: 'Order details found',
+        message: "Order details found",
         orderDetails: result.recordset[0], // Assuming only one order per ID, return the first record
       });
     } else {
       res.status(404).json({
         status: false,
-        message: 'Order not found',
+        message: "Order not found",
       });
     }
   } catch (error) {
-    console.error('Error fetching order details:', error.message);
-    res.status(500).json({ status: false, message: 'An error occurred', error: error.message });
+    console.error("Error fetching order details:", error.message);
+    res
+      .status(500)
+      .json({
+        status: false,
+        message: "An error occurred",
+        error: error.message,
+      });
   }
 });
 
 // Update request Warranty
-router.put('/update-warranty', verifyToken, async (req, res) => {
+router.put("/update-warranty", verifyToken, async (req, res) => {
   const { orderId } = req.body;
-  const requestWarranty = 'Request'; // Set RequestWarranty to 'Request'
+  const requestWarranty = "Request"; // Set RequestWarranty to 'Request'
 
   if (!orderId || !requestWarranty) {
-    return res.status(400).json({ message: 'orderId and RequestWarranty are required' });
+    return res
+      .status(400)
+      .json({ message: "orderId and RequestWarranty are required" });
   }
 
   try {
     const pool = await sql.connect(dbConfig);
-    const result = await pool.request()
-      .input('OrderId', sql.Int, orderId)
-      .input('RequestWarranty', sql.VarChar, requestWarranty)
-      .query('UPDATE OrderDetails SET RequestWarranty = @RequestWarranty WHERE OrderID = @OrderId');
+    const result = await pool
+      .request()
+      .input("OrderId", sql.Int, orderId)
+      .input("RequestWarranty", sql.VarChar, requestWarranty)
+      .query(
+        "UPDATE OrderDetails SET RequestWarranty = @RequestWarranty WHERE OrderID = @OrderId"
+      );
 
     if (result.rowsAffected[0] > 0) {
-      res.status(200).json({ message: 'Warranty request updated successfully' });
+      res
+        .status(200)
+        .json({ message: "Warranty request updated successfully" });
     } else {
-      res.status(404).json({ message: 'OrderId not found' });
+      res.status(404).json({ message: "OrderId not found" });
     }
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: "Server error" });
   }
 });
 
 //View request Warranty ("Manger")
-router.get('/view-warranty-manager', verifyToken, async (req, res) => {
+router.get("/view-warranty-manager", verifyToken, async (req, res) => {
   try {
     const results = await viewWarrantyRequestManager();
     if (results.length > 0) {
       res.status(200).json({
         status: true,
-        message: 'Warranty requests found',
+        message: "Warranty requests found",
         warrantyRequests: results[0],
       });
     } else {
       res.status(200).json({
         status: false,
-        message: 'No warranty requests found.',
+        message: "No warranty requests found.",
       });
     }
   } catch (error) {
@@ -425,52 +523,64 @@ router.get('/view-warranty-manager', verifyToken, async (req, res) => {
 });
 
 //Update request warranty ("Manger")
-router.put('/update-warranty-manager', verifyToken, async (req, res) => {
+router.put("/update-warranty-manager", verifyToken, async (req, res) => {
   const { orderId, requestWarranty } = req.body;
   const validStatuses = ["Assign", "Processing", "Approved", "Refused"];
 
   // Debug log to inspect the received value
 
   if (!orderId || !requestWarranty) {
-    return res.status(400).json({ message: 'orderId and requestWarranty are required' });
+    return res
+      .status(400)
+      .json({ message: "orderId and requestWarranty are required" });
   }
 
   if (!validStatuses.includes(requestWarranty)) {
-    return res.status(400).send({ message: 'Request Warranty must be Assign, Processing, Approved, or Refused' });
+    return res
+      .status(400)
+      .send({
+        message:
+          "Request Warranty must be Assign, Processing, Approved, or Refused",
+      });
   }
 
   try {
     const pool = await sql.connect(dbConfig);
-    const result = await pool.request()
-      .input('OrderId', sql.Int, orderId)
-      .input('RequestWarranty', sql.VarChar, requestWarranty)
-      .query('UPDATE OrderDetails SET RequestWarranty = @RequestWarranty WHERE OrderID = @OrderId');
+    const result = await pool
+      .request()
+      .input("OrderId", sql.Int, orderId)
+      .input("RequestWarranty", sql.VarChar, requestWarranty)
+      .query(
+        "UPDATE OrderDetails SET RequestWarranty = @RequestWarranty WHERE OrderID = @OrderId"
+      );
 
     if (result.rowsAffected[0] > 0) {
-      res.status(200).json({ message: 'Warranty request updated successfully' });
+      res
+        .status(200)
+        .json({ message: "Warranty request updated successfully" });
     } else {
-      res.status(404).json({ message: 'OrderId not found' });
+      res.status(404).json({ message: "OrderId not found" });
     }
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: "Server error" });
   }
 });
 
 //View request Warranty ("Sale")
-router.get('/view-warranty-sale', verifyToken, async (req, res) => {
+router.get("/view-warranty-sale", verifyToken, async (req, res) => {
   try {
     const results = await viewWarrantyRequestSale();
     if (results.length > 0) {
       res.status(200).json({
         status: true,
-        message: 'Warranty requests found',
+        message: "Warranty requests found",
         warrantyRequests: results[0],
       });
     } else {
       res.status(200).json({
         status: false,
-        message: 'No warranty requests found.',
+        message: "No warranty requests found.",
       });
     }
   } catch (error) {
@@ -480,33 +590,45 @@ router.get('/view-warranty-sale', verifyToken, async (req, res) => {
 });
 
 //Update request warranty ("Sale")
-router.put('/update-warranty-sale', verifyToken, async (req, res) => {
+router.put("/update-warranty-sale", verifyToken, async (req, res) => {
   const { orderId, requestWarranty } = req.body;
   const validStatuses = ["Processing", "Approved", "Refused"];
 
   if (!orderId || !requestWarranty) {
-    return res.status(400).json({ message: 'orderId and requestWarranty are required' });
+    return res
+      .status(400)
+      .json({ message: "orderId and requestWarranty are required" });
   }
 
   if (!validStatuses.includes(requestWarranty)) {
-    return res.status(400).send({ message: 'Request Warranty must be Assign, Processing, Approved, or Refused' });
+    return res
+      .status(400)
+      .send({
+        message:
+          "Request Warranty must be Assign, Processing, Approved, or Refused",
+      });
   }
 
   try {
     const pool = await sql.connect(dbConfig);
-    const result = await pool.request()
-      .input('OrderId', sql.Int, orderId)
-      .input('RequestWarranty', sql.VarChar, requestWarranty)
-      .query('UPDATE OrderDetails SET RequestWarranty = @RequestWarranty WHERE OrderID = @OrderId');
+    const result = await pool
+      .request()
+      .input("OrderId", sql.Int, orderId)
+      .input("RequestWarranty", sql.VarChar, requestWarranty)
+      .query(
+        "UPDATE OrderDetails SET RequestWarranty = @RequestWarranty WHERE OrderID = @OrderId"
+      );
 
     if (result.rowsAffected[0] > 0) {
-      res.status(200).json({ message: 'Warranty request updated successfully' });
+      res
+        .status(200)
+        .json({ message: "Warranty request updated successfully" });
     } else {
-      res.status(404).json({ message: 'OrderId not found' });
+      res.status(404).json({ message: "OrderId not found" });
     }
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: "Server error" });
   }
 });
 
@@ -585,16 +707,16 @@ router.put("/change-password", async (request, response) => {
 });
 
 //login google
-const bcrypt = require('bcrypt');
+const bcrypt = require("bcrypt");
 const saltRounds = 10;
 
 passport.use(
-  'customer-google',
+  "customer-google",
   new GoogleStrategy(
     {
       clientID: process.env.CLIENT_ID,
       clientSecret: process.env.CLIENT_SECRET,
-      callbackURL: 'http://localhost:8090/auth/google/customer/callback',
+      callbackURL: "http://localhost:8090/auth/google/customer/callback",
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
@@ -602,16 +724,25 @@ passport.use(
         const pool = await sql.connect(dbConfig);
 
         // Check if email is provided in the Google profile
-        const email = profile.emails && profile.emails.length > 0 ? profile.emails[0].value : null;
+        const email =
+          profile.emails && profile.emails.length > 0
+            ? profile.emails[0].value
+            : null;
         if (!email) {
-          return done(new Error('Email not provided by Google profile'));
+          return done(new Error("Email not provided by Google profile"));
         }
 
         // Check if the email already exists in the Account table
         const emailCheckQuery = `SELECT * FROM Account WHERE Email = @Email`;
-        const emailCheckResult = await pool.request().input('Email', sql.NVarChar, email).query(emailCheckQuery);
+        const emailCheckResult = await pool
+          .request()
+          .input("Email", sql.NVarChar, email)
+          .query(emailCheckQuery);
 
-        if (emailCheckResult.recordset && emailCheckResult.recordset.length > 0) {
+        if (
+          emailCheckResult.recordset &&
+          emailCheckResult.recordset.length > 0
+        ) {
           // Email already exists, return existing user details
           return done(null, emailCheckResult.recordset[0]);
         }
@@ -620,11 +751,17 @@ passport.use(
         let roleId = null;
         const insertRoleQuery = `INSERT INTO Roles (RoleName) VALUES ('Customer'); SELECT SCOPE_IDENTITY() AS RoleID;`;
         const insertRoleResult = await pool.request().query(insertRoleQuery);
-        if (insertRoleResult.recordset && insertRoleResult.recordset.length > 0) {
+        if (
+          insertRoleResult.recordset &&
+          insertRoleResult.recordset.length > 0
+        ) {
           roleId = insertRoleResult.recordset[0].RoleID;
         } else {
-          console.error('Failed to retrieve RoleID from Roles table:', insertRoleResult);
-          return done(new Error('Failed to retrieve RoleID from Roles table'));
+          console.error(
+            "Failed to retrieve RoleID from Roles table:",
+            insertRoleResult
+          );
+          return done(new Error("Failed to retrieve RoleID from Roles table"));
         }
 
         // Generate a random password and hash it
@@ -635,15 +772,19 @@ passport.use(
         const insertAccountQuery = `INSERT INTO Account (FirstName, LastName, Email, Password, RoleID) 
                                     OUTPUT INSERTED.AccountID
                                     VALUES (@FirstName, @LastName, @Email, @Password, @RoleID)`;
-        const insertAccountResult = await pool.request()
-          .input('FirstName', sql.NVarChar, profile.name.givenName)
-          .input('LastName', sql.NVarChar, profile.name.familyName)
-          .input('Email', sql.NVarChar, email)
-          .input('Password', sql.NVarChar, hashedPassword)
-          .input('RoleID', sql.Int, roleId)
+        const insertAccountResult = await pool
+          .request()
+          .input("FirstName", sql.NVarChar, profile.name.givenName)
+          .input("LastName", sql.NVarChar, profile.name.familyName)
+          .input("Email", sql.NVarChar, email)
+          .input("Password", sql.NVarChar, hashedPassword)
+          .input("RoleID", sql.Int, roleId)
           .query(insertAccountQuery);
 
-        if (insertAccountResult.recordset && insertAccountResult.recordset.length > 0) {
+        if (
+          insertAccountResult.recordset &&
+          insertAccountResult.recordset.length > 0
+        ) {
           // Return newly created customer
           return done(null, {
             AccountID: insertAccountResult.recordset[0].AccountID,
@@ -653,11 +794,11 @@ passport.use(
             RoleID: roleId,
           });
         } else {
-          console.error('Invalid insertAccountResult:', insertAccountResult);
-          return done(new Error('Failed to create new account'));
+          console.error("Invalid insertAccountResult:", insertAccountResult);
+          return done(new Error("Failed to create new account"));
         }
       } catch (error) {
-        console.error('Error during Google authentication:', error);
+        console.error("Error during Google authentication:", error);
         return done(error);
       }
     }
@@ -674,13 +815,15 @@ passport.deserializeUser(async (id, done) => {
     const pool = await sql.connect(dbConfig);
 
     const request = pool.request();
-    request.input('accountId', sql.Int, id);
-    const result = await request.query(`SELECT * FROM Account WHERE AccountID = @accountId`);
+    request.input("accountId", sql.Int, id);
+    const result = await request.query(
+      `SELECT * FROM Account WHERE AccountID = @accountId`
+    );
 
     if (result.recordset && result.recordset.length > 0) {
       done(null, result.recordset[0]);
     } else {
-      done(new Error('User not found'));
+      done(new Error("User not found"));
     }
   } catch (error) {
     done(error);
@@ -688,13 +831,16 @@ passport.deserializeUser(async (id, done) => {
 });
 
 // Google authentication route for customer
-router.get('/google/customer', passport.authenticate('customer-google', { scope: ['profile', 'email'] }));
+router.get(
+  "/google/customer",
+  passport.authenticate("customer-google", { scope: ["profile", "email"] })
+);
 
-const frontendHomepageURL = 'http://localhost:5173/';
+const frontendHomepageURL = "http://localhost:5173/";
 
 router.get(
-  '/google/customer/callback',
-  passport.authenticate('customer-google', { failureRedirect: '/login' }),
+  "/google/customer/callback",
+  passport.authenticate("customer-google", { failureRedirect: "/login" }),
   (req, res) => {
     // Redirect to the front-end homepage URL after successful authentication
     res.redirect(frontendHomepageURL);
@@ -702,19 +848,19 @@ router.get(
 );
 
 //View Account
-router.get('/account', verifyToken, async (req, res) => {
+router.get("/account", verifyToken, async (req, res) => {
   try {
     const result = await viewAccount();
     if (result.length > 0) {
       res.status(200).json({
         status: true,
-        message: 'Account details found',
+        message: "Account details found",
         account: result[0],
       });
     } else {
       res.status(200).json({
         status: false,
-        message: 'No account details found.',
+        message: "No account details found.",
       });
     }
   } catch (error) {
@@ -724,7 +870,7 @@ router.get('/account', verifyToken, async (req, res) => {
 });
 
 //View Account by Email
-router.get('/account/:email', verifyToken, async (req, res) => {
+router.get("/account/:email", verifyToken, async (req, res) => {
   const email = req.params.email;
 
   try {
@@ -732,13 +878,13 @@ router.get('/account/:email', verifyToken, async (req, res) => {
     if (result.length > 0) {
       res.status(200).json({
         status: true,
-        message: 'Account details found',
+        message: "Account details found",
         account: result[0],
       });
     } else {
       res.status(200).json({
         status: false,
-        message: 'No account details found.',
+        message: "No account details found.",
       });
     }
   } catch (error) {
