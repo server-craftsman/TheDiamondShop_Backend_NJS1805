@@ -58,7 +58,7 @@ async function insertNewRoleAndGuestAccount(guestData) {
         INSERT INTO Account (FirstName, LastName, Gender, Birthday, Password, Email, PhoneNumber, Address,
           Country, City, Province, PostalCode, RoleID, Status, Image, Token)
         VALUES (@FirstName, @LastName, @Gender, @Birthday, @Password, @Email, @PhoneNumber, @Address,
-          @Country, @City, @Province, @PostalCode, @RoleID, @Status, @Image, @Token);
+          @Country, @City, @Province, @PostalCode, @RoleID, 'Active', @Image, @Token);
       `;
 
       await transaction.request()
@@ -75,7 +75,7 @@ async function insertNewRoleAndGuestAccount(guestData) {
         .input('Province', sql.NVarChar(50), guestData.Province)
         .input('PostalCode', sql.VarChar(50), guestData.PostalCode)
         .input('RoleID', sql.Int, newRoleId)
-        .input('Status', sql.VarChar(50), guestData.Status)
+        // .input('Status', sql.VarChar(50), guestData.Status)
         .input('Image', sql.VarChar(sql.MAX), guestData.Image)
         .input('Token', sql.VarChar(sql.MAX), token)
         .query(insertAccountQuery);
