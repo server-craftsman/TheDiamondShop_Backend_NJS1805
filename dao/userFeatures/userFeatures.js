@@ -1,3 +1,4 @@
+const { config } = require("dotenv");
 const dbConfig = require("../../config/dbconfig");
 const sql = require("mssql");
 const poolPromise = new sql.ConnectionPool(dbConfig).connect();
@@ -397,98 +398,72 @@ async function getAllFeedbacksByProductID(productType, productID) {
 }
 
 // Function to create a new feedback
-async function createFeedback(
-  accountID,
-  diamondID,
-  bridalID,
-  diamondRingsID,
-  diamondTimepiecesID,
-  content,
-  rating
-) {
+async function createFeedback(orderDetailID, feedbackContent, rating, diamondId, bridalId, diamondRingsId, diamondTimepiecesId) {
   try {
-    const pool = await poolPromise;
+    let pool = await sql.connect(config);
     const query = `
-      INSERT INTO Feedback (AccountID, DiamondID, BridalID, DiamondRingsID, DiamondTimepiecesID, Content, Rating)
-      VALUES (@accountID, @diamondID, @bridalID, @diamondRingsID, @diamondTimepiecesID, @content, @rating)
+      INSERT INTO Feedback (OrderDetailID, Content, Rating, DiamondID, BridalID, DiamondRingsID, DiamondTimepiecesID)
+      VALUES (@orderDetailID, @feedbackContent, @rating, @diamondId, @bridalId, @diamondRingsId, @diamondTimepiecesId);
     `;
-    const result = await pool
-      .request()
-      .input("accountID", accountID)
-      .input("diamondID", diamondID)
-      .input("bridalID", bridalID)
-      .input("diamondRingsID", diamondRingsID)
-      .input("diamondTimepiecesID", diamondTimepiecesID)
-      .input("content", content)
-      .input("rating", rating)
-      .query(query);
 
-    return result.rowsAffected[0] === 1;
+    const request = pool.request()
+      .input('orderDetailID', sql.Int, orderDetailID)
+      .input('feedbackContent', sql.NVarChar, feedbackContent || null)
+      .input('rating', sql.Int, rating)
+      .input('diamondId', sql.Int, diamondId || null)
+      .input('bridalId', sql.Int, bridalId || null)
+      .input('diamondRingsId', sql.Int, diamondRingsId || null)
+      .input('diamondTimepiecesId', sql.Int, diamondTimepiecesId || null);
+
+    const result = await request.query(query);
+    return result;
   } catch (error) {
-    console.error("SQL error", error);
-    throw error;
+    throw new Error(`Error creating feedback: ${error.message}`);
   }
 }
 
-// Function to update a feedback by feedback ID
-async function updateFeedback(feedbackID, content, rating, roleName) {
+
+
+// Update feedback
+async function updateFeedback(feedbackID, feedbackContent, rating) {
   try {
-    const pool = await poolPromise;
+    let pool = await sql.connect(config);
     const query = `
       UPDATE Feedback
       SET Content = @content, Rating = @rating
-      WHERE FeebackID = @feedbackID
-      AND EXISTS (
-          SELECT 1 FROM Account a
-          JOIN Roles r ON a.RoleID = r.RoleID
-          WHERE a.AccountID = Feedback.AccountID
-          AND r.RoleName = 'Customer'
-      )
+      WHERE FeedbackID = @feedbackID;
     `;
-    const result = await pool
-      .request()
-      .input("feedbackID", feedbackID)
-      .input("content", content)
-      .input("rating", rating)
-      .input("roleName", roleName)
+
+    const result = await pool.request()
+      .input('feedbackID', sql.Int, feedbackID)
+      .input('content', sql.NVarChar, feedbackContent)
+      .input('rating', sql.Int, rating)
       .query(query);
 
-    return result.rowsAffected[0] === 1;
+    return result;
   } catch (error) {
-    console.error("SQL error", error);
-    throw error;
+    throw new Error(`Error updating feedback: ${error.message}`);
   }
 }
 
-// Function to delete a feedback by feedback ID
-async function deleteFeedback(feedbackID, roleName) {
+async function deleteFeedback(feedbackID) {
   try {
-    const pool = await sql.connect(dbConfig);
+    let pool = await sql.connect(config);
     const query = `
       DELETE FROM Feedback
-      WHERE FeedbackID = @feedbackID
-      AND (
-          @roleName = 'Manager' OR
-          EXISTS (
-              SELECT 1 FROM Account a
-              JOIN Roles r ON a.RoleID = r.RoleID
-              WHERE a.AccountID = Feedback.AccountID
-              AND r.RoleName = @roleName
-          )
-      )
+      WHERE FeedbackID = @feedbackID;
     `;
-    const result = await pool
-      .request()
-      .input("feedbackID", feedbackID)
-      .input("roleName", roleName)
+
+    const result = await pool.request()
+      .input('feedbackID', sql.Int, feedbackID)
       .query(query);
 
-    return result.rowsAffected[0] === 1;s
+    return result.rowsAffected;
   } catch (error) {
-    console.error("SQL Error:", error);
-    throw error; // Throwing the error for further handling
+    throw new Error(`Error deleting feedback: ${error.message}`);
   }
 }
+
 
 //=============================
 

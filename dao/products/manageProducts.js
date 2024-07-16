@@ -1036,7 +1036,7 @@ async function getRingDetailByMaterialAndSize(material, ringSize) {
 const getMaterialDetails = async () => {
   try {
     const pool = await sql.connect(config);
-    const result = await pool.request().query("SELECT * FROM RingsMaterial"); // Replace with your actual query
+    const result = await pool.request().query("SELECT * FROM Material"); // Replace with your actual query
     return result.recordset;
   } catch (error) {
     throw new Error(`Error fetching material details: ${error.message}`);
@@ -1047,7 +1047,7 @@ const getMaterialDetails = async () => {
 const getRingSizeDetails = async () => {
   try {
     const pool = await sql.connect(config);
-    const result = await pool.request().query("SELECT * FROM ListRingsSize"); // Replace with your actual query
+    const result = await pool.request().query("SELECT * FROM RingSize"); // Replace with your actual query
     return result.recordset;
   } catch (error) {
     throw new Error(`Error fetching ring size details: ${error.message}`);

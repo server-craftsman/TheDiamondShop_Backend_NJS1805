@@ -541,51 +541,60 @@ router.get("/feedback/:productType/:productID", verifyToken, async (req, res) =>
 });
 
 // Route to create a new feedback
+
 router.post('/feedback', async (req, res) => {
-  const { accountID, diamondID, bridalID, diamondRingsID, diamondTimepiecesID, content, rating } = req.body;
+  const { orderDetailID, feedbackContent, rating, diamondId, bridalId, diamondRingsId, diamondTimepiecesId } = req.body;
+
   try {
-    const success = await createFeedback(accountID, diamondID, bridalID, diamondRingsID, diamondTimepiecesID, content, rating);
-    if (success) {
-      res.sendStatus(201); // Created
+    const result = await createFeedback(orderDetailID, feedbackContent, rating, diamondId, bridalId, diamondRingsId, diamondTimepiecesId);
+    
+    if (result.rowsAffected > 0) {
+      res.status(201).json({ message: 'Feedback created successfully.' });
     } else {
-      res.sendStatus(500); // Internal Server Error
+      res.status(400).json({ error: 'Failed to create feedback.' });
     }
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('Error creating feedback:', error.message);
+    res.status(500).json({ error: 'Failed to create feedback. Please try again later.' });
   }
 });
 
-// Route to update a feedback by feedback ID
+
+
+// Update feedback endpoint
 router.put('/feedback/:feedbackID', async (req, res) => {
-  const { feedbackID } = req.params;
-  const { content, rating } = req.body;
+  const feedbackID = req.params.feedbackID;
+  const { feedbackContent, rating } = req.body;
+
   try {
-    const success = await updateFeedback(feedbackID, content, rating);
-    if (success) {
-      res.sendStatus(200); // OK
+    const result = await updateFeedback(feedbackID, feedbackContent, rating);
+
+    if (result.rowsAffected > 0) {
+      res.status(200).json({ message: 'Feedback updated successfully.' });
     } else {
-      res.sendStatus(403); // Forbidden if role doesn't match
+      res.status(404).json({ error: 'Feedback not found or could not be updated.' });
     }
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('Error updating feedback:', error.message);
+    res.status(500).json({ error: 'Failed to update feedback. Please try again later.' });
   }
 });
 
-// Route to delete feedback by ID
+// DELETE endpoint to delete existing feedback
 router.delete('/feedback/:feedbackID', async (req, res) => {
   const { feedbackID } = req.params;
-  const { roleName } = req.body; // roleName được truyền qua body từ client
 
   try {
-    const result = await deleteFeedback(feedbackID, roleName);
-    if (result) {
-      res.status(200).json({ success: true, message: 'Phản hồi đã được xóa thành công' });
+    const result = await deleteFeedback(feedbackID);
+
+    if (result > 0) {
+      res.status(200).json({ message: 'Feedback deleted successfully.' });
     } else {
-      res.status(404).json({ success: false, message: 'Không tìm thấy phản hồi hoặc bạn không có quyền xóa nó' });
+      res.status(404).json({ error: 'Feedback not found or failed to delete.' });
     }
   } catch (error) {
-    console.error('Lỗi khi xóa phản hồi:', error);
-    res.status(500).json({ success: false, message: 'Lỗi máy chủ nội bộ' });
+    console.error('Error deleting feedback:', error.message);
+    res.status(500).json({ error: 'Failed to delete feedback. Please try again later.' });
   }
 });
 
