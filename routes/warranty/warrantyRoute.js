@@ -9,6 +9,8 @@ const{
     createWarranty,
     updateWarranty,
     getWarrantyByReportNoOrderDetails,
+    viewWarrantyStatusProcessing,
+    viewWarrantyStatusCompleted,
 } = require("../../dao/warranty/warrantyDAO");
 const { route } = require('../products/productsRoute');
 
@@ -138,7 +140,7 @@ router.get('/view-details-warranty/:orderId', verifyToken, async (req, res) => {
         br.NameBridal, br.BridalStyle, br.Category,
         t.NameTimepieces, t.TimepiecesStyle, t.Collection, od.AttachedAccessories, 
         od.Shipping, w.ReportNo, od.DeliveryAddress, 
-        o.OrderStatus, o.TotalPrice, od.RequestWarranty
+        o.OrderStatus, o.TotalPrice, od.RequestWarranty, od.WarrantyStatus
       FROM Orders o 
       JOIN Account a ON o.AccountID = a.AccountID 
       JOIN OrderDetails od ON o.OrderID = od.OrderID 
@@ -174,4 +176,125 @@ router.get('/view-details-warranty/:orderId', verifyToken, async (req, res) => {
     res.status(500).json({ status: false, message: 'An error occurred', error: error.message });
   }
 });
+
+//Update Warranty Status Null => Processing
+router.put('/update-warrantystatus', verifyToken, async(req, res) => {
+  const { orderId, warrantyStatus } = req.body;
+  const validStatuses = ["Processing"];
+  if (!orderId || !warrantyStatus) {
+    return res
+      .status(400)
+      .json({ message: "orderId and warrantyStatus are required" });
+  }
+
+  if (!validStatuses.includes(warrantyStatus)) {
+    return res
+      .status(400)
+      .send({
+        message:
+          "Warranty Status must be Processing",
+      });
+  }
+  try {
+    const pool = await sql.connect(config);
+    const result = await pool
+    .request()
+    .input("OrderId", sql.Int, orderId)
+    .input("WarrantyStatus", sql.VarChar, warrantyStatus)
+    .query("UPDATE OrderDetails SET WarrantyStatus = @WarrantyStatus WHERE OrderID = @OrderId")
+    if (result.rowsAffected[0] > 0) {
+      res
+        .status(200)
+        .json({ message: "Warranty Status updated successfully" });
+    } else {
+      res.status(404).json({ message: "OrderId not found" });
+    }
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+//Update Warranty Status Processing => Completed
+router.put('/update-warrantystatus-Completed', verifyToken, async(req, res) => {
+  const { orderId, warrantyStatus } = req.body;
+  const validStatuses = ["Completed"];
+  if (!orderId || !warrantyStatus) {
+    return res
+      .status(400)
+      .json({ message: "orderId and warrantyStatus are required" });
+  }
+
+  if (!validStatuses.includes(warrantyStatus)) {
+    return res
+      .status(400)
+      .send({
+        message:
+          "Warranty Status must be Processing",
+      });
+  }
+  try {
+    const pool = await sql.connect(config);
+    const result = await pool
+    .request()
+    .input("OrderId", sql.Int, orderId)
+    .input("WarrantyStatus", sql.VarChar, warrantyStatus)
+    .query("UPDATE OrderDetails SET WarrantyStatus = @WarrantyStatus WHERE OrderID = @OrderId")
+    if (result.rowsAffected[0] > 0) {
+      res
+        .status(200)
+        .json({ message: "Warranty Status updated successfully" });
+    } else {
+      res.status(404).json({ message: "OrderId not found" });
+    }
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+//View Warranty Status ("Processing")
+router.get('/view-warrantystatus-processing', verifyToken, async(req, res) => {
+  try {
+    const results = await viewWarrantyStatusProcessing();
+    if (results.length > 0) {
+      res.status(200).json({
+        status: true,
+        message: "Warranty requests found",
+        warrantyRequests: results[0],
+      });
+    } else {
+      res.status(200).json({
+        status: false,
+        message: "No warranty requests found.",
+      });
+    }
+  } catch (error) {
+    console.error("Error fetching warranty requests:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+//View Warranty Status ("Completed")
+router.get('/view-warrantystatus-completed', verifyToken, async(req, res) => {
+  try {
+    const results = await viewWarrantyStatusCompleted();
+    if (results.length > 0) {
+      res.status(200).json({
+        status: true,
+        message: "Warranty requests found",
+        warrantyRequests: results[0],
+      });
+    } else {
+      res.status(200).json({
+        status: false,
+        message: "No warranty requests found.",
+      });
+    }
+  } catch (error) {
+    console.error("Error fetching warranty requests:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 module.exports = router;

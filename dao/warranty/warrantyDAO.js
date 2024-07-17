@@ -153,10 +153,77 @@ async function getWarrantyByReportNoOrderDetails(reportNo) {
         throw error;
     }
 }
+
+//View Warranty Status Proccessing
+async function viewWarrantyStatusProcessing() {
+    try{
+        let pool = await sql.connect(config)
+        let results = await pool
+        .request()
+        .query(`SELECT
+            o.OrderID,
+            od.FirstName,
+            od.LastName,
+            od.PhoneNumber,
+            o.OrderDate,
+            o.Quantity,
+            o.OrderStatus,
+            o.TotalPrice,
+            od.RequestWarranty,
+            od.WarrantyStatus,
+            od.AttachedAccessories,
+            od.Shipping,
+            od.DeliveryAddress
+            FROM
+                Orders o
+            JOIN
+                OrderDetails od ON o.OrderID = od.OrderID
+            WHERE od.WarrantyStatus IN ('Processing')
+            `);
+        return results.recordsets;
+    }catch (error) {
+        console.error("Connection SQL error:", error);
+        throw error;
+    }};
+
+//View Warranty Status ("Completed")
+async function viewWarrantyStatusCompleted() {
+    try{
+        let pool = await sql.connect(config)
+        let results = await pool
+        .request()
+        .query(`SELECT
+            o.OrderID,
+            od.FirstName,
+            od.LastName,
+            od.PhoneNumber,
+            o.OrderDate,
+            o.Quantity,
+            o.OrderStatus,
+            o.TotalPrice,
+            od.RequestWarranty,
+            od.WarrantyStatus,
+            od.AttachedAccessories,
+            od.Shipping,
+            od.DeliveryAddress
+            FROM
+                Orders o
+            JOIN
+                OrderDetails od ON o.OrderID = od.OrderID
+            WHERE od.WarrantyStatus IN ('Completed')
+            `);
+        return results.recordsets;
+    }catch (error) {
+        console.error("Connection SQL error:", error);
+        throw error;
+    }};
+
 module.exports = {
     getWarranty,
     getWarrantybyReportNo,
     createWarranty,
     updateWarranty,
     getWarrantyByReportNoOrderDetails,
+    viewWarrantyStatusProcessing,
+    viewWarrantyStatusCompleted,
 }

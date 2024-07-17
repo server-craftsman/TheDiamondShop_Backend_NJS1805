@@ -235,59 +235,53 @@ router.post("/register", async (req, res) => {
     `Request received at: POST /auth/register - ${new Date().toLocaleString()}`
   );
 
-  //   try {
-  //     const token = await register.insertNewRoleAndGuestAccount(guestData);
-  //     res.status(200).json({ token });
-  //   } catch (err) {
-  //     console.error('Failed to register guest:', err);
-  //     if (err.message === 'Email already exists.') {
-  //       // Respond with a 400 status code if the email already exists
-  //       res.status(400).json({ error: 'Email already exists.' });
-  //     } else {
-  //       // Respond with a 500 status code for other errors
-  //       res.status(500).json({ error: 'Failed to register guest' });
-  //     }
-  //   }
-  // });
-  try {
-    await connectDB();
-
-    // Start a transaction
-    let transaction = await new sql.Transaction(pool);
-    await transaction.begin();
-
-    // Check if the email already exists in Account table
-    let checkEmailQuery = `
-      SELECT COUNT(*) AS CountEmail
-      FROM Account
-      WHERE Email = @Email
-    `;
-    let emailCheckResult = await transaction
-      .request()
-      .input("Email", sql.VarChar(100), guestData.Email)
-      .query(checkEmailQuery);
-
-    if (emailCheckResult.recordset[0].CountEmail > 0) {
-      await transaction.rollback();
-      console.error("Email already exists.");
-      return res.status(400).json({ error: "Email already exists." });
-    }
-
-    // If email is unique, proceed to insert new role and guest account
     try {
-      const token = await register.insertNewRoleAndGuestAccount(transaction, guestData);
-      await transaction.commit();
+      const token = await register.insertNewRoleAndGuestAccount(guestData);
       res.status(200).json({ token });
     } catch (err) {
-      await transaction.rollback();
-      console.error("Failed to register guest:", err);
-      res.status(500).json({ error: "Failed to register guest" });
-    }
-  } catch (err) {
-    console.error("Failed to register guest:", err);
-    res.status(500).json({ error: "Failed to register guest" });
-  }
-});
+      console.error('Failed to register guest:', err);
+        res.status(500).json({ error: 'Failed to register guest' });
+      }
+    });
+//   try {
+//     await connectDB();
+
+//     // Start a transaction
+//     let transaction = await new sql.Transaction(pool);
+//     await transaction.begin();
+
+//     // Check if the email already exists in Account table
+//     let checkEmailQuery = `
+//       SELECT COUNT(*) AS CountEmail
+//       FROM Account
+//       WHERE Email = @Email
+//     `;
+//     let emailCheckResult = await transaction
+//       .request()
+//       .input("Email", sql.VarChar(100), guestData.Email)
+//       .query(checkEmailQuery);
+
+//     if (emailCheckResult.recordset[0].CountEmail > 0) {
+//       await transaction.rollback();
+//       console.error("Email already exists.");
+//       return res.status(400).json({ error: "Email already exists." });
+//     }
+
+//     // If email is unique, proceed to insert new role and guest account
+//     try {
+//       const token = await register.insertNewRoleAndGuestAccount(transaction, guestData);
+//       await transaction.commit();
+//       res.status(200).json({ token });
+//     } catch (err) {
+//       await transaction.rollback();
+//       console.error("Failed to register guest:", err);
+//       res.status(500).json({ error: "Failed to register guest" });
+//     }
+//   } catch (err) {
+//     console.error("Failed to register guest:", err);
+//     res.status(500).json({ error: "Failed to register guest" });
+//   }
+// });
 
 // Create Account route
 router.post("/createAccount", async (req, res) => {
