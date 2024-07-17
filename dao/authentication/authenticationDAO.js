@@ -27,8 +27,7 @@ async function viewWarrantyRequestManager() {
       .query(`
         SELECT 
           a.FirstName, a.LastName, a.Email, a.PhoneNumber, 
-          o.OrderID, o.OrderDate, o.Quantity, od.AttachedAccessories, 
-          od.Shipping, w.ReportNo, od.DeliveryAddress, 
+          o.OrderID, o.OrderDate, o.Quantity, 
           o.OrderStatus, o.TotalPrice, od.RequestWarranty
         FROM Orders o 
         JOIN Account a ON o.AccountID = a.AccountID 

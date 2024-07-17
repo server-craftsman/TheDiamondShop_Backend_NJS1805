@@ -90,30 +90,21 @@ router.put("/update-warranty", async (req, res) => {
           res.status(500).send("Internal server error");
         }
 })
-//Delete Warranty
-router.delete("/delete-warranty", async (req, res) => {
-    const { reportNo } = req.body;
-    
-    if (!reportNo) {
-        return res.status(400).send({ error: 'ReportNo is required' });
-    }
+// View Warranty by ReportNo of OrderDetails
+router.get('/view-warranty-orderdetails/:reportNo', verifyToken, async (req, res) => {
+  const reportNo = req.params.reportNo;
 
-    try {
-        let pool = await sql.connect(config);
-        let result = await pool
-            .request()
-            .input("ReportNo", sql.VarChar, reportNo)
-            .query("DELETE FROM WarrantyReceipt WHERE ReportNo = @ReportNo");
-        
-        if (result.rowsAffected[0] === 0) {
-            return res.status(404).send({ error: 'Warranty not found' });
-        }
-
-        res.status(200).send({ message: 'Warranty deleted successfully' });
-    } catch (err) {
-        console.error("Database query error:", err);
-        res.status(500).send({ error: 'Database query error' });
-    }
+  try {
+      const warranty = await getWarrantyByReportNoOrderDetails(reportNo);
+      if (warranty && warranty.length > 0) {
+          res.json(warranty);
+      } else {
+          res.status(404).send('Warranty not found');
+      }
+  } catch (err) {
+      console.error('Error fetching warranty:', err);
+      res.status(500).send('Internal Server Error');
+  }
 });
 
 // View Warranty by ReportNo of OrderDetails
@@ -134,53 +125,53 @@ router.get('/view-warranty-orderdetails/:reportNo', verifyToken, async (req, res
 });
 
 router.get('/view-details-warranty/:orderId', verifyToken, async (req, res) => {
-    const { orderId } = req.params;
-  
-    try {
-      const pool = await sql.connect(config);
-      const query = `
-        SELECT 
-          a.FirstName, a.LastName, a.Email, a.PhoneNumber, 
-          o.OrderID, o.OrderDate, o.Quantity,
-          d.StockNumber, d.Clarity, d.Color,
-          dr.RingStyle, dr.NameRings, dr.Category,
-          br.NameBridal, br.BridalStyle, br.Category,
-          t.NameTimepieces, t.TimepiecesStyle, t.Collection, od.AttachedAccessories, 
-          od.Shipping, w.ReportNo, od.DeliveryAddress, 
-          o.OrderStatus, o.TotalPrice, od.RequestWarranty
-        FROM Orders o 
-        JOIN Account a ON o.AccountID = a.AccountID 
-        JOIN OrderDetails od ON o.OrderID = od.OrderID 
-        JOIN WarrantyReceipt w ON od.OrderDetailID = w.OrderDetailID
-        JOIN
-            Diamond d ON od.DiamondID = d.DiamondID
-          LEFT JOIN
-            DiamondRings dr ON od.DiamondRingsID = dr.DiamondRingsID
-          LEFT JOIN
-            Bridal br ON od.BridalID = br.BridalID
-          LEFT JOIN
-            DiamondTimepieces t ON od.DiamondTimepiecesID = t.DiamondTimepiecesID
-        WHERE o.OrderID = @OrderId
-      `;
-      const result = await pool.request()
-        .input('OrderId', sql.Int, orderId)
-        .query(query);
-  
-      if (result.recordset.length > 0) {
-        res.status(200).json({
-          status: true,
-          message: 'Warranty Details found',
-          warrantyDetail: result.recordset,
-        });
-      } else {
-        res.status(200).json({
-          status: false,
-          message: 'No history orders found. Buy something luxurious to fill it up.',
-        });
-      }
-    } catch (error) {
-      console.error('Error fetching history orders:', error.message);
-      res.status(500).json({ status: false, message: 'An error occurred', error: error.message });
+  const { orderId } = req.params;
+
+  try {
+    const pool = await sql.connect(config);
+    const query = `
+      SELECT 
+        a.FirstName, a.LastName, a.Email, a.PhoneNumber, 
+        o.OrderID, o.OrderDate, o.Quantity,
+        d.StockNumber, d.Clarity, d.Color,
+        dr.RingStyle, dr.NameRings, dr.Category,
+        br.NameBridal, br.BridalStyle, br.Category,
+        t.NameTimepieces, t.TimepiecesStyle, t.Collection, od.AttachedAccessories, 
+        od.Shipping, w.ReportNo, od.DeliveryAddress, 
+        o.OrderStatus, o.TotalPrice, od.RequestWarranty
+      FROM Orders o 
+      JOIN Account a ON o.AccountID = a.AccountID 
+      JOIN OrderDetails od ON o.OrderID = od.OrderID 
+      JOIN WarrantyReceipt w ON od.OrderDetailID = w.OrderDetailID
+        LEFT JOIN
+          Diamond d ON od.DiamondID = d.DiamondID
+        LEFT JOIN
+          DiamondRings dr ON od.DiamondRingsID = dr.DiamondRingsID
+        LEFT JOIN
+          Bridal br ON od.BridalID = br.BridalID
+        LEFT JOIN
+          DiamondTimepieces t ON od.DiamondTimepiecesID = t.DiamondTimepiecesID
+      WHERE o.OrderID = @OrderId
+    `;
+    const result = await pool.request()
+      .input('OrderId', sql.Int, orderId)
+      .query(query);
+
+    if (result.recordsets.length > 0) {
+      res.status(200).json({
+        status: true,
+        message: 'Warranty Details found',
+        warrantyDetail: result.recordset,
+      });
+    } else {
+      res.status(200).json({
+        status: false,
+        message: 'No history orders found. Buy something luxurious to fill it up.',
+      });
     }
-  });
+  } catch (error) {
+    console.error('Error fetching history orders:', error.message);
+    res.status(500).json({ status: false, message: 'An error occurred', error: error.message });
+  }
+});
 module.exports = router;

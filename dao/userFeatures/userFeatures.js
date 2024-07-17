@@ -28,7 +28,7 @@ async function getAccessOrder() {
   try {
     let pool = await sql.connect(dbConfig);
     let order = await pool.request()
-    .query(`SELECT o.OrderID, o.Orderdate, a.Firstname, a.Lastname, o.Quantity, o.TotalPrice, o.OrderStatus 
+      .query(`SELECT o.OrderID, o.Orderdate, a.Firstname, a.Lastname, o.Quantity, o.TotalPrice, o.OrderStatus 
       FROM Orders o JOIN Account a ON o.AccountID = a.AccountID WHERE o.OrderStatus = 'Pending'`);
     return order.recordsets;
   } catch (error) {
@@ -190,11 +190,9 @@ const getOrderById = async (id, callback) => {
   try {
     // Establish the connection
     let pool = await sql.connect(dbConfig);
-    
+
     // Prepare the query
-    let result = await pool.request()
-      .input('id', sql.Int, id)
-      .query(`
+    let result = await pool.request().input("id", sql.Int, id).query(`
           SELECT
             o.OrderID,
             a.LastName,
@@ -205,6 +203,8 @@ const getOrderById = async (id, callback) => {
             dr.NameRings,
             br.NameBridal,
             t.NameTimepieces,
+			      lrs.RingSize,
+			      m.MaterialName,
             o.Quantity,
             o.OrderStatus,
             o.TotalPrice,
@@ -218,22 +218,26 @@ const getOrderById = async (id, callback) => {
             Account a ON o.AccountID = a.AccountID
           JOIN 
             OrderDetails od ON o.OrderID = od.OrderID
-          JOIN
-            Diamond d ON od.DiamondID = d.DiamondID
-          JOIN 
-           WarrantyReceipt w ON od.OrderDetailID = w.OrderDetailID 
+		      JOIN 
+           WarrantyReceipt w ON od.OrderDetailID = w.OrderDetailID
+          LEFT JOIN
+            Diamond d ON od.DiamondID = d.DiamondID 
           LEFT JOIN
             DiamondRings dr ON od.DiamondRingsID = dr.DiamondRingsID
           LEFT JOIN
             Bridal br ON od.BridalID = br.BridalID
           LEFT JOIN
             DiamondTimepieces t ON od.DiamondTimepiecesID = t.DiamondTimepiecesID
+			    LEFT JOIN
+			      ListRingsSize lrs ON od.RingSizeID = lrs.RingSizeID
+			    LEFT JOIN
+			      Material m ON od.MaterialID = m.MaterialID
           WHERE 
             o.OrderID = @id;
       `);
-    
+
     // Return the result
-    callback(null, result.recordset[0]);
+    callback(null, result.recordsets[0]);
   } catch (err) {
     callback(err, null);
   } finally {
