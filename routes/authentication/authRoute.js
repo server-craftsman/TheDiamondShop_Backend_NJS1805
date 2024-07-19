@@ -575,8 +575,6 @@ router.get("/history-order/:orderId", verifyToken, async (req, res) => {
 });
 
 
-
-
 router.put("/update-warranty", verifyToken, async (req, res) => {
   const { orderId } = req.body;
   const requestWarranty = "Request"; // Set RequestWarranty to 'Request'
