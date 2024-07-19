@@ -31,6 +31,8 @@ const adminRoute = require("./routes/admin-dashboard/adminRoute");
 const app = express();
 
 // Middleware
+app.use(bodyParser.json({ limit: '1024mb' })); // Increase payload size limit to 50MB
+app.use(bodyParser.urlencoded({ limit: '1024mb', extended: true })); // Increase URL-encoded payload size limit to 50MB
 app.use(express.json()); // Body parser for JSON
 app.use(express.urlencoded({ extended: true })); // Body parser for URL-encoded data
 app.use(cookieParser());
