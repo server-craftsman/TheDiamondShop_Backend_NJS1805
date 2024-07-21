@@ -3,7 +3,7 @@ const router = express.Router();
 const path = require('path');
 const dashboard =require('../../dao/admin-dashboard/dashboard')
 
-//test
+//test || tổng sổ lượng từng loại sản phẩm, số lượng bán ra tất cả sản phẩm, tổng doanh thu
 router.get('/dashboard', async (req, res) => {
     try {
       const data = await dashboard.getDashboardData();

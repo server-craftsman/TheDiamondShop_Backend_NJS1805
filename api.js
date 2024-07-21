@@ -31,9 +31,9 @@ const adminRoute = require("./routes/admin-dashboard/adminRoute");
 const app = express();
 
 // Middleware
-app.use(express.json()); // Body parser for JSON
-app.use(express.urlencoded({ extended: true })); // Body parser for URL-encoded data
-app.use(cookieParser());
+app.use(bodyParser.json({ limit: '1024mb' })); 
+app.use(bodyParser.urlencoded({ limit: '1024mb', extended: true }));
+app.use(express.urlencoded({ extended: true }));
 app.use(flash());
 
 // Session configuration
