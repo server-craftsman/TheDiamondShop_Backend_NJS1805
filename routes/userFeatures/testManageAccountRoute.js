@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const verifyToken = require("../../dao/authentication/middleWare")
-const { createAccount, updateAccountInfo } = require('../../dao/userFeatures/testManageAccount');
+const { createAccount, updateAccountInfo, createAccountWithRole } = require('../../dao/userFeatures/testManageAccount');
 
 router.post('/add-account', async (req, res) => {
   const accountData = req.body;
@@ -18,6 +18,20 @@ router.post('/add-account', async (req, res) => {
   }
 });
 
+router.post('/add-account-with-role', async (req, res) => {
+  const accountData = req.body;
+  const roleName = accountData.roleName || 'Customer'; // Default to 'Customer' if no roleName is provided
+  
+  console.log(`Request received at: POST /add-account-with-role - ${new Date().toLocaleString()}`);
+  
+  try {
+    const { token, newRoleId } = await createAccountWithRole(accountData, roleName);
+    res.status(200).json({ token, roleID: newRoleId });
+  } catch (err) {
+    console.error('Failed to create account:', err);
+    res.status(500).json({ error: 'Failed to create account' });
+  }
+});
 
 router.put('/update', verifyToken, async (req, res) => {
     const accountData = req.body;

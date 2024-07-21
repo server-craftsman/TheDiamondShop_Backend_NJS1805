@@ -541,10 +541,45 @@ router.get("/feedback/:productType/:productID", verifyToken, async (req, res) =>
   }
 });
 
-// Route to create a new feedback
+// // Route to create a new feedback
+// router.post('/feedback', verifyToken, async (req, res) => {
+//   const { orderDetailID, feedbackContent, rating, diamondId, bridalId, diamondRingsId, diamondTimepiecesId } = req.body;
 
-// POST /feedback endpoint
-// POST /feedback endpoint
+//   try {
+//     const accountID = req.user.accountId; // Extract accountID from the decoded token
+//     console.log(`Received AccountID: ${accountID}`); // Log the AccountID
+
+//     // Connect to SQL Server
+//     let pool = await sql.connect(dbConfig);
+//     const query = `
+//       INSERT INTO Feedback (AccountID, OrderDetailID, Content, Rating, DiamondID, BridalID, DiamondRingsID, DiamondTimepiecesID)
+//       VALUES (@accountID, @orderDetailID, @feedbackContent, @rating, @diamondId, @bridalId, @diamondRingsId, @diamondTimepiecesId);
+//     `;
+
+//     const request = pool.request()
+//       .input('accountID', sql.Int, accountID)
+//       .input('orderDetailID', sql.Int, orderDetailID)
+//       .input('feedbackContent', sql.NVarChar, feedbackContent || null)
+//       .input('rating', sql.Int, rating)
+//       .input('diamondId', sql.Int, diamondId || null)
+//       .input('bridalId', sql.Int, bridalId || null)
+//       .input('diamondRingsId', sql.Int, diamondRingsId || null)
+//       .input('diamondTimepiecesId', sql.Int, diamondTimepiecesId || null);
+
+//     const result = await request.query(query);
+
+//     if (result.rowsAffected > 0) {
+//       res.status(201).json({ message: 'Feedback created successfully.' });
+//     } else {
+//       res.status(400).json({ error: 'Failed to create feedback.' });
+//     }
+//   } catch (error) {
+//     console.error('Error creating feedback:', error.message);
+//     res.status(500).json({ error: 'Failed to create feedback. Please try again later.' });
+//   }
+// });
+
+// Route to create a new feedback
 router.post('/feedback', verifyToken, async (req, res) => {
   const { orderDetailID, feedbackContent, rating, diamondId, bridalId, diamondRingsId, diamondTimepiecesId } = req.body;
 
@@ -554,6 +589,25 @@ router.post('/feedback', verifyToken, async (req, res) => {
 
     // Connect to SQL Server
     let pool = await sql.connect(dbConfig);
+
+    // Check if OrderStatus is "Completed"
+    const statusQuery = `
+      SELECT OrderStatus FROM OrderDetails WHERE OrderDetailID = @orderDetailID;
+    `;
+    const statusResult = await pool.request()
+      .input('orderDetailID', sql.Int, orderDetailID)
+      .query(statusQuery);
+
+    if (statusResult.recordset.length === 0) {
+      return res.status(404).json({ error: 'OrderDetailID not found.' });
+    }
+
+    const orderStatus = statusResult.recordset[0].OrderStatus;
+    if (orderStatus !== 'Completed') {
+      return res.status(400).json({ error: 'Feedback can only be created for orders with status "Completed".' });
+    }
+
+    // Insert feedback
     const query = `
       INSERT INTO Feedback (AccountID, OrderDetailID, Content, Rating, DiamondID, BridalID, DiamondRingsID, DiamondTimepiecesID)
       VALUES (@accountID, @orderDetailID, @feedbackContent, @rating, @diamondId, @bridalId, @diamondRingsId, @diamondTimepiecesId);

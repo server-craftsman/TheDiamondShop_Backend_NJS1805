@@ -163,46 +163,32 @@ async function getInventoryListOfEachProductType() {
 
     const query = `
     -- Quản lý tồn kho cho bảng Diamond
-    SELECT 'Diamond' AS ProductType, DiamondID AS ProductID, Inventory
+    SELECT 'Diamond' AS ProductType, StockNumber, CaratWeight, Color, DiamondID AS ProductID, Inventory, Image
     FROM Diamond
     WHERE Inventory = 1
     UNION ALL
-    SELECT 'Diamond' AS ProductType, DiamondID AS ProductID, Inventory
-    FROM Diamond
-    WHERE Inventory = 0
-
-    UNION ALL
+    
 
     -- Quản lý tồn kho cho bảng Bridal
-    SELECT 'Bridal' AS ProductType, BridalID AS ProductID, Inventory
+    SELECT 'Bridal' AS ProductType, BridalID AS ProductID, Inventory, NameBridal, Gender, ImageBridal 
     FROM Bridal
     WHERE Inventory = 1
     UNION ALL
-    SELECT 'Bridal' AS ProductType, BridalID AS ProductID, Inventory
-    FROM Bridal
-    WHERE Inventory = 0
-
-    UNION ALL
+    
 
     -- Quản lý tồn kho cho bảng DiamondRings
-    SELECT 'DiamondRings' AS ProductType, DiamondRingsID AS ProductID, Inventory
+    SELECT 'DiamondRings' AS ProductType, DiamondRingsID AS ProductID, Inventory, NameRings, Gender, ImageRings
     FROM DiamondRings
     WHERE Inventory = 1
     UNION ALL
-    SELECT 'DiamondRings' AS ProductType, DiamondRingsID AS ProductID, Inventory
-    FROM DiamondRings
-    WHERE Inventory = 0
-
-    UNION ALL
+    
 
     -- Quản lý tồn kho cho bảng DiamondTimepieces
-    SELECT 'DiamondTimepieces' AS ProductType, DiamondTimepiecesID AS ProductID, Inventory
+    SELECT 'DiamondTimepieces' AS ProductType, DiamondTimepiecesID AS ProductID, Inventory, NameTimepieces, Gender, ImageTimepieces
     FROM DiamondTimepieces
     WHERE Inventory = 1
     UNION ALL
-    SELECT 'DiamondTimepieces' AS ProductType, DiamondTimepiecesID AS ProductID, Inventory
-    FROM DiamondTimepieces
-    WHERE Inventory = 0
+    
     `;
 
     try {
@@ -220,30 +206,31 @@ async function getListOfOutStockProducts() {
 
     const query = `
     -- Quản lý tồn kho cho bảng Diamond
-    SELECT 'Diamond' AS ProductType, DiamondID AS ProductID, Inventory
+    SELECT 'Diamond' AS ProductType, StockNumber, CaratWeight, Color, DiamondID AS ProductID, Inventory, Image
     FROM Diamond
     WHERE Inventory = 0
-
     UNION ALL
+    
 
     -- Quản lý tồn kho cho bảng Bridal
-    SELECT 'Bridal' AS ProductType, BridalID AS ProductID, Inventory
+    SELECT 'Bridal' AS ProductType, BridalID AS ProductID, Inventory, NameBridal, Gender, ImageBridal 
     FROM Bridal
     WHERE Inventory = 0
-
     UNION ALL
+    
 
     -- Quản lý tồn kho cho bảng DiamondRings
-    SELECT 'DiamondRings' AS ProductType, DiamondRingsID AS ProductID, Inventory
+    SELECT 'DiamondRings' AS ProductType, DiamondRingsID AS ProductID, Inventory, NameRings, Gender, ImageRings
     FROM DiamondRings
     WHERE Inventory = 0
-
     UNION ALL
+    
 
     -- Quản lý tồn kho cho bảng DiamondTimepieces
-    SELECT 'DiamondTimepieces' AS ProductType, DiamondTimepiecesID AS ProductID, Inventory
+    SELECT 'DiamondTimepieces' AS ProductType, DiamondTimepiecesID AS ProductID, Inventory, NameTimepieces, Gender, ImageTimepieces
     FROM DiamondTimepieces
     WHERE Inventory = 0
+    UNION ALL
     `;
 
     try {
