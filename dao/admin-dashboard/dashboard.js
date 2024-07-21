@@ -163,32 +163,27 @@ async function getInventoryListOfEachProductType() {
 
     const query = `
     -- Quản lý tồn kho cho bảng Diamond
-    SELECT 'Diamond' AS ProductType, StockNumber, CaratWeight, Color, DiamondID AS ProductID, Inventory, Image
-    FROM Diamond
-    WHERE Inventory = 1
-    UNION ALL
-    
+SELECT 'Diamond' AS ProductType, DiamondID AS ProductID, CaratWeight, Color, Inventory, NULL AS Name, NULL AS Gender, Image
+FROM Diamond
+WHERE Inventory = 1
+UNION ALL
 
-    -- Quản lý tồn kho cho bảng Bridal
-    SELECT 'Bridal' AS ProductType, BridalID AS ProductID, Inventory, NameBridal, Gender, ImageBridal 
-    FROM Bridal
-    WHERE Inventory = 1
-    UNION ALL
-    
+-- Quản lý tồn kho cho bảng Bridal
+SELECT 'Bridal' AS ProductType, BridalID AS ProductID, NULL AS CaratWeight, NULL AS Color, Inventory, NameBridal AS Name, Gender, ImageBridal AS Image
+FROM Bridal
+WHERE Inventory = 1
+UNION ALL
 
-    -- Quản lý tồn kho cho bảng DiamondRings
-    SELECT 'DiamondRings' AS ProductType, DiamondRingsID AS ProductID, Inventory, NameRings, Gender, ImageRings
-    FROM DiamondRings
-    WHERE Inventory = 1
-    UNION ALL
-    
+-- Quản lý tồn kho cho bảng DiamondRings
+SELECT 'DiamondRings' AS ProductType, DiamondRingsID AS ProductID, NULL AS CaratWeight, NULL AS Color, Inventory, NameRings AS Name, Gender, ImageRings AS Image
+FROM DiamondRings
+WHERE Inventory = 1
+UNION ALL
 
-    -- Quản lý tồn kho cho bảng DiamondTimepieces
-    SELECT 'DiamondTimepieces' AS ProductType, DiamondTimepiecesID AS ProductID, Inventory, NameTimepieces, Gender, ImageTimepieces
-    FROM DiamondTimepieces
-    WHERE Inventory = 1
-    UNION ALL
-    
+-- Quản lý tồn kho cho bảng DiamondTimepieces
+SELECT 'DiamondTimepieces' AS ProductType, DiamondTimepiecesID AS ProductID, NULL AS CaratWeight, NULL AS Color, Inventory, NameTimepieces AS Name, Gender, ImageTimepieces AS Image
+FROM DiamondTimepieces
+WHERE Inventory = 1;
     `;
 
     try {
@@ -206,31 +201,28 @@ async function getListOfOutStockProducts() {
 
     const query = `
     -- Quản lý tồn kho cho bảng Diamond
-    SELECT 'Diamond' AS ProductType, StockNumber, CaratWeight, Color, DiamondID AS ProductID, Inventory, Image
-    FROM Diamond
-    WHERE Inventory = 0
-    UNION ALL
-    
+SELECT 'Diamond' AS ProductType, DiamondID AS ProductID, CaratWeight, Color, Inventory, NULL AS Name, NULL AS Gender, Image
+FROM Diamond
+WHERE Inventory = 0
+UNION ALL
 
-    -- Quản lý tồn kho cho bảng Bridal
-    SELECT 'Bridal' AS ProductType, BridalID AS ProductID, Inventory, NameBridal, Gender, ImageBridal 
-    FROM Bridal
-    WHERE Inventory = 0
-    UNION ALL
-    
+-- Quản lý tồn kho cho bảng Bridal
+SELECT 'Bridal' AS ProductType, BridalID AS ProductID, NULL AS CaratWeight, NULL AS Color, Inventory, NameBridal AS Name, Gender, ImageBridal AS Image
+FROM Bridal
+WHERE Inventory = 0
+UNION ALL
 
-    -- Quản lý tồn kho cho bảng DiamondRings
-    SELECT 'DiamondRings' AS ProductType, DiamondRingsID AS ProductID, Inventory, NameRings, Gender, ImageRings
-    FROM DiamondRings
-    WHERE Inventory = 0
-    UNION ALL
-    
+-- Quản lý tồn kho cho bảng DiamondRings
+SELECT 'DiamondRings' AS ProductType, DiamondRingsID AS ProductID, NULL AS CaratWeight, NULL AS Color, Inventory, NameRings AS Name, Gender, ImageRings AS Image
+FROM DiamondRings
+WHERE Inventory = 0
+UNION ALL
 
-    -- Quản lý tồn kho cho bảng DiamondTimepieces
-    SELECT 'DiamondTimepieces' AS ProductType, DiamondTimepiecesID AS ProductID, Inventory, NameTimepieces, Gender, ImageTimepieces
-    FROM DiamondTimepieces
-    WHERE Inventory = 0
-    UNION ALL
+-- Quản lý tồn kho cho bảng DiamondTimepieces
+SELECT 'DiamondTimepieces' AS ProductType, DiamondTimepiecesID AS ProductID, NULL AS CaratWeight, NULL AS Color, Inventory, NameTimepieces AS Name, Gender, ImageTimepieces AS Image
+FROM DiamondTimepieces
+WHERE Inventory = 0;
+
     `;
 
     try {
@@ -299,14 +291,14 @@ async function getAverageTheNumberOfResponsesAndReviews() {
 }
 
 module.exports = {
-    getDashboardData, 
-    getTotalRevenuePerDayWeekMonth, 
-    getRevenueChartCustom, 
-    getTotalOrderPerDayWeekMonth, 
-    getOrderChartCustom, 
-    getListOfBestSellingProducts, 
-    getInventoryListOfEachProductType, 
+    getDashboardData,
+    getTotalRevenuePerDayWeekMonth,
+    getRevenueChartCustom,
+    getTotalOrderPerDayWeekMonth,
+    getOrderChartCustom,
+    getListOfBestSellingProducts,
+    getInventoryListOfEachProductType,
     getListOfOutStockProducts,
-    getTheNumberOfNewCustomers, 
+    getTheNumberOfNewCustomers,
     getAverageTheNumberOfResponsesAndReviews
 };
