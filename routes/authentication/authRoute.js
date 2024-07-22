@@ -19,6 +19,7 @@ const {
 const {
   viewAccount,
   viewAccoundByEmail,
+  viewAccoundById,
 } = require("../../dao/authentication/userDAO");
 
 const register = require("../../dao/authentication/testRegister");
@@ -994,6 +995,30 @@ router.get("/account/:email", verifyToken, async (req, res) => {
       res.status(200).json({
         status: false,
         message: "No account details found.",
+      });
+    }
+  } catch (error) {
+    console.error("Error fetching account:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+//View Account by AccountID
+router.get('/accounts/:id', verifyToken, async (req, res) => {
+  const id = req.params.id;
+
+  try {
+    const result = await viewAccoundById(id);
+    if (result.length > 0) {
+      res.status(200).json({
+        status: true,
+        message: "Account details found",
+        account: result[0],
+      });
+    } else {
+      res.status(200).json({
+        status: false,
+        message: "No accound details found.",
       });
     }
   } catch (error) {

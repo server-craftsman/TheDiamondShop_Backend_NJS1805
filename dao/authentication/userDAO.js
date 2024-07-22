@@ -351,6 +351,24 @@ async function viewAccoundByEmail(email) {
 }
 };
 
+//View By ID
+async function viewAccoundById(id) {
+  try {
+    const pool = await sql.connect(config);
+    const results = await pool.request()
+    .input("AccountID", sql.Int, id)
+    .query(`SELECT a.*,
+       r.*
+       FROM Account a
+       JOIN Roles r ON a.RoleID = r.RoleID
+       WHERE AccountID = @AccountID`);
+    return results.recordset;
+  }catch (error) {
+    console.error('Error fetching account:', error);
+    throw error;
+}
+};
+
 module.exports = {
   getUserById,
   getUserByToken,
@@ -366,4 +384,5 @@ module.exports = {
   clearToken,
   viewAccount,
   viewAccoundByEmail,
+  viewAccoundById,
 };
