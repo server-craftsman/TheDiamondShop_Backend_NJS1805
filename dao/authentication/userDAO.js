@@ -323,7 +323,10 @@ async function viewAccount() {
   try {
     const pool = await sql.connect(config);
     const results = await pool.request()
-    .query(`SELECT * FROM Account`);
+    .query(`SELECT a.*,
+      r.RoleName
+      FROM Account a
+      JOIN Roles r ON a.RoleID = r.RoleID`);
     return results.recordsets;
   }catch (error) {
     console.error('Error fetching account:', error);
@@ -336,7 +339,11 @@ async function viewAccoundByEmail(email) {
     const pool = await sql.connect(config);
     const results = await pool.request()
     .input("Email", sql.VarChar, email)
-    .query(`SELECT * FROM Account WHERE Email = @Email`);
+    .query(`SELECT a.*,
+       r.RoleName
+       FROM Account a
+       JOIN Roles r ON a.RoleID = r.RoleID
+       WHERE Email = @Email`);
     return results.recordset;
   }catch (error) {
     console.error('Error fetching account:', error);
@@ -357,4 +364,6 @@ module.exports = {
   createUser,
   registerUser,
   clearToken,
+  viewAccount,
+  viewAccoundByEmail,
 };

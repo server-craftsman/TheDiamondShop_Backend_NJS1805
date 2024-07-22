@@ -24,6 +24,7 @@ const {
 const register = require("../../dao/authentication/testRegister");
 let pool = null;
 const config = require("../../config/dbconfig");
+
 async function connectDB() {
   try {
     if (!pool) {

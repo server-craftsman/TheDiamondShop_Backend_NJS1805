@@ -18,9 +18,9 @@ router.post('/add-account', async (req, res) => {
   }
 });
 
-router.post('/add-account-with-role', async (req, res) => {
+router.post('/add-account-with-role', verifyToken, async (req, res) => {
   const accountData = req.body;
-  const roleName = accountData.roleName || 'Customer'; // Default to 'Customer' if no roleName is provided
+  const roleName = accountData.roleName // Default to 'Customer' if no roleName is provided
   
   console.log(`Request received at: POST /add-account-with-role - ${new Date().toLocaleString()}`);
   
