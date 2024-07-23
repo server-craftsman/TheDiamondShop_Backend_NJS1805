@@ -541,6 +541,7 @@ router.get("/feedback/:productType/:productID", verifyToken, async (req, res) =>
   }
 });
 
+// Route to 
 // // Route to create a new feedback
 // router.post('/feedback', verifyToken, async (req, res) => {
 //   const { orderDetailID, feedbackContent, rating, diamondId, bridalId, diamondRingsId, diamondTimepiecesId } = req.body;
@@ -586,6 +587,12 @@ router.post('/feedback', verifyToken, async (req, res) => {
   try {
     const accountID = req.user.accountId; // Extract accountID from the decoded token
     console.log(`Received AccountID: ${accountID}`); // Log the AccountID
+
+    // Ensure orderDetailID is an integer
+    const orderDetailIDParsed = parseInt(orderDetailID, 10);
+    if (isNaN(orderDetailIDParsed)) {
+      return res.status(400).json({ error: 'Invalid OrderDetailID. Must be a valid integer.' });
+    }
 
     // Connect to SQL Server
     let pool = await sql.connect(dbConfig);
