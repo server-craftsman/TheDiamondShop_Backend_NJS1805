@@ -476,7 +476,8 @@ router.get("/history-order/:orderId", verifyToken, async (req, res) => {
               Cut: detail.Cut,
               Price: detail.Price,
               Shape: detail.Shape,
-              Image: detail.DiamondImage
+              Image: detail.DiamondImage,
+              ReportNo: detail.ReportNo // Include ReportNo for Bridal products
             } : null,
             Bridal: detail.BridalID ? {
               BridalID: detail.BridalID,
@@ -498,7 +499,8 @@ router.get("/history-order/:orderId", verifyToken, async (req, res) => {
               Description: detail.BridalDescription,
               Price: detail.BridalPrice,
               ImageBridal: detail.ImageBridal,
-              ImageBrand: detail.BridalBrandImage
+              ImageBrand: detail.BridalBrandImage,
+              ReportNo: detail.ReportNo // Include ReportNo for Bridal products
             } : null,
             DiamondRings: detail.DiamondRingsID ? {
               DiamondRingsID: detail.DiamondRingsID,
@@ -524,7 +526,8 @@ router.get("/history-order/:orderId", verifyToken, async (req, res) => {
               Description: detail.RingsDescription,
               Price: detail.RingsPrice,
               ImageRings: detail.ImageRings,
-              ImageBrand: detail.RingsBrandImage
+              ImageBrand: detail.RingsBrandImage,
+              ReportNo: detail.ReportNo // Include ReportNo for Bridal products
             } : null,
             DiamondTimepieces: detail.DiamondTimepiecesID ? {
               DiamondTimepiecesID: detail.DiamondTimepiecesID,
@@ -544,12 +547,21 @@ router.get("/history-order/:orderId", verifyToken, async (req, res) => {
               Description: detail.TimepiecesDescription,
               Price: detail.TimepiecesPrice,
               ImageTimepieces: detail.ImageTimepieces,
-              ImageBrand: detail.TimepiecesBrandImage
+              ImageBrand: detail.TimepiecesBrandImage,
+              ReportNo: detail.ReportNo // Include ReportNo for Bridal products
             } : null
           },
-          Warranty: {
-            // Include warranty details if available
-          },
+          Warranty: detail.ReportNo ? {
+            ReportNo: detail.ReportNo,
+            Descriptions: detail.Descriptions,
+            Date: detail.Date,
+            PlaceToBuy: detail.PlaceToBuy,
+            Period: detail.Period,
+            WarrantyType: detail.WarrantyType,
+            WarrantyConditions: detail.WarrantyConditions,
+            AccompaniedService: detail.AccompaniedService,
+            Condition: detail.Condition
+          } : null,
           MaterialName: detail.MaterialName,
           RingSize: detail.RingSize
         }))

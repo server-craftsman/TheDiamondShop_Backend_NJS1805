@@ -110,21 +110,21 @@ router.get('/view-warranty-orderdetails/:reportNo', verifyToken, async (req, res
 });
 
 // View Warranty by ReportNo of OrderDetails
-router.get('/view-warranty-orderdetails/:reportNo', verifyToken, async (req, res) => {
-    const reportNo = req.params.reportNo;
+// router.get('/view-warranty-orderdetails/:reportNo', verifyToken, async (req, res) => {
+//     const reportNo = req.params.reportNo;
 
-    try {
-        const warranty = await getWarrantyByReportNoOrderDetails(reportNo);
-        if (warranty && warranty.length > 0) {
-            res.json(warranty);
-        } else {
-            res.status(404).send('Warranty not found');
-        }
-    } catch (err) {
-        console.error('Error fetching warranty:', err);
-        res.status(500).send('Internal Server Error');
-    }
-});
+//     try {
+//         const warranty = await getWarrantyByReportNoOrderDetails(reportNo);
+//         if (warranty && warranty.length > 0) {
+//             res.json(warranty);
+//         } else {
+//             res.status(404).send('Warranty not found');
+//         }
+//     } catch (err) {
+//         console.error('Error fetching warranty:', err);
+//         res.status(500).send('Internal Server Error');
+//     }
+// });
 
 router.get('/view-details-warranty/:orderId', verifyToken, async (req, res) => {
   const { orderId } = req.params;
