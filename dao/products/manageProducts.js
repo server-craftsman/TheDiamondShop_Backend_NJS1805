@@ -929,7 +929,7 @@ const getBridalById = async (id, callback) => {
 
     // Prepare the query
     let result = await pool.request().input("id", sql.Int, id)
-      .query(`SELECT * FROM Bridal`);
+      .query(`SELECT * FROM Bridal WHERE BridalID = @id`);
 
     // Return the result
     callback(null, result.recordset[0]);
@@ -1096,15 +1096,16 @@ async function getBridalAccessory() {
     const result = await pool.request()
     .query(`
     SELECT DISTINCT
-    ra.*,
+    ra.MaterialID,
+    ra.RingSizeID,
     m.MaterialName,
     rs.RingSize,
-    rp.Price
+    bp.Price
     FROM BridalAccessory ra
     JOIN Material m ON ra.MaterialID = m.MaterialID
     JOIN RingSize rs ON ra.RingSizeID = rs.RingSizeID
-    JOIN BridalPrice rp ON ra.PriceID = rp.PriceID
-    WHERE m.MaterialID = rp.PriceID;
+    JOIN BridalPrice bp ON ra.PriceID = bp.PriceID
+    WHERE m.MaterialID = bp.PriceID;
     `)
   return result.recordset;
   } catch(error){
@@ -1117,7 +1118,9 @@ async function getRingsAccessory() {
     const pool = await sql.connect(config);
     const result = await pool.request()
     .query(`SELECT DISTINCT
-    *
+    m.MaterialName,
+    rs.RingSize,
+    rp.Price
     FROM RingsAccessory ra
     JOIN Material m ON ra.MaterialID = m.MaterialID
     JOIN RingSize rs ON ra.RingSizeID = rs.RingSizeID
