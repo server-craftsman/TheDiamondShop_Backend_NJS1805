@@ -226,7 +226,19 @@ async function getAllDiamonds() {
 async function getAllDiamondRings() {
   try {
     let pool = await sql.connect(config);
-    let product = await pool.request().query("SELECT * FROM DiamondRings");
+    let product = await pool.request().query(`SELECT DR.*,
+      m.MaterialName,
+      rs.RingSize,
+      rp.Price
+ FROM DiamondRings DR 
+ CROSS JOIN 
+     Material m
+ CROSS JOIN 
+     RingSize rs
+ CROSS JOIN
+   RingsPrice rp
+ WHERE
+   m.MaterialID = 1 AND rs.RingSizeID = 1 AND rp.PriceID = 1`);
     return product.recordsets;
   } catch (error) {
     console.log("SQL error", error);
@@ -971,17 +983,12 @@ const getRingsById = async (id, callback) => {
 	dr.CenterDiamondClarity,
 	dr.CenterDiamondCaratWeight,
 	dr.Gender,
-  dr.Price,
 	dr.Fluorescence,
 	dr.Description,
 	dr.ImageRings,
 	dr.ImageBrand,
 	dr.Inventory
 	FROM DiamondRings dr
-LEFT JOIN ListRingMaterial lrm ON dr.DiamondRingsID = lrm.DiamondRingsID
-LEFT JOIN RingsMaterial rm ON lrm.MaterialID = rm.MaterialID
-LEFT JOIN DiamondRingsSize drs ON dr.DiamondRingsID = drs.DiamondRingsID
-LEFT JOIN ListRingsSize lrs ON drs.RingSizeID = lrs.RingSizeID
 WHERE dr.DiamondRingsID = @id;`);
 
     // Return the result
