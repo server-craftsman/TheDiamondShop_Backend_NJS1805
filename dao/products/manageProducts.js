@@ -790,10 +790,11 @@ const insertTimepieces = async (timepiecesData) => {
   }
 };
 
-//Update Bridals
+//Update Timepieces
 const updateTimepieces = async (timepiecesData) => {
   try {
     const {
+      diamondTimepiecesID,
       timepiecesStyle,
       nameTimepieces,
       collection,
@@ -817,6 +818,7 @@ const updateTimepieces = async (timepiecesData) => {
     let pool = await sql.connect(config);
     let results = await pool
       .request()
+      .input("DiamondTimepiecesID", sql.Int, diamondTimepiecesID)
       .input("TimepiecesStyle", sql.VarChar, timepiecesStyle)
       .input("NameTimepieces", sql.VarChar, nameTimepieces)
       .input("Collection", sql.VarChar, collection)
@@ -854,7 +856,7 @@ const updateTimepieces = async (timepiecesData) => {
           ImageTimepieces = @ImageTimepieces,
           ImageBrand = @ImageBrand,
           Inventory = @Inventory
-        WHERE TimepiecesStyle = @TimepiecesStyle`);
+         WHERE DiamondTimepiecesID = @DiamondTimepiecesID`);
     return results;
   } catch (err) {
     console.error("Database query error:", err);

@@ -499,11 +499,11 @@ router.post("/add-timepieces", async (req, res) => {
   }
 });
 
-//Update Bridals
+//Update Timepieces
 router.put("/edit-timepieces", async (req, res) => {
   const timepiecesData = req.body;
 
-  if (!timepiecesData.timepiecesStyle) {
+  if (!timepiecesData.diamondTimepiecesID) {
     return res.status(400).send("Timepieces ID required");
   }
   try {
