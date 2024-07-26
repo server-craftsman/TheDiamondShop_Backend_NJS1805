@@ -917,12 +917,7 @@ const getBridalById = async (id, callback) => {
 
     // Prepare the query
     let result = await pool.request().input("id", sql.Int, id)
-      .query(`SELECT * FROM Bridal b
-      LEFT JOIN BridalMaterial bm ON b.BridalID = bm.BridalID
-      LEFT JOIN Material m ON bm.MaterialID = m.MaterialID
-      LEFT JOIN BridalRingSize bs ON b.BridalID = bs.BridalID
-      LEFT JOIN RingSize rs ON bs.RingSizeID = rs.RingSizeID 
-      WHERE b.BridalID = @id`);
+      .query(`SELECT * FROM Bridal`);
 
     // Return the result
     callback(null, result.recordset[0]);
