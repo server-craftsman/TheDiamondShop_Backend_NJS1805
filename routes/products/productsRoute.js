@@ -30,6 +30,7 @@ const {
   getMaterialDetails,
   getRingSizeDetails,
   getBridalAccessory,
+  getRingsAccessory
 } = require("../../dao/products/manageProducts");
 const { auth } = require("googleapis/build/src/apis/abusiveexperiencereport");
 const storage = multer.diskStorage({
@@ -663,4 +664,5 @@ router.get("/ring-accessory-details", async (req, res) => {
     res.status(500).send("Error fetching accessory size details");
   }
 });
+
 module.exports = router;
