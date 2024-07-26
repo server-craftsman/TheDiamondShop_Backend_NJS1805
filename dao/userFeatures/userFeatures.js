@@ -199,14 +199,22 @@ const getOrderById = async (id, callback) => {
             a.FirstName,
             a.PhoneNumber,
             o.OrderDate,
+            d.DiamondOrigin,
+            d.Color,
+            d.Clarity,
+            d.Cut,
+            d.Price,
             d.StockNumber,
             d.Color,
             d.CaratWeight,
             d.Shape,
+            dr.RingStyle,
             dr.NameRings,
+            dr.Category,
+            dr.BrandName,
             br.NameBridal,
             t.NameTimepieces,
-			      lrs.RingSize,
+			      rs.RingSize,
 			      m.MaterialName,
             o.Quantity,
             o.OrderStatus,
@@ -232,7 +240,7 @@ const getOrderById = async (id, callback) => {
           LEFT JOIN
             DiamondTimepieces t ON od.DiamondTimepiecesID = t.DiamondTimepiecesID
 			    LEFT JOIN
-			      ListRingsSize lrs ON od.RingSizeID = lrs.RingSizeID
+			      RingSize rs ON od.RingSizeID = rs.RingSizeID
 			    LEFT JOIN
 			      Material m ON od.MaterialID = m.MaterialID
           WHERE 
