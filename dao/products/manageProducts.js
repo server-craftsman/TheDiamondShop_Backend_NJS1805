@@ -1118,6 +1118,8 @@ async function getRingsAccessory() {
     const pool = await sql.connect(config);
     const result = await pool.request()
     .query(`SELECT DISTINCT
+    ra.MaterialID,
+    ra.RingSizeID,
     m.MaterialName,
     rs.RingSize,
     rp.Price
