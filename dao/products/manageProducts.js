@@ -4,7 +4,41 @@ const sql = require("mssql");
 async function getAllBridals() {
   try {
     let pool = await sql.connect(config);
-    let products = await pool.request().query("SELECT * FROM Bridal");
+    let products = await pool.request().query(`
+    SELECT 
+    b.BridalID,
+    b.BridalStyle,
+    b.NameBridal,
+    b.Category,
+    b.BrandName,
+    b.Material,
+    b.SettingType,
+    b.Gender,
+    b.Weight,
+    b.CenterDiamond,
+    b.DiamondCaratRange,
+    b.RingSizeRange,
+    b.TotalCaratWeight,
+    b.TotalDiamond,
+    b.Description,
+    b.ImageBridal,
+    b.ImageBrand,
+    b.Inventory,
+    m.MaterialName,
+    rs.RingSize,
+	bp.Price
+FROM 
+    Bridal b
+CROSS JOIN 
+    Material m
+CROSS JOIN 
+    RingSize rs
+CROSS JOIN
+	BridalPrice bp
+WHERE 
+    m.MaterialID = 1 AND rs.RingSizeID = 1 AND bp.PriceID = 1;
+
+`);
     return products.recordsets;
   } catch (error) {
     console.error("SQL error", error);

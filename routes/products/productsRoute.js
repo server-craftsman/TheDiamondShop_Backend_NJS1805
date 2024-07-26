@@ -10,7 +10,7 @@ const {
   getAllTimePieces,
   getAllProduct,
   getAllBanner,
-  insertDiamond,
+  insertDiamond, 
   updateDiamond,
   deleteDiamond,
   insertDiamondRings,
