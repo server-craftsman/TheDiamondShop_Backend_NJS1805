@@ -28,7 +28,8 @@ const {
   getTimepiecesById,
   getRingDetailByMaterialAndSize,
   getMaterialDetails,
-  getRingSizeDetails
+  getRingSizeDetails,
+  getBridalAccessory,
 } = require("../../dao/products/manageProducts");
 const { auth } = require("googleapis/build/src/apis/abusiveexperiencereport");
 const storage = multer.diskStorage({
@@ -639,6 +640,16 @@ router.get("/ring-size-details", async (req, res) => {
   } catch (error) {
     console.error("Error fetching ring size details:", error);
     res.status(500).send("Error fetching ring size details");
+  }
+});
+
+router.get("/bridal-accessory", async (req, res) => {
+  try {
+    const ringSizes = await getBridalAccessory();
+    res.json(ringSizes);
+  } catch (error) {
+    console.error("Error fetching bridal accessory details:", error);
+    res.status(500).send("Error fetching bridal accessory details");
   }
 });
 
