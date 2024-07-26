@@ -1108,6 +1108,24 @@ async function getBridalAccessory() {
   }
 }
 
+async function getRingsAccessory() {
+  try {
+    const pool = await sql.connect(config);
+    const result = await pool.request()
+    .query(`SELECT
+      m.MaterialName,
+      rs.RingSize,
+	    rp.Price
+  FROM RingsAccessory ra
+  JOIN Material m ON ra.MaterialID = m.MaterialID
+  JOIN RingSize rs ON ra.RingSizeID = rs.RingSizeID
+  JOIN RingsPrice rp ON ra.PriceID = rp.PriceID`)
+  return result.recordset;
+  } catch(error){
+    console.log("error")
+  }
+}
+
 module.exports = {
   getAllBridals,
   getAllBrands,

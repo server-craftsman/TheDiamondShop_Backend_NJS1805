@@ -653,4 +653,14 @@ router.get("/bridal-accessory", async (req, res) => {
   }
 });
 
+// Route to fetch all
+router.get("/ring-accessory-details", async (req, res) => {
+  try {
+    const accessory = await getRingsAccessory();
+    res.json(accessory);
+  } catch (error) {
+    console.error("Error fetching ring accessory details:", error);
+    res.status(500).send("Error fetching accessory size details");
+  }
+});
 module.exports = router;
