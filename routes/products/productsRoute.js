@@ -30,7 +30,9 @@ const {
   getMaterialDetails,
   getRingSizeDetails,
   getBridalAccessory,
-  getRingsAccessory
+  getRingsAccessory,
+  getBridalPriceByMaterialID,
+  getRingPriceByMaterialID
 } = require("../../dao/products/manageProducts");
 const { auth } = require("googleapis/build/src/apis/abusiveexperiencereport");
 const storage = multer.diskStorage({
@@ -651,6 +653,35 @@ router.get("/bridal-accessory", async (req, res) => {
   } catch (error) {
     console.error("Error fetching bridal accessory details:", error);
     res.status(500).send("Error fetching bridal accessory details");
+  }
+});
+//View bridal price theo material
+router.get("/bridal-price/:materialID", async (req, res) => {
+  const { materialID } = req.params;
+  if (isNaN(materialID)) {
+    return res.status(400).json({ error: 'Invalid MaterialID' });
+  }
+  try {
+    const price = await getBridalPriceByMaterialID(materialID);
+    res.json(price);
+  } catch (error) {
+    console.error("Error fetching bridal price:", error);
+    res.status(500).send("Error fetching bridal price");
+  }
+});
+
+//View ring price theo material
+router.get("/ring-price/:materialID", async (req, res) => {
+  const { materialID } = req.params;
+  if (isNaN(materialID)) {
+    return res.status(400).json({ error: 'Invalid MaterialID' });
+  }
+  try {
+    const price = await getRingPriceByMaterialID(materialID);
+    res.json(price);
+  } catch (error) {
+    console.error("Error fetching bridal price:", error);
+    res.status(500).send("Error fetching bridal price");
   }
 });
 

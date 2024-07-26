@@ -237,14 +237,14 @@ router.post("/register", async (req, res) => {
     `Request received at: POST /auth/register - ${new Date().toLocaleString()}`
   );
 
-    try {
-      const token = await register.insertNewRoleAndGuestAccount(guestData);
-      res.status(200).json({ token });
-    } catch (err) {
-      console.error('Failed to register guest:', err);
-        res.status(500).json({ error: 'Failed to register guest' });
-      }
-    });
+  try {
+    const token = await register.insertNewRoleAndGuestAccount(guestData);
+    res.status(200).json({ token });
+  } catch (err) {
+    console.error("Failed to register guest:", err);
+    res.status(500).json({ error: "Failed to register guest" });
+  }
+});
 //   try {
 //     await connectDB();
 
@@ -365,7 +365,6 @@ router.post("/createAccount", async (req, res) => {
   }
 });
 
-
 //view by OrderId
 // GET history-order route
 router.get("/history-order", verifyToken, async (req, res) => {
@@ -402,13 +401,11 @@ router.get("/history-order", verifyToken, async (req, res) => {
     }
   } catch (error) {
     console.error("Error fetching history orders:", error.message);
-    res
-      .status(500)
-      .json({
-        status: false,
-        message: "An error occurred",
-        error: error.message,
-      });
+    res.status(500).json({
+      status: false,
+      message: "An error occurred",
+      error: error.message,
+    });
   }
 });
 
@@ -422,25 +419,25 @@ router.get("/history-order/:orderId", verifyToken, async (req, res) => {
 
     const query = `
       SELECT 
-        o.OrderID, o.OrderDate, o.Quantity, o.OrderStatus, o.TotalPrice,
-        od.OrderDetailID, od.FirstName, od.LastName, od.PhoneNumber, od.AttachedAccessories, 
-        od.Shipping, od.DeliveryAddress, od.RequestWarranty,
-        d.DiamondID, d.StockNumber, d.CaratWeight, d.DiamondOrigin, d.Color, d.Clarity, d.Cut, d.Price, d.Shape, d.Image as DiamondImage,
-        b.BridalID, b.BridalStyle, b.NameBridal, b.Category as BridalCategory, b.BrandName as BridalBrand, b.Material as BridalMaterial, b.SettingType, b.Gender as BridalGender, b.Weight as BridalWeight, b.CenterDiamond, b.DiamondCaratRange, b.RingSizeRang, b.TotalCaratWeight, b.TotalDiamond, b.Description as BridalDescription, b.Price as BridalPrice, b.ImageBridal, b.ImageBrand as BridalBrandImage,
-        dr.DiamondRingsID, dr.RingStyle, dr.NameRings, dr.Category as RingsCategory, dr.BrandName as RingsBrand, dr.Material as RingsMaterial, dr.CenterGemstone, dr.CenterGemstoneShape, dr.Width, dr.CenterDiamondDimension, dr.Weight as RingsWeight, dr.GemstoneWeight, dr.CenterDiamondColor, dr.CenterDiamondClarity, dr.CenterDiamondCaratWeight, dr.RingSize, dr.Gender as RingsGender, dr.Fluorescence, dr.Description as RingsDescription, dr.Price as RingsPrice, dr.ImageRings, dr.ImageBrand as RingsBrandImage,
-        dt.DiamondTimepiecesID, dt.TimepiecesStyle, dt.NameTimepieces, dt.Collection as TimepiecesCollection, dt.WaterResistance, dt.CrystalType, dt.BraceletMaterial, dt.CaseSize, dt.DialColor, dt.Movement, dt.Gender as TimepiecesGender, dt.Category as TimepiecesCategory, dt.BrandName as TimepiecesBrand, dt.DialType, dt.Description as TimepiecesDescription, dt.Price as TimepiecesPrice, dt.ImageTimepieces, dt.ImageBrand as TimepiecesBrandImage,
-        w.*, rm.MaterialName, lrs.RingSize
-      FROM Orders o
-      JOIN Account a ON o.AccountID = a.AccountID 
-      JOIN OrderDetails od ON o.OrderID = od.OrderID 
-      LEFT JOIN RingsMaterial rm ON od.MaterialID = rm.MaterialID
-      LEFT JOIN ListRingsSize lrs ON od.RingSizeID = lrs.RingSizeID
-      LEFT JOIN Diamond d ON od.DiamondID = d.DiamondID
-      LEFT JOIN Bridal b ON od.BridalID = b.BridalID
-      LEFT JOIN DiamondRings dr ON od.DiamondRingsID = dr.DiamondRingsID
-      LEFT JOIN DiamondTimepieces dt ON od.DiamondTimepiecesID = dt.DiamondTimepiecesID
-      LEFT JOIN WarrantyReceipt w ON od.OrderDetailID = w.OrderDetailID
-      WHERE o.OrderID = @OrderId AND a.AccountID = @AccountId
+    o.OrderID, o.OrderDate, o.Quantity, o.OrderStatus, o.TotalPrice,
+    od.OrderDetailID, od.FirstName, od.LastName, od.PhoneNumber, od.AttachedAccessories, 
+    od.Shipping, od.DeliveryAddress, od.RequestWarranty,
+    d.DiamondID, d.StockNumber, d.CaratWeight, d.DiamondOrigin, d.Color, d.Clarity, d.Cut, d.Price, d.Shape, d.Image as DiamondImage,
+    b.BridalID, b.BridalStyle, b.NameBridal, b.Category as BridalCategory, b.BrandName as BridalBrand, b.Material as BridalMaterial, b.SettingType, b.Gender as BridalGender, b.Weight as BridalWeight, b.CenterDiamond, b.DiamondCaratRange, b.RingSizeRange, b.TotalCaratWeight, b.TotalDiamond, b.Description as BridalDescription, b.ImageBridal, b.ImageBrand as BridalBrandImage,
+    dr.DiamondRingsID, dr.RingStyle, dr.NameRings, dr.Category as RingsCategory, dr.BrandName as RingsBrand, dr.Material as RingsMaterial, dr.CenterGemstone, dr.CenterGemstoneShape, dr.Width, dr.CenterDiamondDimension, dr.Weight as RingsWeight, dr.GemstoneWeight, dr.CenterDiamondColor, dr.CenterDiamondClarity, dr.CenterDiamondCaratWeight, dr.RingSize, dr.Gender as RingsGender, dr.Fluorescence, dr.Description as RingsDescription, dr.ImageRings, dr.ImageBrand as RingsBrandImage,
+    dt.DiamondTimepiecesID, dt.TimepiecesStyle, dt.NameTimepieces, dt.Collection as TimepiecesCollection, dt.WaterResistance, dt.CrystalType, dt.BraceletMaterial, dt.CaseSize, dt.DialColor, dt.Movement, dt.Gender as TimepiecesGender, dt.Category as TimepiecesCategory, dt.BrandName as TimepiecesBrand, dt.DialType, dt.Description as TimepiecesDescription, dt.Price as TimepiecesPrice, dt.ImageTimepieces, dt.ImageBrand as TimepiecesBrandImage,
+    w.*, rm.MaterialName, lrs.RingSize
+  FROM Orders o
+  JOIN Account a ON o.AccountID = a.AccountID 
+  JOIN OrderDetails od ON o.OrderID = od.OrderID 
+  LEFT JOIN Material rm ON od.MaterialID = rm.MaterialID
+  LEFT JOIN RingSize lrs ON od.RingSizeID = lrs.RingSizeID
+  LEFT JOIN Diamond d ON od.DiamondID = d.DiamondID
+  LEFT JOIN Bridal b ON od.BridalID = b.BridalID
+  LEFT JOIN DiamondRings dr ON od.DiamondRingsID = dr.DiamondRingsID
+  LEFT JOIN DiamondTimepieces dt ON od.DiamondTimepiecesID = dt.DiamondTimepiecesID
+  LEFT JOIN WarrantyReceipt w ON od.OrderDetailID = w.OrderDetailID
+  WHERE o.OrderID = @OrderId AND a.AccountID = @AccountId
     `;
 
     const result = await pool
@@ -456,7 +453,7 @@ router.get("/history-order/:orderId", verifyToken, async (req, res) => {
         Quantity: result.recordset[0].Quantity,
         OrderStatus: result.recordset[0].OrderStatus,
         TotalPrice: result.recordset[0].TotalPrice,
-        OrderDetails: result.recordset.map(detail => ({
+        OrderDetails: result.recordset.map((detail) => ({
           OrderDetailID: detail.OrderDetailID,
           FirstName: detail.FirstName,
           LastName: detail.LastName,
@@ -466,111 +463,121 @@ router.get("/history-order/:orderId", verifyToken, async (req, res) => {
           DeliveryAddress: detail.DeliveryAddress,
           RequestWarranty: detail.RequestWarranty,
           Product: {
-            Diamond: detail.DiamondID ? {
-              DiamondID: detail.DiamondID,
-              StockNumber: detail.StockNumber,
-              CaratWeight: detail.CaratWeight,
-              DiamondOrigin: detail.DiamondOrigin,
-              Color: detail.Color,
-              Clarity: detail.Clarity,
-              Cut: detail.Cut,
-              Price: detail.Price,
-              Shape: detail.Shape,
-              Image: detail.DiamondImage,
-              ReportNo: detail.ReportNo // Include ReportNo for Bridal products
-            } : null,
-            Bridal: detail.BridalID ? {
-              BridalID: detail.BridalID,
-              BridalStyle: detail.BridalStyle,
-              NameBridal: detail.NameBridal,
-              Category: detail.BridalCategory,
-              BrandName: detail.BridalBrand,
+            Diamond: detail.DiamondID
+              ? {
+                  DiamondID: detail.DiamondID,
+                  StockNumber: detail.StockNumber,
+                  CaratWeight: detail.CaratWeight,
+                  DiamondOrigin: detail.DiamondOrigin,
+                  Color: detail.Color,
+                  Clarity: detail.Clarity,
+                  Cut: detail.Cut,
+                  Price: detail.Price,
+                  Shape: detail.Shape,
+                  Image: detail.DiamondImage,
+                  ReportNo: detail.ReportNo, // Include ReportNo for Bridal products
+                }
+              : null,
+            Bridal: detail.BridalID
+              ? {
+                  BridalID: detail.BridalID,
+                  BridalStyle: detail.BridalStyle,
+                  NameBridal: detail.NameBridal,
+                  Category: detail.BridalCategory,
+                  BrandName: detail.BridalBrand,
 
-              MaterialName: detail.MaterialName,
-              RingSize: detail.RingSize,
+                  MaterialName: detail.MaterialName,
+                  RingSize: detail.RingSize,
 
-              SettingType: detail.SettingType,
-              Gender: detail.BridalGender,
-              Weight: detail.BridalWeight,
-              CenterDiamond: detail.CenterDiamond,
-              DiamondCaratRange: detail.DiamondCaratRange,
-              TotalCaratWeight: detail.TotalCaratWeight,
-              TotalDiamond: detail.TotalDiamond,
-              Description: detail.BridalDescription,
-              Price: detail.BridalPrice,
-              ImageBridal: detail.ImageBridal,
-              ImageBrand: detail.BridalBrandImage,
-              ReportNo: detail.ReportNo // Include ReportNo for Bridal products
-            } : null,
-            DiamondRings: detail.DiamondRingsID ? {
-              DiamondRingsID: detail.DiamondRingsID,
-              RingStyle: detail.RingStyle,
-              NameRings: detail.NameRings,
-              Category: detail.RingsCategory,
-              BrandName: detail.RingsBrand,
+                  SettingType: detail.SettingType,
+                  Gender: detail.BridalGender,
+                  Weight: detail.BridalWeight,
+                  CenterDiamond: detail.CenterDiamond,
+                  DiamondCaratRange: detail.DiamondCaratRange,
+                  TotalCaratWeight: detail.TotalCaratWeight,
+                  TotalDiamond: detail.TotalDiamond,
+                  Description: detail.BridalDescription,
+                  Price: detail.BridalPrice,
+                  ImageBridal: detail.ImageBridal,
+                  ImageBrand: detail.BridalBrandImage,
+                  ReportNo: detail.ReportNo, // Include ReportNo for Bridal products
+                }
+              : null,
+            DiamondRings: detail.DiamondRingsID
+              ? {
+                  DiamondRingsID: detail.DiamondRingsID,
+                  RingStyle: detail.RingStyle,
+                  NameRings: detail.NameRings,
+                  Category: detail.RingsCategory,
+                  BrandName: detail.RingsBrand,
 
-              MaterialName: detail.MaterialName,
-              RingSize: detail.RingSize,
+                  MaterialName: detail.MaterialName,
+                  RingSize: detail.RingSize,
 
-              CenterGemstone: detail.CenterGemstone,
-              CenterGemstoneShape: detail.CenterGemstoneShape,
-              Width: detail.Width,
-              CenterDiamondDimension: detail.CenterDiamondDimension,
-              Weight: detail.RingsWeight,
-              GemstoneWeight: detail.GemstoneWeight,
-              CenterDiamondColor: detail.CenterDiamondColor,
-              CenterDiamondClarity: detail.CenterDiamondClarity,
-              CenterDiamondCaratWeight: detail.CenterDiamondCaratWeight,
-              Gender: detail.RingsGender,
-              Fluorescence: detail.Fluorescence,
-              Description: detail.RingsDescription,
-              Price: detail.RingsPrice,
-              ImageRings: detail.ImageRings,
-              ImageBrand: detail.RingsBrandImage,
-              ReportNo: detail.ReportNo // Include ReportNo for Bridal products
-            } : null,
-            DiamondTimepieces: detail.DiamondTimepiecesID ? {
-              DiamondTimepiecesID: detail.DiamondTimepiecesID,
-              TimepiecesStyle: detail.TimepiecesStyle,
-              NameTimepieces: detail.NameTimepieces,
-              Collection: detail.TimepiecesCollection,
-              WaterResistance: detail.WaterResistance,
-              CrystalType: detail.CrystalType,
-              BraceletMaterial: detail.BraceletMaterial,
-              CaseSize: detail.CaseSize,
-              DialColor: detail.DialColor,
-              Movement: detail.Movement,
-              Gender: detail.TimepiecesGender,
-              Category: detail.TimepiecesCategory,
-              BrandName: detail.TimepiecesBrand,
-              DialType: detail.DialType,
-              Description: detail.TimepiecesDescription,
-              Price: detail.TimepiecesPrice,
-              ImageTimepieces: detail.ImageTimepieces,
-              ImageBrand: detail.TimepiecesBrandImage,
-              ReportNo: detail.ReportNo // Include ReportNo for Bridal products
-            } : null
+                  CenterGemstone: detail.CenterGemstone,
+                  CenterGemstoneShape: detail.CenterGemstoneShape,
+                  Width: detail.Width,
+                  CenterDiamondDimension: detail.CenterDiamondDimension,
+                  Weight: detail.RingsWeight,
+                  GemstoneWeight: detail.GemstoneWeight,
+                  CenterDiamondColor: detail.CenterDiamondColor,
+                  CenterDiamondClarity: detail.CenterDiamondClarity,
+                  CenterDiamondCaratWeight: detail.CenterDiamondCaratWeight,
+                  Gender: detail.RingsGender,
+                  Fluorescence: detail.Fluorescence,
+                  Description: detail.RingsDescription,
+                  Price: detail.RingsPrice,
+                  ImageRings: detail.ImageRings,
+                  ImageBrand: detail.RingsBrandImage,
+                  ReportNo: detail.ReportNo, // Include ReportNo for Bridal products
+                }
+              : null,
+            DiamondTimepieces: detail.DiamondTimepiecesID
+              ? {
+                  DiamondTimepiecesID: detail.DiamondTimepiecesID,
+                  TimepiecesStyle: detail.TimepiecesStyle,
+                  NameTimepieces: detail.NameTimepieces,
+                  Collection: detail.TimepiecesCollection,
+                  WaterResistance: detail.WaterResistance,
+                  CrystalType: detail.CrystalType,
+                  BraceletMaterial: detail.BraceletMaterial,
+                  CaseSize: detail.CaseSize,
+                  DialColor: detail.DialColor,
+                  Movement: detail.Movement,
+                  Gender: detail.TimepiecesGender,
+                  Category: detail.TimepiecesCategory,
+                  BrandName: detail.TimepiecesBrand,
+                  DialType: detail.DialType,
+                  Description: detail.TimepiecesDescription,
+                  Price: detail.TimepiecesPrice,
+                  ImageTimepieces: detail.ImageTimepieces,
+                  ImageBrand: detail.TimepiecesBrandImage,
+                  ReportNo: detail.ReportNo, // Include ReportNo for Bridal products
+                }
+              : null,
           },
-          Warranty: detail.ReportNo ? {
-            ReportNo: detail.ReportNo,
-            Descriptions: detail.Descriptions,
-            Date: detail.Date,
-            PlaceToBuy: detail.PlaceToBuy,
-            Period: detail.Period,
-            WarrantyType: detail.WarrantyType,
-            WarrantyConditions: detail.WarrantyConditions,
-            AccompaniedService: detail.AccompaniedService,
-            Condition: detail.Condition
-          } : null,
+          Warranty: detail.ReportNo
+            ? {
+                ReportNo: detail.ReportNo,
+                Descriptions: detail.Descriptions,
+                Date: detail.Date,
+                PlaceToBuy: detail.PlaceToBuy,
+                Period: detail.Period,
+                WarrantyType: detail.WarrantyType,
+                WarrantyConditions: detail.WarrantyConditions,
+                AccompaniedService: detail.AccompaniedService,
+                Condition: detail.Condition,
+              }
+            : null,
           MaterialName: detail.MaterialName,
-          RingSize: detail.RingSize
-        }))
+          RingSize: detail.RingSize,
+        })),
       };
 
       res.status(200).json({
         status: true,
         message: "Order details found",
-        order
+        order,
       });
     } else {
       res.status(404).json({
@@ -587,7 +594,6 @@ router.get("/history-order/:orderId", verifyToken, async (req, res) => {
     });
   }
 });
-
 
 router.put("/update-warranty", verifyToken, async (req, res) => {
   const { orderId } = req.body;
@@ -658,12 +664,10 @@ router.put("/update-warranty-manager", verifyToken, async (req, res) => {
   }
 
   if (!validStatuses.includes(requestWarranty)) {
-    return res
-      .status(400)
-      .send({
-        message:
-          "Request Warranty must be Assign, Processing, Approved, or Refused",
-      });
+    return res.status(400).send({
+      message:
+        "Request Warranty must be Assign, Processing, Approved, or Refused",
+    });
   }
 
   try {
@@ -723,12 +727,10 @@ router.put("/update-warranty-sale", verifyToken, async (req, res) => {
   }
 
   if (!validStatuses.includes(requestWarranty)) {
-    return res
-      .status(400)
-      .send({
-        message:
-          "Request Warranty must be Assign, Processing, Approved, or Refused",
-      });
+    return res.status(400).send({
+      message:
+        "Request Warranty must be Assign, Processing, Approved, or Refused",
+    });
   }
 
   try {
@@ -1016,7 +1018,7 @@ router.get("/account/:email", verifyToken, async (req, res) => {
 });
 
 //View Account by AccountID
-router.get('/accounts/:id', verifyToken, async (req, res) => {
+router.get("/accounts/:id", verifyToken, async (req, res) => {
   const id = req.params.id;
 
   try {

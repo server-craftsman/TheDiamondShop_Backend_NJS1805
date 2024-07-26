@@ -1136,6 +1136,42 @@ async function getRingsAccessory() {
   }
 }
 
+async function getBridalPriceByMaterialID(materialID) {
+  try {
+    const pool = await sql.connect(config);
+    const result = await pool.request()
+      .input('MaterialID', sql.Int, materialID)
+      .query(`
+        SELECT bp.Price
+        FROM BridalAccessory ra
+        JOIN BridalPrice bp ON ra.PriceID = bp.PriceID
+        WHERE ra.MaterialID = @MaterialID AND ra.MaterialID = bp.PriceID;
+      `);
+    return result.recordset;
+  } catch (error) {
+    console.log("Error fetching bridal price by material ID:", error);
+    throw error;
+  }
+}
+
+async function getRingPriceByMaterialID(materialID) {
+  try {
+    const pool = await sql.connect(config);
+    const result = await pool.request()
+      .input('MaterialID', sql.Int, materialID)
+      .query(`
+        SELECT rp.Price
+        FROM RingsAccessory Ra
+        JOIN RingsPrice rp ON Ra.PriceID = rp.PriceID
+        WHERE ra.MaterialID = @MaterialID AND ra.MaterialID = rp.PriceID;
+      `);
+    return result.recordset;
+  } catch (error) {
+    console.log("Error fetching bridal price by material ID:", error);
+    throw error;
+  }
+}
+
 module.exports = {
   getAllBridals,
   getAllBrands,
@@ -1164,5 +1200,7 @@ module.exports = {
   getMaterialDetails,
   getRingSizeDetails,
   getBridalAccessory,
-  getRingsAccessory
+  getRingsAccessory,
+  getBridalPriceByMaterialID,
+  getRingPriceByMaterialID,
 };
