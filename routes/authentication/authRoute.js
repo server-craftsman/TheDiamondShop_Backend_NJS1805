@@ -12,6 +12,9 @@ const userDao = require("../../dao/authentication/userDAO");
 const verifyToken = require("../../dao/authentication/middleWare");
 const session = require("express-session");
 const cookieParser = require("cookie-parser");
+const crypto = require('crypto');
+const bcrypt = require('bcrypt');
+// const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const {
   viewWarrantyRequestManager,
   viewWarrantyRequestSale,
@@ -465,109 +468,109 @@ router.get("/history-order/:orderId", verifyToken, async (req, res) => {
           Product: {
             Diamond: detail.DiamondID
               ? {
-                  DiamondID: detail.DiamondID,
-                  StockNumber: detail.StockNumber,
-                  CaratWeight: detail.CaratWeight,
-                  DiamondOrigin: detail.DiamondOrigin,
-                  Color: detail.Color,
-                  Clarity: detail.Clarity,
-                  Cut: detail.Cut,
-                  Price: detail.Price,
-                  Shape: detail.Shape,
-                  Image: detail.DiamondImage,
-                  ReportNo: detail.ReportNo, // Include ReportNo for Bridal products
-                }
+                DiamondID: detail.DiamondID,
+                StockNumber: detail.StockNumber,
+                CaratWeight: detail.CaratWeight,
+                DiamondOrigin: detail.DiamondOrigin,
+                Color: detail.Color,
+                Clarity: detail.Clarity,
+                Cut: detail.Cut,
+                Price: detail.Price,
+                Shape: detail.Shape,
+                Image: detail.DiamondImage,
+                ReportNo: detail.ReportNo, // Include ReportNo for Bridal products
+              }
               : null,
             Bridal: detail.BridalID
               ? {
-                  BridalID: detail.BridalID,
-                  BridalStyle: detail.BridalStyle,
-                  NameBridal: detail.NameBridal,
-                  Category: detail.BridalCategory,
-                  BrandName: detail.BridalBrand,
+                BridalID: detail.BridalID,
+                BridalStyle: detail.BridalStyle,
+                NameBridal: detail.NameBridal,
+                Category: detail.BridalCategory,
+                BrandName: detail.BridalBrand,
 
-                  MaterialName: detail.MaterialName,
-                  RingSize: detail.RingSize,
+                MaterialName: detail.MaterialName,
+                RingSize: detail.RingSize,
 
-                  SettingType: detail.SettingType,
-                  Gender: detail.BridalGender,
-                  Weight: detail.BridalWeight,
-                  CenterDiamond: detail.CenterDiamond,
-                  DiamondCaratRange: detail.DiamondCaratRange,
-                  TotalCaratWeight: detail.TotalCaratWeight,
-                  TotalDiamond: detail.TotalDiamond,
-                  Description: detail.BridalDescription,
-                  Price: detail.BridalPrice,
-                  ImageBridal: detail.ImageBridal,
-                  ImageBrand: detail.BridalBrandImage,
-                  ReportNo: detail.ReportNo, // Include ReportNo for Bridal products
-                }
+                SettingType: detail.SettingType,
+                Gender: detail.BridalGender,
+                Weight: detail.BridalWeight,
+                CenterDiamond: detail.CenterDiamond,
+                DiamondCaratRange: detail.DiamondCaratRange,
+                TotalCaratWeight: detail.TotalCaratWeight,
+                TotalDiamond: detail.TotalDiamond,
+                Description: detail.BridalDescription,
+                Price: detail.BridalPrice,
+                ImageBridal: detail.ImageBridal,
+                ImageBrand: detail.BridalBrandImage,
+                ReportNo: detail.ReportNo, // Include ReportNo for Bridal products
+              }
               : null,
             DiamondRings: detail.DiamondRingsID
               ? {
-                  DiamondRingsID: detail.DiamondRingsID,
-                  RingStyle: detail.RingStyle,
-                  NameRings: detail.NameRings,
-                  Category: detail.RingsCategory,
-                  BrandName: detail.RingsBrand,
+                DiamondRingsID: detail.DiamondRingsID,
+                RingStyle: detail.RingStyle,
+                NameRings: detail.NameRings,
+                Category: detail.RingsCategory,
+                BrandName: detail.RingsBrand,
 
-                  MaterialName: detail.MaterialName,
-                  RingSize: detail.RingSize,
+                MaterialName: detail.MaterialName,
+                RingSize: detail.RingSize,
 
-                  CenterGemstone: detail.CenterGemstone,
-                  CenterGemstoneShape: detail.CenterGemstoneShape,
-                  Width: detail.Width,
-                  CenterDiamondDimension: detail.CenterDiamondDimension,
-                  Weight: detail.RingsWeight,
-                  GemstoneWeight: detail.GemstoneWeight,
-                  CenterDiamondColor: detail.CenterDiamondColor,
-                  CenterDiamondClarity: detail.CenterDiamondClarity,
-                  CenterDiamondCaratWeight: detail.CenterDiamondCaratWeight,
-                  Gender: detail.RingsGender,
-                  Fluorescence: detail.Fluorescence,
-                  Description: detail.RingsDescription,
-                  Price: detail.RingsPrice,
-                  ImageRings: detail.ImageRings,
-                  ImageBrand: detail.RingsBrandImage,
-                  ReportNo: detail.ReportNo, // Include ReportNo for Bridal products
-                }
+                CenterGemstone: detail.CenterGemstone,
+                CenterGemstoneShape: detail.CenterGemstoneShape,
+                Width: detail.Width,
+                CenterDiamondDimension: detail.CenterDiamondDimension,
+                Weight: detail.RingsWeight,
+                GemstoneWeight: detail.GemstoneWeight,
+                CenterDiamondColor: detail.CenterDiamondColor,
+                CenterDiamondClarity: detail.CenterDiamondClarity,
+                CenterDiamondCaratWeight: detail.CenterDiamondCaratWeight,
+                Gender: detail.RingsGender,
+                Fluorescence: detail.Fluorescence,
+                Description: detail.RingsDescription,
+                Price: detail.RingsPrice,
+                ImageRings: detail.ImageRings,
+                ImageBrand: detail.RingsBrandImage,
+                ReportNo: detail.ReportNo, // Include ReportNo for Bridal products
+              }
               : null,
             DiamondTimepieces: detail.DiamondTimepiecesID
               ? {
-                  DiamondTimepiecesID: detail.DiamondTimepiecesID,
-                  TimepiecesStyle: detail.TimepiecesStyle,
-                  NameTimepieces: detail.NameTimepieces,
-                  Collection: detail.TimepiecesCollection,
-                  WaterResistance: detail.WaterResistance,
-                  CrystalType: detail.CrystalType,
-                  BraceletMaterial: detail.BraceletMaterial,
-                  CaseSize: detail.CaseSize,
-                  DialColor: detail.DialColor,
-                  Movement: detail.Movement,
-                  Gender: detail.TimepiecesGender,
-                  Category: detail.TimepiecesCategory,
-                  BrandName: detail.TimepiecesBrand,
-                  DialType: detail.DialType,
-                  Description: detail.TimepiecesDescription,
-                  Price: detail.TimepiecesPrice,
-                  ImageTimepieces: detail.ImageTimepieces,
-                  ImageBrand: detail.TimepiecesBrandImage,
-                  ReportNo: detail.ReportNo, // Include ReportNo for Bridal products
-                }
+                DiamondTimepiecesID: detail.DiamondTimepiecesID,
+                TimepiecesStyle: detail.TimepiecesStyle,
+                NameTimepieces: detail.NameTimepieces,
+                Collection: detail.TimepiecesCollection,
+                WaterResistance: detail.WaterResistance,
+                CrystalType: detail.CrystalType,
+                BraceletMaterial: detail.BraceletMaterial,
+                CaseSize: detail.CaseSize,
+                DialColor: detail.DialColor,
+                Movement: detail.Movement,
+                Gender: detail.TimepiecesGender,
+                Category: detail.TimepiecesCategory,
+                BrandName: detail.TimepiecesBrand,
+                DialType: detail.DialType,
+                Description: detail.TimepiecesDescription,
+                Price: detail.TimepiecesPrice,
+                ImageTimepieces: detail.ImageTimepieces,
+                ImageBrand: detail.TimepiecesBrandImage,
+                ReportNo: detail.ReportNo, // Include ReportNo for Bridal products
+              }
               : null,
           },
           Warranty: detail.ReportNo
             ? {
-                ReportNo: detail.ReportNo,
-                Descriptions: detail.Descriptions,
-                Date: detail.Date,
-                PlaceToBuy: detail.PlaceToBuy,
-                Period: detail.Period,
-                WarrantyType: detail.WarrantyType,
-                WarrantyConditions: detail.WarrantyConditions,
-                AccompaniedService: detail.AccompaniedService,
-                Condition: detail.Condition,
-              }
+              ReportNo: detail.ReportNo,
+              Descriptions: detail.Descriptions,
+              Date: detail.Date,
+              PlaceToBuy: detail.PlaceToBuy,
+              Period: detail.Period,
+              WarrantyType: detail.WarrantyType,
+              WarrantyConditions: detail.WarrantyConditions,
+              AccompaniedService: detail.AccompaniedService,
+              Condition: detail.Condition,
+            }
             : null,
           MaterialName: detail.MaterialName,
           RingSize: detail.RingSize,
@@ -830,146 +833,131 @@ router.put("/change-password", async (request, response) => {
   }
 });
 
-//login google
-const bcrypt = require("bcrypt");
-const saltRounds = 10;
+// //login google
+// // Salt rounds for bcrypt
+// const saltRounds = 10;
+// // Configure Passport Google Strategy
+// passport.use(
+//   'customer-google',
+//   new GoogleStrategy(
+//     {
+//       clientID: process.env.CLIENT_ID,
+//       clientSecret: process.env.CLIENT_SECRET,
+//       callbackURL: 'http://localhost:8090/auth/google/customer/callback',
+//     },
+//     async (accessToken, refreshToken, profile, done) => {
+//       try {
+//         console.log('Google profile:', profile);
 
-passport.use(
-  "customer-google",
-  new GoogleStrategy(
-    {
-      clientID: process.env.CLIENT_ID,
-      clientSecret: process.env.CLIENT_SECRET,
-      callbackURL: "http://localhost:8090/auth/google/customer/callback",
-    },
-    async (accessToken, refreshToken, profile, done) => {
-      try {
-        // Connect to SQL Server
-        const pool = await sql.connect(dbConfig);
+//         const pool = await sql.connect(dbConfig);
+//         const email = profile.emails && profile.emails.length > 0 ? profile.emails[0].value : null;
 
-        // Check if email is provided in the Google profile
-        const email =
-          profile.emails && profile.emails.length > 0
-            ? profile.emails[0].value
-            : null;
-        if (!email) {
-          return done(new Error("Email not provided by Google profile"));
-        }
+//         if (!email) {
+//           return done(new Error('Email not provided by Google profile'));
+//         }
 
-        // Check if the email already exists in the Account table
-        const emailCheckQuery = `SELECT * FROM Account WHERE Email = @Email`;
-        const emailCheckResult = await pool
-          .request()
-          .input("Email", sql.NVarChar, email)
-          .query(emailCheckQuery);
+//         // Check if the user already exists
+//         const emailCheckQuery = `SELECT * FROM Account WHERE Email = @Email`;
+//         const emailCheckResult = await pool.request().input('Email', sql.NVarChar, email).query(emailCheckQuery);
 
-        if (
-          emailCheckResult.recordset &&
-          emailCheckResult.recordset.length > 0
-        ) {
-          // Email already exists, return existing user details
-          return done(null, emailCheckResult.recordset[0]);
-        }
+//         if (emailCheckResult.recordset && emailCheckResult.recordset.length > 0) {
+//           return done(null, emailCheckResult.recordset[0]);
+//         }
 
-        // Insert or update Role in Roles table
-        let roleId = null;
-        const insertRoleQuery = `INSERT INTO Roles (RoleName) VALUES ('Customer'); SELECT SCOPE_IDENTITY() AS RoleID;`;
-        const insertRoleResult = await pool.request().query(insertRoleQuery);
-        if (
-          insertRoleResult.recordset &&
-          insertRoleResult.recordset.length > 0
-        ) {
-          roleId = insertRoleResult.recordset[0].RoleID;
-        } else {
-          console.error(
-            "Failed to retrieve RoleID from Roles table:",
-            insertRoleResult
-          );
-          return done(new Error("Failed to retrieve RoleID from Roles table"));
-        }
+//         // Create a new user if not found
+//         const randomPassword = crypto.randomBytes(16).toString('hex');
+//         const hashedPassword = await bcrypt.hash(randomPassword, saltRounds);
 
-        // Generate a random password and hash it
-        const randomPassword = Math.random().toString(36).slice(-8); // Generate a simple random password
-        const hashedPassword = await bcrypt.hash(randomPassword, saltRounds);
+//         // Insert new role
+//         const roleInsertQuery = `INSERT INTO Roles (RoleName) VALUES ('Customer'); SELECT SCOPE_IDENTITY() AS RoleID;`;
+//         const roleInsertResult = await pool.request().query(roleInsertQuery);
+//         const roleId = roleInsertResult.recordset[0].RoleID;
 
-        // Insert new customer with the retrieved RoleID and hashed password
-        const insertAccountQuery = `INSERT INTO Account (FirstName, LastName, Email, Password, RoleID) 
-                                    OUTPUT INSERTED.AccountID
-                                    VALUES (@FirstName, @LastName, @Email, @Password, @RoleID)`;
-        const insertAccountResult = await pool
-          .request()
-          .input("FirstName", sql.NVarChar, profile.name.givenName)
-          .input("LastName", sql.NVarChar, profile.name.familyName)
-          .input("Email", sql.NVarChar, email)
-          .input("Password", sql.NVarChar, hashedPassword)
-          .input("RoleID", sql.Int, roleId)
-          .query(insertAccountQuery);
+//         const token = crypto.randomBytes(64).toString('hex');
+//         const insertAccountQuery = `INSERT INTO Account (FirstName, LastName, Email, Password, RoleID, Status, Token) OUTPUT INSERTED.AccountID VALUES (@FirstName, @LastName, @Email, @Password, @RoleID, @Status, @Token)`;
 
-        if (
-          insertAccountResult.recordset &&
-          insertAccountResult.recordset.length > 0
-        ) {
-          // Return newly created customer
-          return done(null, {
-            AccountID: insertAccountResult.recordset[0].AccountID,
-            FirstName: profile.name.givenName,
-            LastName: profile.name.familyName,
-            Email: email,
-            RoleID: roleId,
-          });
-        } else {
-          console.error("Invalid insertAccountResult:", insertAccountResult);
-          return done(new Error("Failed to create new account"));
-        }
-      } catch (error) {
-        console.error("Error during Google authentication:", error);
-        return done(error);
-      }
-    }
-  )
-);
+//         const insertAccountResult = await pool
+//           .request()
+//           .input('FirstName', sql.NVarChar, profile.name.givenName)
+//           .input('LastName', sql.NVarChar, profile.name.familyName)
+//           .input('Email', sql.NVarChar, email)
+//           .input('Password', sql.NVarChar, hashedPassword)
+//           .input('RoleID', sql.Int, roleId)
+//           .input('Status', sql.NVarChar, 'Activate')
+//           .input('Token', sql.NVarChar, token)
+//           .query(insertAccountQuery);
 
-// Serialize and deserialize user
-passport.serializeUser((user, done) => {
-  done(null, user.AccountID);
-});
+//         if (insertAccountResult.recordset && insertAccountResult.recordset.length > 0) {
+//           return done(null, {
+//             AccountID: insertAccountResult.recordset[0].AccountID,
+//             FirstName: profile.name.givenName,
+//             LastName: profile.name.familyName,
+//             Email: email,
+//             RoleID: roleId,
+//             Token: token,
+//           });
+//         } else {
+//           return done(new Error('Failed to create new account'));
+//         }
+//       } catch (error) {
+//         console.error('Error in Google authentication:', error);
+//         return done(error);
+//       }
+//     }
+//   )
+// );
 
-passport.deserializeUser(async (id, done) => {
-  try {
-    const pool = await sql.connect(dbConfig);
+// // Serialize user into session
+// passport.serializeUser((user, done) => {
+//   done(null, user.AccountID);
+// });
 
-    const request = pool.request();
-    request.input("accountId", sql.Int, id);
-    const result = await request.query(
-      `SELECT * FROM Account WHERE AccountID = @accountId`
-    );
+// // Deserialize user from session
+// passport.deserializeUser(async (id, done) => {
+//   try {
+//     const pool = await sql.connect(dbConfig);
 
-    if (result.recordset && result.recordset.length > 0) {
-      done(null, result.recordset[0]);
-    } else {
-      done(new Error("User not found"));
-    }
-  } catch (error) {
-    done(error);
-  }
-});
+//     const result = await pool.request()
+//       .input('accountId', sql.Int, id)
+//       .query(`SELECT * FROM Account WHERE AccountID = @accountId`);
 
-// Google authentication route for customer
-router.get(
-  "/google/customer",
-  passport.authenticate("customer-google", { scope: ["profile", "email"] })
-);
+//     if (result.recordset && result.recordset.length > 0) {
+//       done(null, result.recordset[0]);
+//     } else {
+//       done(new Error('User not found'));
+//     }
+//   } catch (error) {
+//     done(error);
+//   }
+// });
 
-const frontendHomepageURL = "http://localhost:5173/";
+// // Middleware setup
+// router.use(cookieParser());
+// router.use(session({
+//   secret: process.env.SESSION_SECRET,
+//   resave: false,
+//   saveUninitialized: false,
+// }));
+// router.use(passport.initialize());
+// router.use(passport.session());
+// router.use(flash());
 
-router.get(
-  "/google/customer/callback",
-  passport.authenticate("customer-google", { failureRedirect: "/login" }),
-  (req, res) => {
-    // Redirect to the front-end homepage URL after successful authentication
-    res.redirect(frontendHomepageURL);
-  }
-);
+// // Google login route
+// router.get(
+//   '/google/customer',
+//   passport.authenticate('customer-google', { scope: ['profile', 'email'] })
+// );
+
+// // Google callback route
+// const frontendHomepageURL = 'http://localhost:5173/diamond-page';
+// router.get(
+//   '/google/customer/callback',
+//   passport.authenticate('customer-google', { failureRedirect: '/login' }),
+//   (req, res) => {
+//     res.redirect(frontendHomepageURL);
+//   }
+// );
+
 
 //View Account
 router.get("/account", verifyToken, async (req, res) => {

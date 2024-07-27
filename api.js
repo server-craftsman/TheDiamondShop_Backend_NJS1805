@@ -8,7 +8,7 @@ const flash = require("express-flash");
 const cookieParser = require("cookie-parser");
 const expressLayouts = require('express-ejs-layouts');
 const path = require('path');
-
+const passport = require('passport');
 // Import Routes
 const authRoute = require("./routes/authentication/authRoute");
 const forgotPassword = require("./routes/userFeatures/view/email/forgotPassword");
@@ -30,6 +30,7 @@ const adminRoute = require("./routes/admin-dashboard/adminRoute");
 //----------- verify register ----------
 const verifyEmail = require("./routes/verify-gmail/sendEmail");
 const activeAccount = require("./routes/verify-gmail/verifyRoute");
+const loginGoogle = require("./routes/authentication/loginGoogle");
 // Create an Express app
 const app = express();
 
@@ -52,8 +53,10 @@ app.use(
       httpOnly: true, // Prevent client-side JavaScript from accessing the cookie
       maxAge: 3600000, // Cookie lifespan in milliseconds (1 hour in this case)
     },
-  })
+    })
 );
+app.use(passport.initialize());
+app.use(passport.session());
 
 // CORS configuration
 const corsOptions = {
@@ -105,7 +108,7 @@ sql
     app.use("/features", userFeatures, manageAccount);
     app.use("/products", manageProduct);
     app.use("/orders", orderTest);
-    app.use("/", voucherRoute, verifyEmail, activeAccount);
+    app.use("/", voucherRoute, verifyEmail, activeAccount, loginGoogle);
     app.use("/events", eventRouter);
     app.use("/certificate", certificateRouter);
     app.use("/warranty", warrantyRoute);
