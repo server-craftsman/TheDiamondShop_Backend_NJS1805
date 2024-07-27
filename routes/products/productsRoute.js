@@ -751,17 +751,6 @@ router.get("/ring-size-details", async (req, res) => {
   }
 });
 
-// router.get("/bridal-accessory", async (req, res) => {
-//   try {
-//     const ringSizes = await getBridalAccessory();
-//     res.json(ringSizes);
-//   } catch (error) {
-//     console.error("Error fetching bridal accessory details:", error);
-//     res.status(500).send("Error fetching bridal accessory details");
-//   }
-// });
-
-// Define the route
 router.get('/bridal-accessory/:id', async (req, res) => {
   const { id } = req.params;
   try {
@@ -771,6 +760,24 @@ router.get('/bridal-accessory/:id', async (req, res) => {
     res.status(500).json({ message: 'Failed to fetch bridal accessories' });
   }
 });
+
+// Định nghĩa route
+router.get('/ring-accessory-details/:id', async (req, res) => {
+  const { id } = req.params;
+
+  // Kiểm tra ID có phải là số nguyên không
+  if (!Number.isInteger(parseInt(id))) {
+    return res.status(400).json({ message: 'Invalid ID format' });
+  }
+
+  try {
+    const accessories = await getRingsAccessory(id);
+    res.json(accessories);
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to fetch rings accessories' });
+  }
+});
+
 //View bridal price theo material
 router.get("/bridal-price/:materialID", async (req, res) => {
   const { materialID } = req.params;
@@ -798,17 +805,6 @@ router.get("/ring-price/:materialID", async (req, res) => {
   } catch (error) {
     console.error("Error fetching bridal price:", error);
     res.status(500).send("Error fetching bridal price");
-  }
-});
-
-// Route to fetch all
-router.get("/ring-accessory-details", async (req, res) => {
-  try {
-    const accessory = await getRingsAccessory();
-    res.json(accessory);
-  } catch (error) {
-    console.error("Error fetching ring accessory details:", error);
-    res.status(500).send("Error fetching accessory size details");
   }
 });
 

@@ -1309,28 +1309,7 @@ const getRingSizeDetails = async () => {
   }
 };
 
-// async function getBridalAccessory() {
-//   try {
-//     const pool = await sql.connect(config);
-//     const result = await pool.request()
-//     .query(`
-//     SELECT DISTINCT
-//     ra.MaterialID,
-//     ra.RingSizeID,
-//     m.MaterialName,
-//     rs.RingSize,
-//     bp.Price
-//     FROM BridalAccessory ra
-//     JOIN Material m ON ra.MaterialID = m.MaterialID
-//     JOIN RingSize rs ON ra.RingSizeID = rs.RingSizeID
-//     JOIN BridalPrice bp ON ra.PriceID = bp.PriceID
-//     WHERE ra.BridalID = @id;;
-//     `)
-//   return result.recordset;
-//   } catch(error){
-//     console.log("error")
-//   }
-// }
+
 
 async function getBridalAccessory(id) {
   try {
@@ -1363,26 +1342,37 @@ WHERE
   }
 }
 
-async function getRingsAccessory() {
+async function getRingsAccessory(id) {
   try {
     const pool = await sql.connect(config);
     const result = await pool.request()
-      .query(`SELECT DISTINCT
-    ra.MaterialID,
-    ra.RingSizeID,
-    m.MaterialName,
-    rs.RingSize,
-    rp.Price
-    FROM RingsAccessory ra
-    JOIN Material m ON ra.MaterialID = m.MaterialID
-    JOIN RingSize rs ON ra.RingSizeID = rs.RingSizeID
-    JOIN RingsPrice rp ON ra.PriceID = rp.PriceID
-    WHERE m.MaterialID = rp.PriceID;`)
+      .input('id', sql.Int, id)
+      .query(`
+        SELECT
+        DISTINCT
+          ra.MaterialID,
+          ra.RingSizeID,
+          m.MaterialName,
+          rs.RingSize,
+          bp.Price
+        FROM 
+          RingsAccessory ra
+        INNER JOIN 
+          Material m ON ra.MaterialID = m.MaterialID
+        INNER JOIN 
+          RingSize rs ON ra.RingSizeID = rs.RingSizeID
+        INNER JOIN 
+          RingsPrice bp ON ra.PriceID = bp.PriceID
+        WHERE 
+          ra.DiamondRingsID = @id;
+      `);
     return result.recordset;
   } catch (error) {
-    console.log("error")
+    console.error("Error fetching rings accessory:", error.message);
+    throw error;
   }
 }
+
 
 async function getBridalPriceByMaterialID(materialID) {
   try {
