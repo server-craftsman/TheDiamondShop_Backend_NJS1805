@@ -333,6 +333,7 @@ const insertDiamond = async (diamondData) => {
 const updateDiamond = async (diamondData) => {
   try {
     const {
+      diamondID,
       diamondOrigin,
       caratWeight,
       color,
@@ -359,6 +360,7 @@ const updateDiamond = async (diamondData) => {
     let pool = await sql.connect(config);
     let results = await pool
       .request()
+      .input("DiamondID", sql.Int, diamondID)
       .input("DiamondOrigin", sql.VarChar, diamondOrigin)
       .input("CaratWeight", sql.Float, caratWeight)
       .input("Color", sql.VarChar, color)
@@ -396,13 +398,14 @@ const updateDiamond = async (diamondData) => {
           Depth = @Depth,
           Measurements = @Measurements,
           GIAReportNumber = @GIAReportNumber,
+          StockNumber = @StockNumber,
           LabReportNumber = @LabReportNumber,
           Gemstone = @Gemstone,
           GradingReport = @GradingReport,
           Descriptors = @Descriptors,
           Fluorescence = @Fluorescence,
           Inventory = @Inventory
-        WHERE StockNumber = @StockNumber
+        WHERE DiamondID = @DiamondID
       `);
 
     return results;
@@ -595,6 +598,115 @@ const deleteDiamondRings = async (diamondRingsData) => {
 };
 
 //Add Bridals
+// const insertBridals = async (bridalsData) => {
+//   try {
+//     const {
+//       bridalStyle,
+//       nameBridal,
+//       category,
+//       brandName,
+//       material,
+//       settingType,
+//       gender,
+//       weight,
+//       centerDiamond,
+//       diamondCaratRange,
+//       ringSizeRange,
+//       totalCaratweight,
+//       totalDiamond,
+//       description,
+//       price,
+//       imageBridal,
+//       imageBrand,
+//       inventory,
+//     } = bridalsData;
+
+//     let pool = await sql.connect(config);
+//     let results = await pool
+//       .request()
+//       .input("BridalStyle", sql.VarChar, bridalStyle)
+//       .input("NameBridal", sql.VarChar, nameBridal)
+//       .input("Category", sql.VarChar, category)
+//       .input("BrandName", sql.VarChar, brandName)
+//       .input("Material", sql.VarChar, material)
+//       .input("SettingType", sql.VarChar, settingType)
+//       .input("Gender", sql.VarChar, gender)
+//       .input("Weight", sql.Decimal, weight)
+//       .input("CenterDiamond", sql.VarChar, centerDiamond)
+//       .input("DiamondCaratRange", sql.VarChar, diamondCaratRange)
+//       .input("RingSizeRang", sql.Decimal, ringSizeRange)
+//       .input("TotalCaratWeight", sql.Decimal, totalCaratweight)
+//       .input("TotalDiamond", sql.Int, totalDiamond)
+//       .input("Description", sql.VarChar, description)
+//       // .input("Price", sql.Float, price)
+//       .input("ImageBridal", sql.VarChar, imageBridal)
+//       //.input("ImageBrand", sql.VarChar, imageBrand)
+//       .input("Inventory", sql.Int, 1)
+//       .query(`INSERT INTO Bridal (BridalStyle, NameBridal, Category, BrandName, Material, SettingType, Gender, Weight, CenterDiamond, DiamondCaratRange, RingSizeRang, TotalCaratWeight, TotalDiamond, Description, ImageBridal, ImageBrand, Inventory)
+//             VALUES (@BridalStyle, @NameBridal, @Category, @BrandName, @Material, @SettingType, @Gender, @Weight, @CenterDiamond, @DiamondCaratRange, @RingSizeRang, @TotalCaratWeight, @TotalDiamond, @Description, @ImageBridal, 'https://collections.jewelryimages.net/collections_logos/00008w.jpg', @Inventory)
+//           `);
+//     return results;
+//   } catch (err) {
+//     console.error("Database query error:", err);
+//     throw new Error("Database query error");
+//   }
+// };
+
+//insert data Bridal true
+// const insertBridals = async (bridalsData) => {
+//   try {
+//     const {
+//       bridalStyle,
+//       nameBridal,
+//       category,
+//       brandName,
+//       material,
+//       settingType,
+//       gender,
+//       weight,
+//       centerDiamond,
+//       diamondCaratRange,
+//       ringSizeRange,  // Corrected the name
+//       totalCaratweight,
+//       totalDiamond,
+//       description,
+//       price,
+//       imageBridal,
+//       imageBrand,
+//       inventory,
+//     } = bridalsData;
+
+//     let pool = await sql.connect(config);
+//     let results = await pool
+//       .request()
+//       .input("BridalStyle", sql.VarChar, bridalStyle)
+//       .input("NameBridal", sql.VarChar, nameBridal)
+//       .input("Category", sql.VarChar, category)
+//       .input("BrandName", sql.VarChar, brandName)
+//       .input("Material", sql.VarChar, material)
+//       .input("SettingType", sql.VarChar, settingType)
+//       .input("Gender", sql.VarChar, gender)
+//       .input("Weight", sql.Decimal, weight)
+//       .input("CenterDiamond", sql.VarChar, centerDiamond)
+//       .input("DiamondCaratRange", sql.VarChar, diamondCaratRange)
+//       .input("RingSizeRange", sql.Decimal, ringSizeRange)  // Corrected the name
+//       .input("TotalCaratWeight", sql.Decimal, totalCaratweight)
+//       .input("TotalDiamond", sql.Int, totalDiamond)
+//       .input("Description", sql.VarChar, description)
+//       // .input("Price", sql.Float, price)
+//       .input("ImageBridal", sql.VarChar, imageBridal)
+//       //.input("ImageBrand", sql.VarChar, imageBrand)
+//       .input("Inventory", sql.Int, 1)
+//       .query(`INSERT INTO Bridal (BridalStyle, NameBridal, Category, BrandName, Material, SettingType, Gender, Weight, CenterDiamond, DiamondCaratRange, RingSizeRange, TotalCaratWeight, TotalDiamond, Description, ImageBridal, ImageBrand, Inventory)
+//             VALUES (@BridalStyle, @NameBridal, @Category, @BrandName, @Material, @SettingType, @Gender, @Weight, @CenterDiamond, @DiamondCaratRange, @RingSizeRange, @TotalCaratWeight, @TotalDiamond, @Description, @ImageBridal, 'https://collections.jewelryimages.net/collections_logos/00008w.jpg', @Inventory)
+//           `);
+//     return results;
+//   } catch (err) {
+//     console.error("Database query error:", err);
+//     throw new Error("Database query error");
+//   }
+// };
+
 const insertBridals = async (bridalsData) => {
   try {
     const {
@@ -608,7 +720,7 @@ const insertBridals = async (bridalsData) => {
       weight,
       centerDiamond,
       diamondCaratRange,
-      ringSizeRange,
+      ringSizeRange,  // Corrected the name
       totalCaratweight,
       totalDiamond,
       description,
@@ -619,7 +731,9 @@ const insertBridals = async (bridalsData) => {
     } = bridalsData;
 
     let pool = await sql.connect(config);
-    let results = await pool
+
+    // Insert into Bridal table
+    let bridalResult = await pool
       .request()
       .input("BridalStyle", sql.VarChar, bridalStyle)
       .input("NameBridal", sql.VarChar, nameBridal)
@@ -631,20 +745,62 @@ const insertBridals = async (bridalsData) => {
       .input("Weight", sql.Decimal, weight)
       .input("CenterDiamond", sql.VarChar, centerDiamond)
       .input("DiamondCaratRange", sql.VarChar, diamondCaratRange)
-      .input("RingSizeRang", sql.Decimal, ringSizeRange)
+      .input("RingSizeRange", sql.Decimal, ringSizeRange)  // Corrected the name
       .input("TotalCaratWeight", sql.Decimal, totalCaratweight)
       .input("TotalDiamond", sql.Int, totalDiamond)
       .input("Description", sql.VarChar, description)
-      .input("Price", sql.Float, price)
       .input("ImageBridal", sql.VarChar, imageBridal)
-      //.input("ImageBrand", sql.VarChar, imageBrand)
+      // .input("ImageBrand", sql.VarChar, imageBrand)
       .input("Inventory", sql.Int, 1)
-      .query(`INSERT INTO Bridal (BridalStyle, NameBridal, Category, BrandName, Material, SettingType, Gender, Weight, CenterDiamond, DiamondCaratRange, RingSizeRang, TotalCaratWeight, TotalDiamond, Description, Price, ImageBridal, ImageBrand, Inventory)
-            VALUES (@BridalStyle, @NameBridal, @Category, @BrandName, @Material, @SettingType, @Gender, @Weight, @CenterDiamond, @DiamondCaratRange, @RingSizeRang, @TotalCaratWeight, @TotalDiamond, @Description, @Price, @ImageBridal, 'https://collections.jewelryimages.net/collections_logos/00008w.jpg', @Inventory)
-          `);
-    return results;
+      .query(`INSERT INTO Bridal (BridalStyle, NameBridal, Category, BrandName, Material, SettingType, Gender, Weight, CenterDiamond, DiamondCaratRange, RingSizeRange, TotalCaratWeight, TotalDiamond, Description, ImageBridal, ImageBrand, Inventory)
+              VALUES (@BridalStyle, @NameBridal, @Category, @BrandName, @Material, @SettingType, @Gender, @Weight, @CenterDiamond, @DiamondCaratRange, @RingSizeRange, @TotalCaratWeight, @TotalDiamond, @Description, @ImageBridal,'https://collections.jewelryimages.net/collections_logos/00008w.jpg', @Inventory);
+              SELECT SCOPE_IDENTITY() AS BridalID;`);
+
+    const bridalID = bridalResult.recordset[0].BridalID;
+
+    // Insert into BridalAccessory table
+    await insertBridalAccessories(bridalID);
+
+    return bridalResult;
   } catch (err) {
     console.error("Database query error:", err);
+    throw new Error("Database query error");
+  }
+};
+
+const insertBridalAccessories = async (bridalID) => {
+  try {
+    let pool = await sql.connect(config);
+
+    // Reset identity seed (make sure to adjust this according to your needs)
+    await pool.request().query("DBCC CHECKIDENT ('Material', RESEED, 0);");
+
+    // Insert BridalAccessory records for each combination
+    await pool
+      .request()
+      .query(`
+        DECLARE @MaterialID INT = 1;
+        WHILE @MaterialID <= 5
+        BEGIN
+          DECLARE @RingSizeID INT = 1;
+          WHILE @RingSizeID <= 13
+          BEGIN
+            DECLARE @PriceID INT = 1;
+            WHILE @PriceID <= 5
+            BEGIN
+              INSERT INTO BridalAccessory (BridalID, MaterialID, RingSizeID, PriceID)
+              VALUES (${bridalID}, @MaterialID, @RingSizeID, @PriceID);
+              
+              SET @PriceID = @PriceID + 1;
+            END;
+            SET @RingSizeID = @RingSizeID + 1;
+          END;
+          SET @MaterialID = @MaterialID + 1;
+        END;
+      `);
+
+  } catch (err) {
+    console.error("Error inserting bridal accessories:", err);
     throw new Error("Database query error");
   }
 };
@@ -653,6 +809,7 @@ const insertBridals = async (bridalsData) => {
 const updateBridals = async (bridalsData) => {
   try {
     const {
+      bridalID,
       bridalStyle,
       nameBridal,
       category,
@@ -663,7 +820,7 @@ const updateBridals = async (bridalsData) => {
       weight,
       centerDiamond,
       diamondCaratRange,
-      ringSizeRange,
+      ringSizeRange,  // Corrected the name
       totalCaratweight,
       totalDiamond,
       description,
@@ -675,6 +832,7 @@ const updateBridals = async (bridalsData) => {
     let pool = await sql.connect(config);
     let results = await pool
       .request()
+      .input("BridalID", sql.Int, bridalID)
       .input("BridalStyle", sql.VarChar, bridalStyle)
       .input("NameBridal", sql.VarChar, nameBridal)
       .input("Category", sql.VarChar, category)
@@ -685,14 +843,15 @@ const updateBridals = async (bridalsData) => {
       .input("Weight", sql.Decimal, weight)
       .input("CenterDiamond", sql.VarChar, centerDiamond)
       .input("DiamondCaratRange", sql.VarChar, diamondCaratRange)
-      .input("RingSizeRang", sql.Decimal, ringSizeRange)
+      .input("RingSizeRange", sql.Decimal, ringSizeRange)  // Corrected the name
       .input("TotalCaratWeight", sql.Decimal, totalCaratweight)
       .input("TotalDiamond", sql.Int, totalDiamond)
       .input("Description", sql.VarChar, description)
-      .input("Price", sql.Float, price)
+      // .input("Price", sql.Float, price)
       .input("ImageBridal", sql.VarChar, imageBridal)
       .input("Inventory", sql.Int, inventory).query(`UPDATE Bridal
         SET 
+          BridalStyle = @BridalStyle,
           NameBridal = @NameBridal,
           Category = @Category,
           BrandName = @BrandName,
@@ -702,14 +861,13 @@ const updateBridals = async (bridalsData) => {
           Weight = @Weight,
           CenterDiamond = @CenterDiamond,
           DiamondCaratRange = @DiamondCaratRange,
-          RingSizeRang = @RingSizeRang,
+          RingSizeRange = @RingSizeRange,
           TotalCaratWeight = @TotalCaratWeight,
           TotalDiamond = @TotalDiamond,
           Description = @Description,
-          Price = @Price,
           ImageBridal = @ImageBridal,
           Inventory = @Inventory
-        WHERE BridalStyle = @BridalStyle`);
+        WHERE BridalID = @BridalID`);
     return results;
   } catch (err) {
     console.error("Database query error:", err);
