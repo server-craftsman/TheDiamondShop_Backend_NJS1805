@@ -27,6 +27,9 @@ const orderTest = require("./routes/orders/orderTest");
 //------------ admin ---------
 const adminRoute = require("./routes/admin-dashboard/adminRoute");
 //----------------
+//----------- verify register ----------
+const verifyEmail = require("./routes/verify-gmail/sendEmail");
+const activeAccount = require("./routes/verify-gmail/verifyRoute");
 // Create an Express app
 const app = express();
 
@@ -102,12 +105,13 @@ sql
     app.use("/features", userFeatures, manageAccount);
     app.use("/products", manageProduct);
     app.use("/orders", orderTest);
-    app.use("/", voucherRoute);
+    app.use("/", voucherRoute, verifyEmail, activeAccount);
     app.use("/events", eventRouter);
     app.use("/certificate", certificateRouter);
     app.use("/warranty", warrantyRoute);
     app.use("/paypal", paypalRouter);
-    app.use("/admin", adminRoute )
+    app.use("/admin", adminRoute);
+    // app.use("/verify-email", sendEmail);
     const port = process.env.PORT || 8090; // Set default port if PORT environment variable is not defined
     app.listen(port, () => {
       console.log(

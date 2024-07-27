@@ -230,7 +230,7 @@ router.post("/logout", async (req, res) => {
 // test Debug
 // POST /register endpoint for guest registration
 // POST route to register a guest
-router.post("/register", async (req, res) => {
+router.post("/registers", async (req, res) => {
   const guestData = req.body;
 
   console.log(

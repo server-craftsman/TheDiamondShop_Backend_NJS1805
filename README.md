@@ -1,4 +1,4 @@
-# BE_Diamond Shop
+# BE_DiamondShop
 
 ![BE_DiamondShop Logo](https://firebasestorage.googleapis.com/v0/b/the-diamond-anh3.appspot.com/o/Logo%2FlogoDiamondShop.jpg?alt=media&token=753bec3b-2c2b-4d3a-bc47-0913437732da)
 
@@ -45,4 +45,4 @@ To get a local copy up and running follow these simple steps.
 ### Installation
 1. Clone the repo
    ```sh
-   git clone https://github.com/server-craftsman/TheDiamondShop_Backend_NJS1805.git
+   git clone https://github.com/server-craftsman/BE_Diamond_V2.0.git
