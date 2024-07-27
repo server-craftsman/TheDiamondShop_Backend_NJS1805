@@ -354,8 +354,113 @@ router.delete("/delete-diamond-rings", async (req, res) => {
 });
 
 //Add Bridals
+// router.post("/add-bridals", async (req, res) => {
+//   const{
+//     bridalStyle,
+//     nameBridal,
+//     category,
+//     brandName,
+//     material,
+//     settingType,
+//     gender,
+//     weight,
+//     centerDiamond,
+//     diamondCaratRange,
+//     ringSizeRange,
+//     totalCaratweight,
+//     totalDiamond,
+//     description,
+//     price,
+//     imageBridal,
+//     imageBrand,
+//     inventory
+//   } = req.body;
+
+//   try {
+//     // Insert new diamond ring
+//     await insertBridals({
+//     bridalStyle,
+//     nameBridal,
+//     category,
+//     brandName,
+//     material,
+//     settingType,
+//     gender,
+//     weight,
+//     centerDiamond,
+//     diamondCaratRange,
+//     ringSizeRange,
+//     totalCaratweight,
+//     totalDiamond,
+//     description,
+//     price,
+//     imageBridal,
+//     imageBrand,
+//     inventory
+//     });
+
+//     res.status(200).json({ message: "Bridal added successfully" });
+//   } catch (err) {
+//     console.error("Error adding Bridal:", err.message);
+//     res.status(500).send("Internal server error");
+//   }
+// });
+
+// Insert Data Bridal True
+// router.post("/add-bridals", async (req, res) => {
+//   const{
+//     bridalStyle,
+//     nameBridal,
+//     category,
+//     brandName,
+//     material,
+//     settingType,
+//     gender,
+//     weight,
+//     centerDiamond,
+//     diamondCaratRange,
+//     ringSizeRange,
+//     totalCaratweight,
+//     totalDiamond,
+//     description,
+//     price,
+//     imageBridal,
+//     imageBrand,
+//     inventory
+//   } = req.body;
+
+//   try {
+//     // Insert new diamond ring
+//     await insertBridals({
+//     bridalStyle,
+//     nameBridal,
+//     category,
+//     brandName,
+//     material,
+//     settingType,
+//     gender,
+//     weight,
+//     centerDiamond,
+//     diamondCaratRange,
+//     ringSizeRange,
+//     totalCaratweight,
+//     totalDiamond,
+//     description,
+//     price,
+//     imageBridal,
+//     imageBrand,
+//     inventory
+//     });
+
+//     res.status(200).json({ message: "Bridal added successfully" });
+//   } catch (err) {
+//     console.error("Error adding Bridal:", err.message);
+//     res.status(500).send("Internal server error");
+//   }
+// });
+
 router.post("/add-bridals", async (req, res) => {
-  const{
+  const {
     bridalStyle,
     nameBridal,
     category,
@@ -377,26 +482,26 @@ router.post("/add-bridals", async (req, res) => {
   } = req.body;
 
   try {
-    // Insert new diamond ring
+    // Insert new bridal and accessories
     await insertBridals({
-    bridalStyle,
-    nameBridal,
-    category,
-    brandName,
-    material,
-    settingType,
-    gender,
-    weight,
-    centerDiamond,
-    diamondCaratRange,
-    ringSizeRange,
-    totalCaratweight,
-    totalDiamond,
-    description,
-    price,
-    imageBridal,
-    imageBrand,
-    inventory
+      bridalStyle,
+      nameBridal,
+      category,
+      brandName,
+      material,
+      settingType,
+      gender,
+      weight,
+      centerDiamond,
+      diamondCaratRange,
+      ringSizeRange,
+      totalCaratweight,
+      totalDiamond,
+      description,
+      price,
+      imageBridal,
+      imageBrand,
+      inventory
     });
 
     res.status(200).json({ message: "Bridal added successfully" });
@@ -410,7 +515,7 @@ router.post("/add-bridals", async (req, res) => {
 router.put("/edit-bridals", async (req, res) => {
   const bridalsData = req.body;
 
-  if (!bridalsData.bridalStyle) {
+  if (!bridalsData.bridalID) {
     return res.status(400).send("Bridal ID required");
   }
   try {
