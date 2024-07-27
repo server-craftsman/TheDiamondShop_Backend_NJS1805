@@ -1,6 +1,52 @@
 const config = require("../../config/dbconfig");
 const sql = require("mssql");
 
+// async function getAllBridals() {
+//   try {
+//     let pool = await sql.connect(config);
+//     let products = await pool.request().query(`
+//     SELECT 
+//     b.BridalID,
+//     b.BridalStyle,
+//     b.NameBridal,
+//     b.Category,
+//     b.BrandName,
+//     b.Material,
+//     b.SettingType,
+//     b.Gender,
+//     b.Weight,
+//     b.CenterDiamond,
+//     b.DiamondCaratRange,
+//     b.RingSizeRange,
+//     b.TotalCaratWeight,
+//     b.TotalDiamond,
+//     b.Description,
+//     b.ImageBridal,
+//     b.ImageBrand,
+//     b.Inventory,
+//     m.MaterialName,
+//     rs.RingSize,
+// 	bp.Price
+// FROM 
+//     Bridal b
+// CROSS JOIN 
+//     Material m
+// CROSS JOIN 
+//     RingSize rs
+// CROSS JOIN
+// 	BridalPrice bp
+// WHERE m.MaterialID = 1 AND rs.RingSizeID = 1 AND bp.PriceID = 1;
+// `);
+//     return products.recordsets;
+//   } catch (error) {
+//     console.error("SQL error", error);
+//     throw error;
+//   }
+// }
+
+//View All Prodcut
+
+
 async function getAllBridals() {
   try {
     let pool = await sql.connect(config);
@@ -24,19 +70,25 @@ async function getAllBridals() {
     b.ImageBridal,
     b.ImageBrand,
     b.Inventory,
-    m.MaterialName,
-    rs.RingSize,
-	bp.Price
+    (SELECT TOP 1 m.MaterialName 
+     FROM BridalAccessory ba 
+     INNER JOIN Material m ON ba.MaterialID = m.MaterialID 
+     WHERE ba.BridalID = b.BridalID 
+     ORDER BY m.MaterialName) AS MaterialName,
+    (SELECT TOP 1 rs.RingSize 
+     FROM BridalAccessory ba 
+     INNER JOIN RingSize rs ON ba.RingSizeID = rs.RingSizeID 
+     WHERE ba.BridalID = b.BridalID 
+     ORDER BY rs.RingSize) AS RingSize,
+    (SELECT TOP 1 bp.Price 
+     FROM BridalAccessory ba 
+     INNER JOIN BridalPrice bp ON ba.PriceID = bp.PriceID 
+     WHERE ba.BridalID = b.BridalID 
+     ORDER BY bp.Price) AS Price
 FROM 
     Bridal b
-CROSS JOIN 
-    Material m
-CROSS JOIN 
-    RingSize rs
-CROSS JOIN
-	BridalPrice bp
-WHERE 
-    m.MaterialID = 1 AND rs.RingSizeID = 1 AND bp.PriceID = 1;
+ORDER BY 
+    b.BridalID;
 
 `);
     return products.recordsets;
@@ -45,8 +97,6 @@ WHERE
     throw error;
   }
 }
-
-//View All Prodcut
 async function getAllProduct() {
   try {
     const pool = await sql.connect(config);
@@ -226,19 +276,28 @@ async function getAllDiamonds() {
 async function getAllDiamondRings() {
   try {
     let pool = await sql.connect(config);
-    let product = await pool.request().query(`SELECT DR.*,
-      m.MaterialName,
-      rs.RingSize,
-      rp.Price
- FROM DiamondRings DR 
- CROSS JOIN 
-     Material m
- CROSS JOIN 
-     RingSize rs
- CROSS JOIN
-   RingsPrice rp
- WHERE
-   m.MaterialID = 1 AND rs.RingSizeID = 1 AND rp.PriceID = 1`);
+    let product = await pool.request().query(`SELECT 
+    b.*,
+    (SELECT TOP 1 m.MaterialName 
+     FROM RingsAccessory ba 
+     INNER JOIN Material m ON ba.MaterialID = m.MaterialID 
+     WHERE ba.DiamondRingsID = b.DiamondRingsID 
+     ORDER BY m.MaterialName) AS MaterialName,
+    (SELECT TOP 1 rs.RingSize 
+     FROM RingsAccessory ba 
+     INNER JOIN RingSize rs ON ba.RingSizeID = rs.RingSizeID 
+     WHERE ba.DiamondRingsID = b.DiamondRingsID 
+     ORDER BY rs.RingSize) AS RingSize,
+    (SELECT TOP 1 bp.Price 
+     FROM RingsAccessory ba 
+     INNER JOIN RingsPrice bp ON ba.PriceID = bp.PriceID 
+     WHERE ba.DiamondRingsID = b.DiamondRingsID 
+     ORDER BY bp.Price) AS Price
+FROM 
+    DiamondRings b
+ORDER BY 
+    b.DiamondRingsID;
+`);
     return product.recordsets;
   } catch (error) {
     console.log("SQL error", error);
