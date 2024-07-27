@@ -751,13 +751,24 @@ router.get("/ring-size-details", async (req, res) => {
   }
 });
 
-router.get("/bridal-accessory", async (req, res) => {
+// router.get("/bridal-accessory", async (req, res) => {
+//   try {
+//     const ringSizes = await getBridalAccessory();
+//     res.json(ringSizes);
+//   } catch (error) {
+//     console.error("Error fetching bridal accessory details:", error);
+//     res.status(500).send("Error fetching bridal accessory details");
+//   }
+// });
+
+// Define the route
+router.get('/bridal-accessory/:id', async (req, res) => {
+  const { id } = req.params;
   try {
-    const ringSizes = await getBridalAccessory();
-    res.json(ringSizes);
+    const accessories = await getBridalAccessory(id);
+    res.json(accessories);
   } catch (error) {
-    console.error("Error fetching bridal accessory details:", error);
-    res.status(500).send("Error fetching bridal accessory details");
+    res.status(500).json({ message: 'Failed to fetch bridal accessories' });
   }
 });
 //View bridal price theo material

@@ -1309,26 +1309,57 @@ const getRingSizeDetails = async () => {
   }
 };
 
-async function getBridalAccessory() {
+// async function getBridalAccessory() {
+//   try {
+//     const pool = await sql.connect(config);
+//     const result = await pool.request()
+//     .query(`
+//     SELECT DISTINCT
+//     ra.MaterialID,
+//     ra.RingSizeID,
+//     m.MaterialName,
+//     rs.RingSize,
+//     bp.Price
+//     FROM BridalAccessory ra
+//     JOIN Material m ON ra.MaterialID = m.MaterialID
+//     JOIN RingSize rs ON ra.RingSizeID = rs.RingSizeID
+//     JOIN BridalPrice bp ON ra.PriceID = bp.PriceID
+//     WHERE ra.BridalID = @id;;
+//     `)
+//   return result.recordset;
+//   } catch(error){
+//     console.log("error")
+//   }
+// }
+
+async function getBridalAccessory(id) {
   try {
     const pool = await sql.connect(config);
     const result = await pool.request()
-    .query(`
-    SELECT DISTINCT
+      .input('id', sql.Int, id)  // Use .input() to pass the parameter
+      .query(`
+       SELECT 
     ra.MaterialID,
     ra.RingSizeID,
     m.MaterialName,
     rs.RingSize,
     bp.Price
-    FROM BridalAccessory ra
-    JOIN Material m ON ra.MaterialID = m.MaterialID
-    JOIN RingSize rs ON ra.RingSizeID = rs.RingSizeID
-    JOIN BridalPrice bp ON ra.PriceID = bp.PriceID
-    WHERE m.MaterialID = bp.PriceID;
-    `)
-  return result.recordset;
-  } catch(error){
-    console.log("error")
+FROM 
+    BridalAccessory ra
+INNER JOIN 
+    Material m ON ra.MaterialID = m.MaterialID
+INNER JOIN 
+    RingSize rs ON ra.RingSizeID = rs.RingSizeID
+INNER JOIN 
+    BridalPrice bp ON ra.PriceID = bp.PriceID
+WHERE 
+    ra.BridalID = @id;
+
+      `);
+    return result.recordset;
+  } catch (error) {
+    console.error("Error fetching bridal accessory:", error.message); // Improved error logging
+    throw error; // Rethrow error to handle it in the caller function if needed
   }
 }
 
@@ -1336,7 +1367,7 @@ async function getRingsAccessory() {
   try {
     const pool = await sql.connect(config);
     const result = await pool.request()
-    .query(`SELECT DISTINCT
+      .query(`SELECT DISTINCT
     ra.MaterialID,
     ra.RingSizeID,
     m.MaterialName,
@@ -1347,8 +1378,8 @@ async function getRingsAccessory() {
     JOIN RingSize rs ON ra.RingSizeID = rs.RingSizeID
     JOIN RingsPrice rp ON ra.PriceID = rp.PriceID
     WHERE m.MaterialID = rp.PriceID;`)
-  return result.recordset;
-  } catch(error){
+    return result.recordset;
+  } catch (error) {
     console.log("error")
   }
 }

@@ -1,0 +1,6 @@
+{
+  "watch": ["api.js"],
+  "ext": "js,json",
+  "ignore": [],
+  "exec": "node api.js"
+}
