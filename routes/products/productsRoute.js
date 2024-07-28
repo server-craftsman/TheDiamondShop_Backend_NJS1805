@@ -819,6 +819,8 @@ router.get("/ring-price/:materialID", async (req, res) => {
   }
 });
 
+
+//===========for only diamond-rings=============
 //add-rings
 router.post('/add-diamond-ring', async (req, res) => {
   try {
@@ -1046,5 +1048,6 @@ router.get('/diamond-rings-price/:id', async (req, res) => {
     res.status(500).send('Error retrieving diamond ring prices');
   }
 });
+//===========================================
 
 module.exports = router;
