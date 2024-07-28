@@ -972,5 +972,29 @@ router.put('/edit-diamond-rings/:id', async (req, res) => {
   }
 });
 
+// Router to view distinct MaterialNames for a DiamondRingsID
+router.get('/diamond-rings-material/:id', async (req, res) => {
+  try {
+    const pool = await poolPromise;
+    const { id } = req.params;
+
+    const query = `
+      SELECT DISTINCT dr.DiamondRingsID, m.MaterialName
+      FROM DiamondRings dr
+      JOIN RingsAccessory ra ON dr.DiamondRingsID = ra.DiamondRingsID
+      JOIN Material m ON ra.MaterialID = m.MaterialID
+      WHERE dr.DiamondRingsID = @id
+    `;
+
+    const result = await pool.request()
+      .input('id', sql.Int, id)
+      .query(query);
+
+    res.status(200).json(result.recordset);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Error retrieving diamond ring materials');
+  }
+});
 
 module.exports = router;
