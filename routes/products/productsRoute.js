@@ -1022,4 +1022,29 @@ router.get('/diamond-rings-size/:id', async (req, res) => {
   }
 });
 
+// Router to view distinct Prices for a DiamondRingsID
+router.get('/diamond-rings-price/:id', async (req, res) => {
+  try {
+    const pool = await poolPromise;
+    const { id } = req.params;
+
+    const query = `
+      SELECT DISTINCT dr.DiamondRingsID, rp.Price
+      FROM DiamondRings dr
+      JOIN RingsAccessory ra ON dr.DiamondRingsID = ra.DiamondRingsID
+      JOIN RingsPrice rp ON ra.PriceID = rp.PriceID
+      WHERE dr.DiamondRingsID = @id
+    `;
+
+    const result = await pool.request()
+      .input('id', sql.Int, id)
+      .query(query);
+
+    res.status(200).json(result.recordset);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Error retrieving diamond ring prices');
+  }
+});
+
 module.exports = router;
