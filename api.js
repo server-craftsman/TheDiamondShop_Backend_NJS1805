@@ -31,6 +31,7 @@ const adminRoute = require("./routes/admin-dashboard/adminRoute");
 const verifyEmail = require("./routes/verify-gmail/sendEmail");
 const activeAccount = require("./routes/verify-gmail/verifyRoute");
 const loginGoogle = require("./routes/authentication/loginGoogle");
+const globalRegistrationInformation = require("./routes/userFeatures/globalRegistrationInformation");
 // Create an Express app
 const app = express();
 
@@ -105,7 +106,7 @@ sql
     app.use("/features", userFeatures, manageAccount);
     app.use("/products", manageProduct);
     app.use("/orders", orderTest);
-    app.use("/", voucherRoute, verifyEmail, activeAccount, loginGoogle);
+    app.use("/", voucherRoute, verifyEmail, activeAccount, loginGoogle, globalRegistrationInformation);
     app.use("/events", eventRouter);
     app.use("/certificate", certificateRouter);
     app.use("/warranty", warrantyRoute);
