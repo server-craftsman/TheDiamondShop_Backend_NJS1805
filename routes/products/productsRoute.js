@@ -881,7 +881,7 @@ router.post('/add-diamond-ring', async (req, res) => {
       .input('PriceID', sql.Int, priceID)
       .query(ringsAccessoryQuery);
 
-    res.status(201).send({ message: 'Diamond Ring added successfully', DiamondRingsID: diamondRingsID });
+    res.status(200).send({ message: 'Diamond Ring added successfully', DiamondRingsID: diamondRingsID });
   } catch (err) {
     res.status(500).send({ message: err.message });
   }
