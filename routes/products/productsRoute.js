@@ -997,4 +997,29 @@ router.get('/diamond-rings-material/:id', async (req, res) => {
   }
 });
 
+// Router to view distinct RingSizes for a DiamondRingsID
+router.get('/diamond-rings-size/:id', async (req, res) => {
+  try {
+    const pool = await poolPromise;
+    const { id } = req.params;
+
+    const query = `
+      SELECT DISTINCT dr.DiamondRingsID, rs.RingSize
+      FROM DiamondRings dr
+      JOIN RingsAccessory ra ON dr.DiamondRingsID = ra.DiamondRingsID
+      JOIN RingSize rs ON ra.RingSizeID = rs.RingSizeID
+      WHERE dr.DiamondRingsID = @id
+    `;
+
+    const result = await pool.request()
+      .input('id', sql.Int, id)
+      .query(query);
+
+    res.status(200).json(result.recordset);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Error retrieving diamond ring sizes');
+  }
+});
+
 module.exports = router;
