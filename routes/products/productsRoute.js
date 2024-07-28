@@ -10,7 +10,7 @@ const {
   getAllTimePieces,
   getAllProduct,
   getAllBanner,
-  insertDiamond, 
+  insertDiamond,
   updateDiamond,
   deleteDiamond,
   insertDiamondRings,
@@ -32,8 +32,21 @@ const {
   getBridalAccessory,
   getRingsAccessory,
   getBridalPriceByMaterialID,
-  getRingPriceByMaterialID
+  getRingPriceByMaterialID,
+  getBridalByRingSize,
+  getBridalByMaterial,
 } = require("../../dao/products/manageProducts");
+const config = require("../../config/dbconfig");
+const sql = require("mssql");
+
+const poolPromise = new sql.ConnectionPool(config)
+  .connect()
+  .then(pool => {
+    console.log('Connected to MSSQL');
+    return pool;
+  })
+  .catch(err => console.log('Database Connection Failed! Bad Config: ', err));
+
 const { auth } = require("googleapis/build/src/apis/abusiveexperiencereport");
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -106,27 +119,27 @@ router.get("/brands", async (req, res) => {
 
 // View timepieces
 router.get("/timepieces", async (req, response) => {
-    getAllTimePieces().then(result => {
-        response.json(result[0]);
-    }).catch(error => {
-        console.error('Error fetching timepieces: ', error);
-        response.status(500).send('Error fetching timepieces');
-    });
+  getAllTimePieces().then(result => {
+    response.json(result[0]);
+  }).catch(error => {
+    console.error('Error fetching timepieces: ', error);
+    response.status(500).send('Error fetching timepieces');
+  });
 });
 
 // View Diamond Rings
 router.get("/diamond-rings", async (req, response) => {
-    getAllDiamondRings().then(result => {
-        response.json(result[0]);
-    }).catch(error => {
-        console.error('Error fetching diamond rings: ', error);
-        response.status(500).send('Error fetching diamond rings');
-    });
+  getAllDiamondRings().then(result => {
+    response.json(result[0]);
+  }).catch(error => {
+    console.error('Error fetching diamond rings: ', error);
+    response.status(500).send('Error fetching diamond rings');
+  });
 });
 
 //View all product
 router.get("/product", async (req, response) => {
-  getAllProduct().then(result =>{
+  getAllProduct().then(result => {
     response.json(result[0]);
   }).catch(error => {
     console.error('Error fetching banners: ', error);
@@ -136,7 +149,7 @@ router.get("/product", async (req, response) => {
 
 //View Banner
 router.get("/banner", async (req, response) => {
-  getAllBanner().then(result =>{
+  getAllBanner().then(result => {
     response.json(result[0]);
   }).catch(error => {
     console.error('Error fetching banners: ', error);
@@ -170,7 +183,7 @@ router.post("/add-diamond", async (req, res) => {
     inventory,
   } = req.body;
 
-// Validate required fields
+  // Validate required fields
   if (!caratWeight || !price || !shape) {
     return res
       .status(400)
@@ -178,7 +191,7 @@ router.post("/add-diamond", async (req, res) => {
   }
 
   try {
-// Insert new diamond
+    // Insert new diamond
     await insertDiamond({
       diamondOrigin,
       caratWeight,
@@ -233,22 +246,22 @@ router.put("/edit-diamond", async (req, res) => {
 // Delete Diamond
 router.delete("/delete-diamond", async (req, res) => {
   const dataSource = req.body;
- // Validate the diamondId
- if(!dataSource.diamondId){
-   return res.status(400).send("Diamond ID required");
- }
- try {
-   // Delete diamond
-   const result = await deleteDiamond(dataSource);
-   if (result.rowsAffected && result.rowsAffected[0] > 0) {
-     res.status(200).json({ message: 'Diamond deleted successfully' });
-   } else {
-     res.status(404).json({ error: 'Diamond not found or already deleted' });
-   }
- } catch (error) {
-   console.error('Error deleting diamond:', error.message);
-   res.status(500).json({ error: 'Failed to delete diamond' });
- }
+  // Validate the diamondId
+  if (!dataSource.diamondId) {
+    return res.status(400).send("Diamond ID required");
+  }
+  try {
+    // Delete diamond
+    const result = await deleteDiamond(dataSource);
+    if (result.rowsAffected && result.rowsAffected[0] > 0) {
+      res.status(200).json({ message: 'Diamond deleted successfully' });
+    } else {
+      res.status(404).json({ error: 'Diamond not found or already deleted' });
+    }
+  } catch (error) {
+    console.error('Error deleting diamond:', error.message);
+    res.status(500).json({ error: 'Failed to delete diamond' });
+  }
 });
 
 //Add Diamonds Rings
@@ -321,9 +334,9 @@ router.put("/edit-diamond-rings", async (req, res) => {
   }
   try {
     const results = await updateDiamondRings(diamondRingsData);
-    if(results.rowsAffected && results.rowsAffected[0] >0){
+    if (results.rowsAffected && results.rowsAffected[0] > 0) {
       res.status(200).json({ message: "Diamond ring updated successfully" });
-    }else{
+    } else {
       res.status(404).json({ message: "Diamond ring not found" });
     }
   } catch (err) {
@@ -335,22 +348,22 @@ router.put("/edit-diamond-rings", async (req, res) => {
 // Delete Diamond ring
 router.delete("/delete-diamond-rings", async (req, res) => {
   const diamondRingsData = req.body;
- // Validate the diamondId
- if(!diamondRingsData.diamondRingsId){
-   return res.status(400).send("Diamond ring ID required");
- }
- try {
-   // Delete diamond ring
-   const result = await deleteDiamondRings(diamondRingsData);
-   if (result.rowsAffected && result.rowsAffected[0] > 0) {
-     res.status(200).json({ message: 'Diamond ring deleted successfully' });
-   } else {
-     res.status(404).json({ error: 'Diamond ring not found or already deleted' });
-   }
- } catch (error) {
-   console.error('Error deleting diamond ring:', error.message);
-   res.status(500).json({ error: 'Failed to delete diamond ring' });
- }
+  // Validate the diamondId
+  if (!diamondRingsData.diamondRingsId) {
+    return res.status(400).send("Diamond ring ID required");
+  }
+  try {
+    // Delete diamond ring
+    const result = await deleteDiamondRings(diamondRingsData);
+    if (result.rowsAffected && result.rowsAffected[0] > 0) {
+      res.status(200).json({ message: 'Diamond ring deleted successfully' });
+    } else {
+      res.status(404).json({ error: 'Diamond ring not found or already deleted' });
+    }
+  } catch (error) {
+    console.error('Error deleting diamond ring:', error.message);
+    res.status(500).json({ error: 'Failed to delete diamond ring' });
+  }
 });
 
 //Add Bridals
@@ -520,9 +533,9 @@ router.put("/edit-bridals", async (req, res) => {
   }
   try {
     const results = await updateBridals(bridalsData);
-    if(results.rowsAffected && results.rowsAffected[0] >0){
+    if (results.rowsAffected && results.rowsAffected[0] > 0) {
       res.status(200).json({ message: "Bridal updated successfully" });
-    }else{
+    } else {
       res.status(404).json({ message: "Bridal not found" });
     }
   } catch (err) {
@@ -535,45 +548,45 @@ router.put("/edit-bridals", async (req, res) => {
 // Delete Bridals
 router.delete("/delete-bridals", async (req, res) => {
   const bridalsData = req.body;
- // Validate the bridaldId
- if(!bridalsData.bridalId){
-   return res.status(400).send("Bridals ID required");
- }
- try {
-   // Delete Bridal
-   const result = await deleteBridals(bridalsData);
-   if (result.rowsAffected && result.rowsAffected[0] > 0) {
-     res.status(200).json({ message: 'Bridal deleted successfully' });
-   } else {
-     res.status(404).json({ error: 'Bridal not found or already deleted' });
-   }
- } catch (error) {
-   console.error('Error deleting Bridal:', error.message);
-   res.status(500).json({ error: 'Failed to delete Bridal' });
- }
+  // Validate the bridaldId
+  if (!bridalsData.bridalId) {
+    return res.status(400).send("Bridals ID required");
+  }
+  try {
+    // Delete Bridal
+    const result = await deleteBridals(bridalsData);
+    if (result.rowsAffected && result.rowsAffected[0] > 0) {
+      res.status(200).json({ message: 'Bridal deleted successfully' });
+    } else {
+      res.status(404).json({ error: 'Bridal not found or already deleted' });
+    }
+  } catch (error) {
+    console.error('Error deleting Bridal:', error.message);
+    res.status(500).json({ error: 'Failed to delete Bridal' });
+  }
 });
 
 //Add Timepieces
 router.post("/add-timepieces", async (req, res) => {
-  const{
-      timepiecesStyle,
-      nameTimepieces,
-      collection,
-      waterResistance,
-      crystalType,
-      braceletMaterial,
-      caseSize,
-      dialColor,
-      movement,
-      gender,
-      category,
-      brandName,
-      dialType,
-      description,
-      price,
-      imageTimepieces,
-      imageBrand,
-      inventory
+  const {
+    timepiecesStyle,
+    nameTimepieces,
+    collection,
+    waterResistance,
+    crystalType,
+    braceletMaterial,
+    caseSize,
+    dialColor,
+    movement,
+    gender,
+    category,
+    brandName,
+    dialType,
+    description,
+    price,
+    imageTimepieces,
+    imageBrand,
+    inventory
   } = req.body;
 
   try {
@@ -615,9 +628,9 @@ router.put("/edit-timepieces", async (req, res) => {
   }
   try {
     const results = await updateTimepieces(timepiecesData);
-    if(results.rowsAffected && results.rowsAffected[0] >0){
+    if (results.rowsAffected && results.rowsAffected[0] > 0) {
       res.status(200).json({ message: "Timepieces updated successfully" });
-    }else{
+    } else {
       res.status(404).json({ message: "Timepieces not found" });
     }
   } catch (err) {
@@ -629,22 +642,22 @@ router.put("/edit-timepieces", async (req, res) => {
 // Delete Timepieces
 router.delete("/delete-timepieces", async (req, res) => {
   const timepiecesData = req.body;
- // Validate the bridaldId
- if(!timepiecesData.diamondTimepiecesId){
-   return res.status(400).send("Timepieces ID required");
- }
- try {
-   // Delete Bridal
-   const result = await deleteTimepieces(timepiecesData);
-   if (result.rowsAffected && result.rowsAffected[0] > 0) {
-     res.status(200).json({ message: 'Timepieces deleted successfully' });
-   } else {
-     res.status(404).json({ error: 'Timepieces not found or already deleted' });
-   }
- } catch (error) {
-   console.error('Error deleting Timepieces:', error.message);
-   res.status(500).json({ error: 'Failed to delete Bridal' });
- }
+  // Validate the bridaldId
+  if (!timepiecesData.diamondTimepiecesId) {
+    return res.status(400).send("Timepieces ID required");
+  }
+  try {
+    // Delete Bridal
+    const result = await deleteTimepieces(timepiecesData);
+    if (result.rowsAffected && result.rowsAffected[0] > 0) {
+      res.status(200).json({ message: 'Timepieces deleted successfully' });
+    } else {
+      res.status(404).json({ error: 'Timepieces not found or already deleted' });
+    }
+  } catch (error) {
+    console.error('Error deleting Timepieces:', error.message);
+    res.status(500).json({ error: 'Failed to delete Bridal' });
+  }
 });
 //view details
 // Get a specific diamond by ID
@@ -707,49 +720,49 @@ router.get("/ring-detail", async (req, res) => {
 });
 
 //-----Bridal and Ring------//
-// router.get("/material-details", async (req, response) => {
-//   getBridalByMaterial()
-//     .then((result) => {
-//       response.json(result[0]);
-//     })
-//     .catch((error) => {
-//       console.error("Error fetching bridal and ring of materials: ", error);
-//       response.status(500).send("Error fetching bridal and ring materials");
-//     });
-// });
-
-// router.get("/ring-size-details", async (req, response) => {
-//   getBridalByRingSize()
-//     .then((result) => {
-//       response.json(result[0]);
-//     })
-//     .catch((error) => {
-//       console.error("Error fetching bridal ring sizes: ", error);
-//       response.status(500).send("Error fetching bridal ring sizes");
-//     });
-// });
-
-// Route to fetch material details
-router.get("/material-details", async (req, res) => {
-  try {
-    const materials = await getMaterialDetails();
-    res.json(materials);
-  } catch (error) {
-    console.error("Error fetching material details:", error);
-    res.status(500).send("Error fetching material details");
-  }
+router.get("/material-details", async (req, response) => {
+  getBridalByMaterial()
+    .then((result) => {
+      response.json(result[0]);
+    })
+    .catch((error) => {
+      console.error("Error fetching bridal and ring of materials: ", error);
+      response.status(500).send("Error fetching bridal and ring materials");
+    });
 });
 
-// Route to fetch ring size details
-router.get("/ring-size-details", async (req, res) => {
-  try {
-    const ringSizes = await getRingSizeDetails();
-    res.json(ringSizes);
-  } catch (error) {
-    console.error("Error fetching ring size details:", error);
-    res.status(500).send("Error fetching ring size details");
-  }
+router.get("/ring-size-details", async (req, response) => {
+  getBridalByRingSize()
+    .then((result) => {
+      response.json(result[0]);
+    })
+    .catch((error) => {
+      console.error("Error fetching bridal ring sizes: ", error);
+      response.status(500).send("Error fetching bridal ring sizes");
+    });
 });
+//=============
+// // Route to fetch material details
+// router.get("/material-details", async (req, res) => {
+//   try {
+//     const materials = await getMaterialDetails();
+//     res.json(materials);
+//   } catch (error) {
+//     console.error("Error fetching material details:", error);
+//     res.status(500).send("Error fetching material details");
+//   }
+// });
+
+// // Route to fetch ring size details
+// router.get("/ring-size-details", async (req, res) => {
+//   try {
+//     const ringSizes = await getRingSizeDetails();
+//     res.json(ringSizes);
+//   } catch (error) {
+//     console.error("Error fetching ring size details:", error);
+//     res.status(500).send("Error fetching ring size details");
+//   }
+// });
 
 router.get('/bridal-accessory/:id', async (req, res) => {
   const { id } = req.params;
@@ -765,7 +778,6 @@ router.get('/bridal-accessory/:id', async (req, res) => {
 router.get('/ring-accessory-details/:id', async (req, res) => {
   const { id } = req.params;
 
-  // Kiểm tra ID có phải là số nguyên không
   if (!Number.isInteger(parseInt(id))) {
     return res.status(400).json({ message: 'Invalid ID format' });
   }
@@ -777,7 +789,6 @@ router.get('/ring-accessory-details/:id', async (req, res) => {
     res.status(500).json({ message: 'Failed to fetch rings accessories' });
   }
 });
-
 //View bridal price theo material
 router.get("/bridal-price/:materialID", async (req, res) => {
   const { materialID } = req.params;
@@ -807,5 +818,74 @@ router.get("/ring-price/:materialID", async (req, res) => {
     res.status(500).send("Error fetching bridal price");
   }
 });
+
+//add-rings
+router.post('/add-diamond-ring', async (req, res) => {
+  try {
+    const pool = await poolPromise;
+    const { RingStyle, NameRings, Category, BrandName, Material, CenterGemstone, CenterGemstoneShape, Width, CenterDiamondDimension, Weight, GemstoneWeight, CenterDiamondColor, CenterDiamondClarity, CenterDiamondCaratWeight, RingSize, Gender, Fluorescence, Description, ImageRings, ImageBrand, Inventory, MaterialID, RingSizeID, Price } = req.body;
+
+    // Insert into DiamondRings table
+    const diamondRingsQuery = `
+      INSERT INTO DiamondRings (RingStyle, NameRings, Category, BrandName, Material, CenterGemstone, CenterGemstoneShape, Width, CenterDiamondDimension, Weight, GemstoneWeight, CenterDiamondColor, CenterDiamondClarity, CenterDiamondCaratWeight, RingSize, Gender, Fluorescence, Description, ImageRings, ImageBrand, Inventory)
+      OUTPUT INSERTED.DiamondRingsID
+      VALUES (@RingStyle, @NameRings, @Category, @BrandName, @Material, @CenterGemstone, @CenterGemstoneShape, @Width, @CenterDiamondDimension, @Weight, @GemstoneWeight, @CenterDiamondColor, @CenterDiamondClarity, @CenterDiamondCaratWeight, @RingSize, @Gender, @Fluorescence, @Description, @ImageRings, @ImageBrand, @Inventory);
+    `;
+    const result = await pool.request()
+      .input('RingStyle', sql.VarChar(50), RingStyle)
+      .input('NameRings', sql.VarChar(50), NameRings)
+      .input('Category', sql.VarChar(50), Category)
+      .input('BrandName', sql.VarChar(50), BrandName)
+      .input('Material', sql.VarChar(50), Material)
+      .input('CenterGemstone', sql.VarChar(50), CenterGemstone)
+      .input('CenterGemstoneShape', sql.VarChar(50), CenterGemstoneShape)
+      .input('Width', sql.Decimal(10, 2), Width)
+      .input('CenterDiamondDimension', sql.Int, CenterDiamondDimension)
+      .input('Weight', sql.Decimal(10, 2), Weight)
+      .input('GemstoneWeight', sql.Decimal(5, 2), GemstoneWeight)
+      .input('CenterDiamondColor', sql.VarChar(50), CenterDiamondColor)
+      .input('CenterDiamondClarity', sql.VarChar(50), CenterDiamondClarity)
+      .input('CenterDiamondCaratWeight', sql.Decimal(5, 2), CenterDiamondCaratWeight)
+      .input('RingSize', sql.Decimal(10, 2), RingSize)
+      .input('Gender', sql.VarChar(50), Gender)
+      .input('Fluorescence', sql.VarChar(50), Fluorescence)
+      .input('Description', sql.VarChar(sql.MAX), Description)
+      .input('ImageRings', sql.VarChar(sql.MAX), ImageRings)
+      .input('ImageBrand', sql.VarChar(sql.MAX), ImageBrand)
+      .input('Inventory', sql.Int, Inventory)
+      .query(diamondRingsQuery);
+
+    const diamondRingsID = result.recordset[0].DiamondRingsID;
+
+    // Insert into RingsPrice table
+    const ringsPriceQuery = `
+      INSERT INTO RingsPrice (Price)
+      OUTPUT INSERTED.PriceID
+      VALUES (@Price);
+    `;
+    const priceResult = await pool.request()
+      .input('Price', sql.Decimal(18, 2), Price)
+      .query(ringsPriceQuery);
+
+    const priceID = priceResult.recordset[0].PriceID;
+
+    // Insert into RingsAccessory table
+    const ringsAccessoryQuery = `
+      INSERT INTO RingsAccessory (DiamondRingsID, MaterialID, RingSizeID, PriceID)
+      VALUES (@DiamondRingsID, @MaterialID, @RingSizeID, @PriceID);
+    `;
+    await pool.request()
+      .input('DiamondRingsID', sql.Int, diamondRingsID)
+      .input('MaterialID', sql.Int, MaterialID)
+      .input('RingSizeID', sql.Int, RingSizeID)
+      .input('PriceID', sql.Int, priceID)
+      .query(ringsAccessoryQuery);
+
+    res.status(201).send({ message: 'Diamond Ring added successfully', DiamondRingsID: diamondRingsID });
+  } catch (err) {
+    res.status(500).send({ message: err.message });
+  }
+});
+
 
 module.exports = router;

@@ -6,9 +6,9 @@ const path = require('path');
 //npm install -g nodemon - update new version of nodemon
 
 const appScript = path.join(__dirname, 'api.js'); // Tệp chính của ứng dụng
-const restartInterval = 20000; // Khoảng thời gian khởi động lại (10 giây)
-const saveInterval = 20000; // Khoảng thời gian để tự động lưu tệp (10 giây)
-const stopDelay = 3000; // Thời gian đợi trước khi khởi động lại (3 giây)
+const restartInterval = 60000; // Khoảng thời gian khởi động lại (10 giây)
+const saveInterval = 60000; // Khoảng thời gian để tự động lưu tệp (10 giây)
+const stopDelay = 0; // Thời gian đợi trước khi khởi động lại (3 giây)
 
 let childProcess;
 

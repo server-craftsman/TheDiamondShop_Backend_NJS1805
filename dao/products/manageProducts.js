@@ -1264,28 +1264,28 @@ async function getRingDetailByMaterialAndSize(material, ringSize) {
 }
 
 //----Bridal Material / Size-----//
-// async function getBridalByMaterial() {
-//   try {
-//     let pool = await sql.connect(config);
-//     let products = await pool.request().query("SELECT * FROM Material");
-//     return products.recordsets;
-//   } catch (error) {
-//     console.error("SQL error", error);
-//     throw error;
-//   }
-// }
+async function getBridalByMaterial() {
+  try {
+    let pool = await sql.connect(config);
+    let products = await pool.request().query("SELECT * FROM Material");
+    return products.recordsets;
+  } catch (error) {
+    console.error("SQL error", error);
+    throw error;
+  }
+}
 
-// async function getBridalByRingSize() {
-//   try {
-//     let pool = await sql.connect(config);
-//     let products = await pool.request().query("SELECT * FROM RingSize");
-//     return products.recordsets;
-//   } catch (error) {
-//     console.error("SQL error", error);
-//     throw error;
-//   }
-// }
-
+async function getBridalByRingSize() {
+  try {
+    let pool = await sql.connect(config);
+    let products = await pool.request().query("SELECT * FROM RingSize");
+    return products.recordsets;
+  } catch (error) {
+    console.error("SQL error", error);
+    throw error;
+  }
+}
+//====================
 
 // Function to fetch material details
 const getMaterialDetails = async () => {
@@ -1373,7 +1373,6 @@ async function getRingsAccessory(id) {
   }
 }
 
-
 async function getBridalPriceByMaterialID(materialID) {
   try {
     const pool = await sql.connect(config);
@@ -1441,4 +1440,6 @@ module.exports = {
   getRingsAccessory,
   getBridalPriceByMaterialID,
   getRingPriceByMaterialID,
+  getBridalByMaterial,
+  getBridalByRingSize,
 };

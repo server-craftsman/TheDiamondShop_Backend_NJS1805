@@ -53,7 +53,7 @@ app.use(
       httpOnly: true, // Prevent client-side JavaScript from accessing the cookie
       maxAge: 3600000, // Cookie lifespan in milliseconds (1 hour in this case)
     },
-    })
+  })
 );
 app.use(passport.initialize());
 app.use(passport.session());
@@ -70,8 +70,7 @@ app.use(cors(corsOptions));
 
 app.use((req, res, next) => {
   console.log(
-    `Request received at: ${req.method} ${
-      req.path
+    `Request received at: ${req.method} ${req.path
     } - ${new Date().toLocaleString()}`
   );
   next();
@@ -82,8 +81,6 @@ app.use(expressLayouts);
 app.set('view engine', 'ejs');
 
 app.use(express.static(path.join(__dirname, 'public')));
-
-//
 
 // Function to create a unique styled message
 function createStyledMessage(text, colorCode) {
