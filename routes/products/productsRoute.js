@@ -889,7 +889,6 @@ router.post('/add-diamond-ring', async (req, res) => {
   }
 });
 
-
 // Router to view distinct MaterialNames for a DiamondRingsID
 router.put('/edit-diamond-rings/:id', async (req, res) => {
   try {
@@ -949,22 +948,36 @@ router.put('/edit-diamond-rings/:id', async (req, res) => {
 
       // Update RingsPrice table if NewPrice and PriceID are provided
       if (PriceID && NewPrice) {
-        const ringsPriceUpdateQuery = `
-          UPDATE RingsPrice
-          SET Price = @NewPrice
-          WHERE PriceID = (
-            SELECT PriceID
-            FROM RingsAccessory
-            WHERE DiamondRingsID = @id
-            AND PriceID = @PriceID
-          )
+        const getPriceIDQuery = `
+          SELECT PriceID
+          FROM RingsAccessory
+          WHERE DiamondRingsID = @id
+            AND MaterialID = @MaterialID
+            AND RingSizeID = @RingSizeID
         `;
 
-        await transaction.request()
+        const result = await transaction.request()
           .input('id', sql.Int, id)
-          .input('PriceID', sql.Int, PriceID)
-          .input('NewPrice', sql.Decimal(18, 2), NewPrice)
-          .query(ringsPriceUpdateQuery);
+          .input('MaterialID', sql.Int, MaterialID)
+          .input('RingSizeID', sql.Int, RingSizeID)
+          .query(getPriceIDQuery);
+
+        const newPriceID = result.recordset[0]?.PriceID;
+
+        if (newPriceID) {
+          const ringsPriceUpdateQuery = `
+            UPDATE RingsPrice
+            SET Price = @NewPrice
+            WHERE PriceID = @PriceID
+          `;
+
+          await transaction.request()
+            .input('PriceID', sql.Int, newPriceID)
+            .input('NewPrice', sql.Decimal(18, 2), NewPrice)
+            .query(ringsPriceUpdateQuery);
+        } else {
+          throw new Error('PriceID not found for the given parameters');
+        }
       }
 
       // Commit transaction
