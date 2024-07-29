@@ -889,6 +889,8 @@ router.post('/add-diamond-ring', async (req, res) => {
   }
 });
 
+
+// Router to view distinct MaterialNames for a DiamondRingsID
 router.put('/edit-diamond-rings/:id', async (req, res) => {
   try {
     const pool = await poolPromise;
@@ -897,7 +899,7 @@ router.put('/edit-diamond-rings/:id', async (req, res) => {
       CenterGemstoneShape, Width, CenterDiamondDimension, Weight, GemstoneWeight,
       CenterDiamondColor, CenterDiamondClarity, CenterDiamondCaratWeight, RingSize,
       Gender, Fluorescence, Description, ImageRings, ImageBrand, Inventory,
-      MaterialID, RingSizeID, PriceID
+      MaterialID, RingSizeID, PriceID, NewPrice
     } = req.body;
 
     const { id } = req.params;
@@ -909,16 +911,16 @@ router.put('/edit-diamond-rings/:id', async (req, res) => {
     try {
       // Update DiamondRings table
       const diamondRingsUpdateQuery = `
-            UPDATE DiamondRings
-            SET RingStyle = @RingStyle, NameRings = @NameRings, Category = @Category,
-                BrandName = @BrandName, Material = @Material, CenterGemstone = @CenterGemstone,
-                CenterGemstoneShape = @CenterGemstoneShape, Width = @Width, CenterDiamondDimension = @CenterDiamondDimension,
-                Weight = @Weight, GemstoneWeight = @GemstoneWeight, CenterDiamondColor = @CenterDiamondColor,
-                CenterDiamondClarity = @CenterDiamondClarity, CenterDiamondCaratWeight = @CenterDiamondCaratWeight,
-                RingSize = @RingSize, Gender = @Gender, Fluorescence = @Fluorescence, Description = @Description,
-                ImageRings = @ImageRings, ImageBrand = @ImageBrand, Inventory = @Inventory
-            WHERE DiamondRingsID = @id
-        `;
+        UPDATE DiamondRings
+        SET RingStyle = @RingStyle, NameRings = @NameRings, Category = @Category,
+            BrandName = @BrandName, Material = @Material, CenterGemstone = @CenterGemstone,
+            CenterGemstoneShape = @CenterGemstoneShape, Width = @Width, CenterDiamondDimension = @CenterDiamondDimension,
+            Weight = @Weight, GemstoneWeight = @GemstoneWeight, CenterDiamondColor = @CenterDiamondColor,
+            CenterDiamondClarity = @CenterDiamondClarity, CenterDiamondCaratWeight = @CenterDiamondCaratWeight,
+            RingSize = @RingSize, Gender = @Gender, Fluorescence = @Fluorescence, Description = @Description,
+            ImageRings = @ImageRings, ImageBrand = @ImageBrand, Inventory = @Inventory
+        WHERE DiamondRingsID = @id
+      `;
 
       await transaction.request()
         .input('id', sql.Int, id)
@@ -945,19 +947,25 @@ router.put('/edit-diamond-rings/:id', async (req, res) => {
         .input('Inventory', sql.Int, Inventory)
         .query(diamondRingsUpdateQuery);
 
-      // Update RingsAccessory table
-      const ringsAccessoryUpdateQuery = `
-            UPDATE RingsAccessory
-            SET MaterialID = @MaterialID, RingSizeID = @RingSizeID, PriceID = @PriceID
+      // Update RingsPrice table if NewPrice and PriceID are provided
+      if (PriceID && NewPrice) {
+        const ringsPriceUpdateQuery = `
+          UPDATE RingsPrice
+          SET Price = @NewPrice
+          WHERE PriceID = (
+            SELECT PriceID
+            FROM RingsAccessory
             WHERE DiamondRingsID = @id
+            AND PriceID = @PriceID
+          )
         `;
 
-      await transaction.request()
-        .input('id', sql.Int, id)
-        .input('MaterialID', sql.Int, MaterialID)
-        .input('RingSizeID', sql.Int, RingSizeID)
-        .input('PriceID', sql.Int, PriceID)
-        .query(ringsAccessoryUpdateQuery);
+        await transaction.request()
+          .input('id', sql.Int, id)
+          .input('PriceID', sql.Int, PriceID)
+          .input('NewPrice', sql.Decimal(18, 2), NewPrice)
+          .query(ringsPriceUpdateQuery);
+      }
 
       // Commit transaction
       await transaction.commit();
@@ -965,16 +973,15 @@ router.put('/edit-diamond-rings/:id', async (req, res) => {
     } catch (err) {
       // Rollback transaction in case of error
       await transaction.rollback();
-      console.error(err);
+      console.error('Error during transaction:', err);
       res.status(500).send('Error updating diamond ring and accessory');
     }
   } catch (err) {
-    console.error(err);
+    console.error('Error connecting to database:', err);
     res.status(500).send('Error connecting to database');
   }
 });
 
-// Router to view distinct MaterialNames for a DiamondRingsID
 router.get('/diamond-rings-material/:id', async (req, res) => {
   try {
     const pool = await poolPromise;
