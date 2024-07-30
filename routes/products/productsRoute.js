@@ -889,124 +889,6 @@ router.post('/add-diamond-ring', async (req, res) => {
   }
 });
 
-// Router to view distinct MaterialNames for a DiamondRingsID
-// router.put('/edit-diamond-rings/:id', async (req, res) => {
-//   try {
-//     const pool = await poolPromise;
-//     const {
-//       RingStyle, NameRings, Category, BrandName, Material, CenterGemstone,
-//       CenterGemstoneShape, Width, CenterDiamondDimension, Weight, GemstoneWeight,
-//       CenterDiamondColor, CenterDiamondClarity, CenterDiamondCaratWeight, RingSize,
-//       Gender, Fluorescence, Description, ImageRings, ImageBrand, Inventory,
-//       MaterialID, RingSizeID, PriceID, NewPrice
-//     } = req.body;
-
-//     const { id } = req.params;
-
-//     // Log the input values
-//     console.log('Received request body:', req.body);
-//     console.log('Received parameters:', req.params);
-
-//     // Begin transaction
-//     const transaction = new sql.Transaction(pool);
-//     await transaction.begin();
-
-//     try {
-//       // Update DiamondRings table
-//       const diamondRingsUpdateQuery = `
-//         UPDATE DiamondRings
-//         SET RingStyle = @RingStyle, NameRings = @NameRings, Category = @Category,
-//             BrandName = @BrandName, Material = @Material, CenterGemstone = @CenterGemstone,
-//             CenterGemstoneShape = @CenterGemstoneShape, Width = @Width, CenterDiamondDimension = @CenterDiamondDimension,
-//             Weight = @Weight, GemstoneWeight = @GemstoneWeight, CenterDiamondColor = @CenterDiamondColor,
-//             CenterDiamondClarity = @CenterDiamondClarity, CenterDiamondCaratWeight = @CenterDiamondCaratWeight,
-//             RingSize = @RingSize, Gender = @Gender, Fluorescence = @Fluorescence, Description = @Description,
-//             ImageRings = @ImageRings, ImageBrand = @ImageBrand, Inventory = @Inventory
-//         WHERE DiamondRingsID = @id
-//       `;
-
-//       await transaction.request()
-//         .input('id', sql.Int, id)
-//         .input('RingStyle', sql.VarChar, RingStyle)
-//         .input('NameRings', sql.VarChar, NameRings)
-//         .input('Category', sql.VarChar, Category)
-//         .input('BrandName', sql.VarChar, BrandName)
-//         .input('Material', sql.VarChar, Material)
-//         .input('CenterGemstone', sql.VarChar, CenterGemstone)
-//         .input('CenterGemstoneShape', sql.VarChar, CenterGemstoneShape)
-//         .input('Width', sql.Decimal, Width)
-//         .input('CenterDiamondDimension', sql.Int, CenterDiamondDimension)
-//         .input('Weight', sql.Decimal, Weight)
-//         .input('GemstoneWeight', sql.Decimal, GemstoneWeight)
-//         .input('CenterDiamondColor', sql.VarChar, CenterDiamondColor)
-//         .input('CenterDiamondClarity', sql.VarChar, CenterDiamondClarity)
-//         .input('CenterDiamondCaratWeight', sql.Decimal, CenterDiamondCaratWeight)
-//         .input('RingSize', sql.Decimal, RingSize)
-//         .input('Gender', sql.VarChar, Gender)
-//         .input('Fluorescence', sql.VarChar, Fluorescence)
-//         .input('Description', sql.VarChar, Description)
-//         .input('ImageRings', sql.VarChar, ImageRings)
-//         .input('ImageBrand', sql.VarChar, ImageBrand)
-//         .input('Inventory', sql.Int, Inventory)
-//         .query(diamondRingsUpdateQuery);
-
-//       console.log('DiamondRings table updated successfully');
-
-//       // Update RingsPrice table if NewPrice and PriceID are provided
-//       if (PriceID && NewPrice) {
-//         console.log('Updating RingsPrice table');
-
-//         const getPriceIDQuery = `
-//           SELECT PriceID
-//           FROM RingsAccessory
-//           WHERE DiamondRingsID = @id
-//             AND MaterialID = @MaterialID
-//             AND RingSizeID = @RingSizeID
-//         `;
-
-//         const result = await transaction.request()
-//           .input('id', sql.Int, id)
-//           .input('MaterialID', sql.Int, MaterialID)
-//           .input('RingSizeID', sql.Int, RingSizeID)
-//           .query(getPriceIDQuery);
-
-//         console.log('Result from RingsAccessory query:', result.recordset);
-
-//         const newPriceID = result.recordset[0]?.PriceID;
-
-//         if (newPriceID) {
-//           const ringsPriceUpdateQuery = `
-//             UPDATE RingsPrice
-//             SET Price = @NewPrice
-//             WHERE PriceID = @PriceID
-//           `;
-
-//           await transaction.request()
-//             .input('PriceID', sql.Int, newPriceID)
-//             .input('NewPrice', sql.Decimal(18, 2), NewPrice)
-//             .query(ringsPriceUpdateQuery);
-
-//           console.log('RingsPrice table updated successfully');
-//         } else {
-//           throw new Error('PriceID not found for the given parameters');
-//         }
-//       }
-
-//       // Commit transaction
-//       await transaction.commit();
-//       res.status(200).send('Diamond ring and accessory updated successfully');
-//     } catch (err) {
-//       // Rollback transaction in case of error
-//       await transaction.rollback();
-//       console.error('Error during transaction:', err);
-//       res.status(500).send('Error updating diamond ring and accessory');
-//     }
-//   } catch (err) {
-//     console.error('Error connecting to database:', err);
-//     res.status(500).send('Error connecting to database');
-//   }
-// });
-
 router.put('/edit-diamond-rings/:id', async (req, res) => {
   try {
     const pool = await poolPromise;
@@ -1072,7 +954,7 @@ router.put('/edit-diamond-rings/:id', async (req, res) => {
         console.log('Updating RingsPrice table');
 
         const getPriceIDQuery = `
-          SELECT PriceID
+          SELECT PriceID, MaterialID, RingSizeID, DiamondRingsID
           FROM RingsAccessory
           WHERE DiamondRingsID = @id
             AND MaterialID = @MaterialID
@@ -1176,7 +1058,7 @@ router.get('/diamond-rings-price/:id', async (req, res) => {
     const { id } = req.params;
 
     const query = `
-    SELECT DISTINCT dr.DiamondRingsID, ra.PriceID, ra.MaterialID, ra.RingSizeID, rp.Price
+    SELECT DISTINCT dr.DiamondRingsID, rp.PriceID, rp.Price
       FROM DiamondRings dr
       JOIN RingsAccessory ra ON dr.DiamondRingsID = ra.DiamondRingsID
       JOIN RingsPrice rp ON ra.PriceID = rp.PriceID
@@ -1203,19 +1085,23 @@ router.post('/price-id', async (req, res) => {
       return res.status(400).json({ error: 'MaterialID, RingSizeID, and DiamondRingsID are required' });
     }
 
+    console.log('Input Data:', { diamondRingsId, materialID, ringSizeID });
+
     const pool = await poolPromise;
     const result = await pool.request()
       .input('MaterialID', sql.Int, materialID)
       .input('RingSizeID', sql.Int, ringSizeID)
       .input('DiamondRingsID', sql.Int, diamondRingsId)
       .query(`
-        SELECT ra.DiamondRingsID, ra.MaterialID, ra.RingSizeID, p.PriceID
+        SELECT p.PriceID
         FROM RingsAccessory ra
         JOIN RingsPrice p ON ra.PriceID = p.PriceID
         WHERE ra.MaterialID = @MaterialID
         AND ra.RingSizeID = @RingSizeID
         AND ra.DiamondRingsID = @DiamondRingsID
       `);
+
+    console.log('Query Result:', result.recordset);
 
     if (result.recordset.length > 0) {
       res.json({ PriceID: result.recordset[0].PriceID });
@@ -1227,6 +1113,7 @@ router.post('/price-id', async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
 
 //===========================================
 //===================Follow of Bridal===========
