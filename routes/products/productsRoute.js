@@ -1116,6 +1116,244 @@ router.post('/price-id', async (req, res) => {
 
 
 //===========================================
+// //===================Follow of Bridal===========
+// router.post('/add-bridal', async (req, res) => {
+//   try {
+//     const pool = await poolPromise;
+//     const { BridalStyle, NameBridal, Category, BrandName, Material, SettingType, Gender, Weight, CenterDiamond, DiamondCaratRange, RingSizeRange, TotalCaratWeight, TotalDiamond, Description, ImageBridal, ImageBrand, Inventory, MaterialID, RingSizeID, Price } = req.body;
+
+//     //Insert into DiamondRings table
+//     const bridalQuery = `
+//     INSERT INTO Bridal (BridalStyle, NameBridal, Category, BrandName, Material, SettingType, Gender, Weight, CenterDiamond, DiamondCaratRange, RingSizeRange, TotalCaratWeight, TotalDiamond, Description, ImageBridal, ImageBrand, Inventory)
+//     OUTPUT INSERTED.BridalID
+//     VALUES (@BridalStyle, @NameBridal, @Category, @BrandName, @Material, @SettingType, @Gender, @Weight, @CenterDiamond, @DiamondCaratRange, @RingSizeRange, @TotalCaratWeight, @TotalDiamond, @Description, @ImageBridal, 'https://collections.jewelryimages.net/collections_logos/00008w.jpg', @Inventory);
+//     `;
+
+//     const result = await pool.request()
+//       .input('BridalStyle', sql.VarChar(50), BridalStyle)
+//       .input('NameBridal', sql.VarChar(50), NameBridal)
+//       .input('Category', sql.VarChar(sql.MAX), Category)
+//       .input('BrandName', sql.VarChar(50), BrandName)
+//       .input('Material', sql.VarChar(sql.MAX), Material)
+//       .input('SettingType', sql.VarChar(sql.MAX), SettingType)
+//       .input('Gender', sql.VarChar(sql.MAX), Gender)
+//       .input('Weight', sql.Decimal(10, 2), Weight)
+//       .input('CenterDiamond', sql.VarChar(sql.MAX), CenterDiamond)
+//       .input('DiamondCaratRange', sql.VarChar(sql.MAX), DiamondCaratRange)
+//       .input('RingSizeRange', sql.Decimal(10, 2), RingSizeRange)
+//       .input('TotalCaratWeight', sql.Decimal(10, 2), TotalCaratWeight)
+//       .input('TotalDiamond', sql.Int, TotalDiamond)
+//       .input('Description', sql.VarChar(sql.MAX), Description)
+//       .input('ImageBridal', sql.VarChar(sql.MAX), ImageBridal)
+//       .input('Inventory', sql.Int, Inventory)
+//       .query(bridalQuery);
+
+//     const bridalID = result.recordset[0].BridalID;
+//     //Insert into BridalPrice table
+//     const bridalPriceQuery = `
+//         INSERT INTO BridalPrice (Price)
+//         OUTPUT INSERTED.PriceID
+//         VALUES (@Price); 
+//       `;
+//     const priceResult = await pool.request()
+//       .input('Price', sql.Decimal(18, 2), Price)
+//       .query(bridalPriceQuery);
+
+//     const priceID = priceResult.recordset[0].PriceID;
+
+//     //Insert into BridalAccessory table
+//     const bridalAccessory = `
+//       INSERT INTO BridalAccessory (BridalID, MaterialID, RingSizeID, PriceID)
+//       VALUES (@BridalID, @MaterialID, @RingSizeID, @PriceID);
+//       `;
+//     await pool.request()
+//       .input('BridalID', sql.Int, bridalID)
+//       .input('MaterialID', sql.Int, MaterialID)
+//       .input('RingSizeID', sql.Int, RingSizeID)
+//       .input('PriceID', sql.Int, priceID)
+//       .query(bridalAccessory);
+
+//     res.status(200).send({ message: 'Bridal added successfully', BridalID: bridalID })
+//   } catch (err) {
+//     res.status(500).send({ message: err.message });
+//   }
+// });
+
+// router.put('/edit-bridal/:id', async (req, res) => {
+//   try {
+//     const pool = await poolPromise;
+//     const { BridalStyle, NameBridal, Category, BrandName, Material, SettingType, Gender,
+//       Weight, CenterDiamond, DiamondCaratRange, RingSizeRange, TotalCaratWeight, TotalDiamond,
+//       Description, ImageBridal, ImageBrand, Inventory,
+//       MaterialID, RingSizeID, PriceID, NewPrice
+//     } = req.body;
+
+//     const { id } = req.params;
+
+//     //Begin transaction
+//     const transaction = new sql.Transaction(pool);
+//     await transaction.begin();
+//     try {
+//       // Update Bridal table
+//       const bridalUpdateQuery = `
+//     UPDATE Bridal
+//     SET BridalStyle = @BridalStyle,
+//           NameBridal = @NameBridal,
+//           Category = @Category,
+//           BrandName = @BrandName,
+//           Material = @Material,
+//           SettingType = @SettingType,
+//           Gender = @Gender,
+//           Weight = @Weight,
+//           CenterDiamond = @CenterDiamond,
+//           DiamondCaratRange = @DiamondCaratRange,
+//           RingSizeRange = @RingSizeRange,
+//           TotalCaratWeight = @TotalCaratWeight,
+//           TotalDiamond = @TotalDiamond,
+//           Description = @Description,
+//           ImageBridal = @ImageBridal,
+//           Inventory = @Inventory
+//     WHERE BridalID = @id
+//     `;
+//       await pool.request()
+//         .input('id', sql.Int, id)
+//         .input("BridalStyle", sql.VarChar, BridalStyle)
+//         .input("NameBridal", sql.VarChar, NameBridal)
+//         .input("Category", sql.VarChar, Category)
+//         .input("BrandName", sql.VarChar, BrandName)
+//         .input("Material", sql.VarChar, Material)
+//         .input("SettingType", sql.VarChar, SettingType)
+//         .input("Gender", sql.VarChar, Gender)
+//         .input("Weight", sql.Decimal, Weight)
+//         .input("CenterDiamond", sql.VarChar, CenterDiamond)
+//         .input("DiamondCaratRange", sql.VarChar, DiamondCaratRange)
+//         .input("RingSizeRange", sql.Decimal, RingSizeRange)  // Corrected the name
+//         .input("TotalCaratWeight", sql.Decimal, TotalCaratWeight)
+//         .input("TotalDiamond", sql.Int, TotalDiamond)
+//         .input("Description", sql.VarChar, Description)
+//         .input("ImageBridal", sql.VarChar, ImageBridal)
+//         .input('Inventory', sql.Int, Inventory)
+//         .query(bridalUpdateQuery)
+
+//       // Update BridalPrice table if NewPrice and PriceID are provided
+//       if (PriceID && NewPrice) {
+//         const getPriceIDQuery = `
+//           SELECT PriceID
+//           FROM BridalAccessory
+//           WHERE BridalID = @id
+//             AND MaterialID = @MaterialID
+//             AND RingSizeID = @RingSizeID
+//         `;
+
+//         const result = await transaction.request()
+//           .input('id', sql.Int, id)
+//           .input('MaterialID', sql.Int, MaterialID)
+//           .input('RingSizeID', sql.Int, RingSizeID)
+//           .query(getPriceIDQuery);
+
+//         const newPriceID = result.recordset[0]?.PriceID;
+
+//         if (newPriceID) {
+//           const bridalPriceUpdateQuery = `
+//             UPDATE BridalPrice
+//             SET Price = @NewPrice
+//             WHERE PriceID = @PriceID
+//           `;
+
+//           await transaction.request()
+//             .input('PriceID', sql.Int, newPriceID)
+//             .input('NewPrice', sql.Decimal(18, 2), NewPrice)
+//             .query(bridalPriceUpdateQuery);
+//         } else {
+//           throw new Error('PriceID not found for the given parameters');
+//         }
+//       }
+//       // Commit transaction
+//       await transaction.commit();
+//       res.status(200).send('Bridal and accessory updated successfully');
+//     } catch (err) {
+//       // Rollback transaction in case of error
+//       await transaction.rollback();
+//       console.error('Error during transaction:', err);
+//       res.status(500).send('Error updating bridal and accessory');
+//     }
+//   } catch (err) {
+//     console.error('Error connecting to database:', err);
+//     res.status(500).send('Error connecting to database');
+//   }
+// });
+
+// router.get('/bridal-material/:id', async (req, res) => {
+//   try {
+//     const pool = await poolPromise;
+//     const { id } = req.params;
+
+//     const query = `
+//     SELECT DISTINCT br.BridalID, m.MaterialName
+//     FROM Bridal br
+//     JOIN BridalAccessory ba ON br.BridalID = ba.BridalID
+//     JOIN Material m ON ba.MaterialID = m.MaterialID
+//     WHERE br.BridalID = @id
+//     `;
+
+//     const result = await pool.request()
+//       .input('id', sql.Int, id)
+//       .query(query);
+
+//     res.status(200).json(result.recordset);
+//   } catch (err) {
+//     console.error(err);
+//     res.status(500).send('Error retrieving bridal materials');
+//   }
+// });
+
+// router.get('/bridal-size/:id', async (req, res) => {
+//   try {
+//     const pool = await poolPromise;
+//     const { id } = req.params;
+//     const query = `
+//     SELECT DISTINCT br.BridalID, rs.RingSize
+//     FROM  Bridal br
+//     JOIN BridalAccessory ba ON br.BridalID = ba.BridalID
+//     JOIN RingSize rs ON ba.RingSizeID = rs.RingSizeID
+//     WHERE br.BridalID = @id
+//     `;
+
+//     const result = await pool.request()
+//       .input('id', sql.Int, id)
+//       .query(query);
+
+//     res.status(200).json(result.recordset);
+//   } catch (err) {
+//     console.error(err);
+//     res.status(500).send('Error retrieving diamond ring sizes');
+//   }
+// });
+
+// router.get('/bridal-prices/:id', async (req, res) => {
+//   try {
+//     const pool = await poolPromise;
+//     const { id } = req.params;
+
+//     const query = `
+//     SELECT DISTINCT br.BridalID, bp.Price
+//     FROM  Bridal br
+//     JOIN BridalAccessory ba ON br.BridalID = ba.BridalID
+//     JOIN BridalPrice bp ON ba.PriceID = bp.PriceID
+//     WHERE br.BridalID = @id
+//     `;
+
+//     const result = await pool.request()
+//       .input('id', sql.Int, id)
+//       .query(query);
+
+//     res.status(200).json(result.recordset);
+//   } catch (err) {
+//     console.error(err);
+//     res.status(500).send('Error retrieving diamond ring prices');
+//   }
+// });
+
 //===================Follow of Bridal===========
 router.post('/add-bridal', async (req, res) => {
   try {
@@ -1182,13 +1420,18 @@ router.post('/add-bridal', async (req, res) => {
 router.put('/edit-bridal/:id', async (req, res) => {
   try {
     const pool = await poolPromise;
-    const { BridalStyle, NameBridal, Category, BrandName, Material, SettingType, Gender,
-      Weight, CenterDiamond, DiamondCaratRange, RingSizeRange, TotalCaratWeight, TotalDiamond,
+    const { BridalStyle, NameBridal, Category, BrandName,
+      Material, SettingType, Gender,
+      Weight, CenterDiamond, DiamondCaratRange,
+      RingSizeRange, TotalCaratWeight, TotalDiamond,
       Description, ImageBridal, ImageBrand, Inventory,
       MaterialID, RingSizeID, PriceID, NewPrice
     } = req.body;
 
     const { id } = req.params;
+
+    console.log('Received request body:', req.body);
+    console.log('Received parameters:', req.params);
 
     //Begin transaction
     const transaction = new sql.Transaction(pool);
@@ -1237,8 +1480,10 @@ router.put('/edit-bridal/:id', async (req, res) => {
 
       // Update BridalPrice table if NewPrice and PriceID are provided
       if (PriceID && NewPrice) {
+        console.log('Updating BridalPrice table');
+
         const getPriceIDQuery = `
-          SELECT PriceID
+          SELECT PriceID, MaterialID, RingSizeID, BridalID
           FROM BridalAccessory
           WHERE BridalID = @id
             AND MaterialID = @MaterialID
@@ -1250,6 +1495,8 @@ router.put('/edit-bridal/:id', async (req, res) => {
           .input('MaterialID', sql.Int, MaterialID)
           .input('RingSizeID', sql.Int, RingSizeID)
           .query(getPriceIDQuery);
+
+        console.log('Result from BridalAccessory query:', result.recordset);
 
         const newPriceID = result.recordset[0]?.PriceID;
 
@@ -1264,6 +1511,8 @@ router.put('/edit-bridal/:id', async (req, res) => {
             .input('PriceID', sql.Int, newPriceID)
             .input('NewPrice', sql.Decimal(18, 2), NewPrice)
             .query(bridalPriceUpdateQuery);
+
+            console.log('BridalPrice table updated successfully');
         } else {
           throw new Error('PriceID not found for the given parameters');
         }
@@ -1289,7 +1538,7 @@ router.get('/bridal-material/:id', async (req, res) => {
     const { id } = req.params;
 
     const query = `
-    SELECT DISTINCT br.BridalID, m.MaterialName
+    SELECT DISTINCT br.BridalID, ba.MaterialID, m.MaterialName
     FROM Bridal br
     JOIN BridalAccessory ba ON br.BridalID = ba.BridalID
     JOIN Material m ON ba.MaterialID = m.MaterialID
@@ -1312,7 +1561,7 @@ router.get('/bridal-size/:id', async (req, res) => {
     const pool = await poolPromise;
     const { id } = req.params;
     const query = `
-    SELECT DISTINCT br.BridalID, rs.RingSize
+    SELECT DISTINCT br.BridalID, ba.RingSizeID, rs.RingSize
     FROM  Bridal br
     JOIN BridalAccessory ba ON br.BridalID = ba.BridalID
     JOIN RingSize rs ON ba.RingSizeID = rs.RingSizeID
@@ -1336,7 +1585,7 @@ router.get('/bridal-prices/:id', async (req, res) => {
     const { id } = req.params;
 
     const query = `
-    SELECT DISTINCT br.BridalID, bp.Price
+    SELECT DISTINCT br.BridalID, bp.PriceID, bp.Price
     FROM  Bridal br
     JOIN BridalAccessory ba ON br.BridalID = ba.BridalID
     JOIN BridalPrice bp ON ba.PriceID = bp.PriceID
@@ -1351,6 +1600,44 @@ router.get('/bridal-prices/:id', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).send('Error retrieving diamond ring prices');
+  }
+});
+
+// Define the endpoint
+router.post('/price-bridal-id', async (req, res) => {
+  try {
+    const { bridalId, materialID, ringSizeID } = req.body;
+
+    if(materialID === null || ringSizeID === null || bridalId === null) {
+      return res.status(400).json({ error: 'MaterialID, RingSizeID, and BridalID are required' });
+    }
+
+    console.log('Input Data:', { bridalId, materialID, ringSizeID });
+
+    const pool = await poolPromise;
+    const result = await pool.request()
+      .input('MaterialID', sql.Int, materialID)
+      .input('RingSizeID', sql.Int, ringSizeID)
+      .input('BridalID', sql.Int, bridalId)
+      .query(`
+        SELECT b.PriceID
+        FROM BridalAccessory ba
+        JOIN BridalPrice b ON ba.PriceID = b.PriceID
+        WHERE ba.MaterialID = @MaterialID
+        AND ba.RingSizeID = @RingSizeID
+        AND ba.BridalID = @BridalID
+        `);
+
+        console.log('Query Result:', result.recordset);
+
+        if (result.recordset.length > 0) {
+          res.json({ PriceID: result.recordset[0].PriceID });
+        } else {
+          res.status(404).json({ error: 'PriceID not found for the given MaterialID and RingSizeID' });
+        }
+  } catch (err) {
+    console.error('Error fetching PriceID:', err);
+    res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 module.exports = router;
