@@ -4,30 +4,205 @@ const certificateDAO = require('../../dao/certificate/certificateDAO');
 const ejs = require('ejs');
 const path = require('path');
 const certificatePrinter = require('../../dao/certificate/certificatePrinter');
+const sql = require("mssql");
+const config = require("../../config/dbconfig");
 
-router.put('/add', async (req, res) => {
+const poolPromise = new sql.ConnectionPool(config)
+    .connect()
+    .then(pool => {
+        console.log('Connected to MSSQL');
+        return pool;
+    })
+    .catch(err => console.log('Database Connection Failed! Bad Config: ', err));
+
+// router.put('/add', async (req, res) => {
+//     try {
+//         const cert = req.body;
+//         const addcert = await certificateDAO.addCertificate(cert);
+//         res.status(201).json(addcert);
+//     } catch (error) {
+//         res.status(500).send(error.message);
+//     }
+// });
+
+router.post('/add', async (req, res) => {
     try {
-        const cert = req.body;
-        const addcert = await certificateDAO.addCertificate(cert);
-        res.status(201).json(addcert);
+        const pool = await poolPromise;
+        const {
+            InspectionDate, ClarityGrade, ShapeAndCuttingStyle, GIAReportNumber, Measurements, CaratWeight,
+            ColorGrade, SymmetryGrade, CutGrade, PolishGrade, Fluorescence, ImageLogoCertificate,
+            BridalID, DiamondTimepiecesID, DiamondRingsID, DiamondID
+        } = req.body;
+
+        // Validate that exactly one of the unique ID fields is provided
+        const uniqueFields = [BridalID, DiamondTimepiecesID, DiamondRingsID, DiamondID];
+        const providedUniqueFields = uniqueFields.filter(field => field !== null && field !== undefined);
+
+        if (providedUniqueFields.length !== 1) {
+            return res.status(400).send({ message: 'Exactly one of BridalID, DiamondTimepiecesID, DiamondRingsID, or DiamondID must be provided.' });
+        }
+
+        // Construct the check query dynamically based on the provided IDs
+        const checkConditions = [];
+        const checkRequest = pool.request();
+
+        if (BridalID) {
+            checkConditions.push('BridalID = @BridalID');
+            checkRequest.input('BridalID', sql.Int, BridalID);
+        }
+        if (DiamondTimepiecesID) {
+            checkConditions.push('DiamondTimepiecesID = @DiamondTimepiecesID');
+            checkRequest.input('DiamondTimepiecesID', sql.Int, DiamondTimepiecesID);
+        }
+        if (DiamondRingsID) {
+            checkConditions.push('DiamondRingsID = @DiamondRingsID');
+            checkRequest.input('DiamondRingsID', sql.Int, DiamondRingsID);
+        }
+        if (DiamondID) {
+            checkConditions.push('DiamondID = @DiamondID');
+            checkRequest.input('DiamondID', sql.Int, DiamondID);
+        }
+
+        const checkQuery = `SELECT * FROM Certificate WHERE ${checkConditions.join(' OR ')}`;
+        const checkResult = await checkRequest.query(checkQuery);
+
+        if (checkResult.recordset.length > 0) {
+            return res.status(400).send({ message: 'A certificate already exists for one of the provided IDs.' });
+        }
+
+        // Construct the insert query dynamically based on the provided IDs
+        const insertColumns = [
+            'InspectionDate', 'ClarityGrade', 'ShapeAndCuttingStyle', 'GIAReportNumber', 'Measurements', 'CaratWeight',
+            'ColorGrade', 'SymmetryGrade', 'CutGrade', 'PolishGrade', 'Fluorescence', 'ImageLogoCertificate'
+        ];
+        const insertValues = [
+            '@InspectionDate', '@ClarityGrade', '@ShapeAndCuttingStyle', '@GIAReportNumber', '@Measurements', '@CaratWeight',
+            '@ColorGrade', '@SymmetryGrade', '@CutGrade', '@PolishGrade', '@Fluorescence', '@ImageLogoCertificate'
+        ];
+
+        if (BridalID) {
+            insertColumns.push('BridalID');
+            insertValues.push('@BridalID');
+        }
+        if (DiamondTimepiecesID) {
+            insertColumns.push('DiamondTimepiecesID');
+            insertValues.push('@DiamondTimepiecesID');
+        }
+        if (DiamondRingsID) {
+            insertColumns.push('DiamondRingsID');
+            insertValues.push('@DiamondRingsID');
+        }
+        if (DiamondID) {
+            insertColumns.push('DiamondID');
+            insertValues.push('@DiamondID');
+        }
+
+        const insertQuery = `
+            INSERT INTO Certificate (${insertColumns.join(', ')})
+            VALUES (${insertValues.join(', ')})`;
+
+        const insertRequest = pool.request()
+            .input('InspectionDate', sql.Date, InspectionDate)
+            .input('ClarityGrade', sql.VarChar(50), ClarityGrade)
+            .input('ShapeAndCuttingStyle', sql.VarChar(50), ShapeAndCuttingStyle)
+            .input('GIAReportNumber', sql.VarChar(50), GIAReportNumber)
+            .input('Measurements', sql.VarChar(100), Measurements)
+            .input('CaratWeight', sql.Decimal(5, 2), CaratWeight)
+            .input('ColorGrade', sql.VarChar(50), ColorGrade)
+            .input('SymmetryGrade', sql.VarChar(50), SymmetryGrade)
+            .input('CutGrade', sql.VarChar(50), CutGrade)
+            .input('PolishGrade', sql.VarChar(50), PolishGrade)
+            .input('Fluorescence', sql.VarChar(50), Fluorescence)
+            .input('ImageLogoCertificate', sql.VarChar(sql.MAX), ImageLogoCertificate);
+
+        if (BridalID) {
+            insertRequest.input('BridalID', sql.Int, BridalID);
+        }
+        if (DiamondTimepiecesID) {
+            insertRequest.input('DiamondTimepiecesID', sql.Int, DiamondTimepiecesID);
+        }
+        if (DiamondRingsID) {
+            insertRequest.input('DiamondRingsID', sql.Int, DiamondRingsID);
+        }
+        if (DiamondID) {
+            insertRequest.input('DiamondID', sql.Int, DiamondID);
+        }
+
+        const result = await insertRequest.query(insertQuery);
+
+        res.status(201).send({ message: 'Certificate added successfully', data: result.recordset });
     } catch (error) {
-        res.status(500).send(error.message);
+        console.error(error);
+        res.status(500).send({ message: 'An error occurred while adding the certificate', error });
     }
 });
+
+// Route to fetch products that are not in the Certificate table
+router.get('/fetch-products', async (req, res) => {
+    try {
+        const pool = await poolPromise;
+
+        // Define queries to fetch products without associated Certificate records
+        const diamondQuery = `
+        SELECT d.*
+        FROM Diamond d
+        LEFT JOIN Certificate c ON d.DiamondID = c.DiamondID
+        WHERE c.DiamondID IS NULL
+        `;
+        const bridalQuery = `
+        SELECT b.*
+        FROM Bridal b
+        LEFT JOIN Certificate c ON b.BridalID = c.BridalID
+        WHERE c.BridalID IS NULL
+        `;
+        const diamondRingsQuery = `
+        SELECT r.*
+        FROM DiamondRings r
+        LEFT JOIN Certificate c ON r.DiamondRingsID = c.DiamondRingsID
+        WHERE c.DiamondRingsID IS NULL
+        `;
+        const diamondTimepiecesQuery = `
+        SELECT t.*
+        FROM DiamondTimepieces t
+        LEFT JOIN Certificate c ON t.DiamondTimepiecesID = c.DiamondTimepiecesID
+        WHERE c.DiamondTimepiecesID IS NULL
+        `;
+
+        // Execute all queries
+        const [diamonds, bridals, diamondRings, diamondTimepieces] = await Promise.all([
+            pool.request().query(diamondQuery),
+            pool.request().query(bridalQuery),
+            pool.request().query(diamondRingsQuery),
+            pool.request().query(diamondTimepiecesQuery)
+        ]);
+
+        // Respond with filtered products
+        res.json({
+            diamonds: diamonds.recordset,
+            bridals: bridals.recordset,
+            diamondRings: diamondRings.recordset,
+            diamondTimepieces: diamondTimepieces.recordset
+        });
+    } catch (err) {
+        console.error('Error fetching products:', err.message); // Log specific error message
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
 router.get("/lookup", async (req, response) => {
     certificateDAO.getCertificate()
-      .then((result) => {
-        response.json(result[0]);
-      })
-      .catch((error) => {
-        console.error("Error fetching certificate: ", error);
-        response.status(500).send("Error fetching certificate");
-      });
-  });
-  
+        .then((result) => {
+            response.json(result[0]);
+        })
+        .catch((error) => {
+            console.error("Error fetching certificate: ", error);
+            response.status(500).send("Error fetching certificate");
+        });
+});
+
 router.get('/:GIAReportNumber', async (req, res) => {
     const GIAReportNumber = req.params.GIAReportNumber;
-  
+
     try {
         const certificate = await certificateDAO.getCertificateByGIAReportNumber(GIAReportNumber);
         if (certificate) {
