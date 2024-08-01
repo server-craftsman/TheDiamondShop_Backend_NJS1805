@@ -235,4 +235,56 @@ router.post('/print-certificate', async (req, res) => {
     }
 });
 
+router.put('/edit-certificate/:id', async (req, res) => {
+    const certificateID = req.params.id;
+    const { inspectionDate, clarityGrade, shapeAndCuttingStyle, GIAReportNumber, measurements, caratWeight, colorGrade, symmetryGrade, cutGrade, polishGrade, fluorescence, imageLogoCertificate, bridalID, diamondTimepiecesID, diamondRingsID, diamondID } = req.body;
+
+    try {
+        const pool = await sql.connect(config);
+        const result = await pool.request()
+            .input('CertificateID', sql.Int, certificateID)
+            .input('InspectionDate', sql.Date, inspectionDate)
+            .input('ClarityGrade', sql.VarChar(50), clarityGrade)
+            .input('ShapeAndCuttingStyle', sql.VarChar(50), shapeAndCuttingStyle)
+            .input('GIAReportNumber', sql.VarChar(50), GIAReportNumber)
+            .input('Measurements', sql.VarChar(100), measurements)
+            .input('CaratWeight', sql.Decimal(5, 2), caratWeight)
+            .input('ColorGrade', sql.VarChar(50), colorGrade)
+            .input('SymmetryGrade', sql.VarChar(50), symmetryGrade)
+            .input('CutGrade', sql.VarChar(50), cutGrade)
+            .input('PolishGrade', sql.VarChar(50), polishGrade)
+            .input('Fluorescence', sql.VarChar(50), fluorescence)
+            .input('ImageLogoCertificate', sql.NVarChar(sql.MAX), imageLogoCertificate)
+            .input('BridalID', sql.Int, bridalID)
+            .input('DiamondTimepiecesID', sql.Int, diamondTimepiecesID)
+            .input('DiamondRingsID', sql.Int, diamondRingsID)
+            .input('DiamondID', sql.Int, diamondID)
+            .query(`
+                UPDATE Certificate
+                SET InspectionDate = @InspectionDate,
+                    ClarityGrade = @ClarityGrade,
+                    ShapeAndCuttingStyle = @ShapeAndCuttingStyle,
+                    GIAReportNumber = @GIAReportNumber,
+                    Measurements = @Measurements,
+                    CaratWeight = @CaratWeight,
+                    ColorGrade = @ColorGrade,
+                    SymmetryGrade = @SymmetryGrade,
+                    CutGrade = @CutGrade,
+                    PolishGrade = @PolishGrade,
+                    Fluorescence = @Fluorescence,
+                    ImageLogoCertificate = @ImageLogoCertificate,
+                    BridalID = @BridalID,
+                    DiamondTimepiecesID = @DiamondTimepiecesID,
+                    DiamondRingsID = @DiamondRingsID,
+                    DiamondID = @DiamondID
+                WHERE CertificateID = @CertificateID
+            `);
+
+        res.status(200).send('Certificate updated successfully');
+    } catch (err) {
+        console.error('Error updating certificate:', err);
+        res.status(500).send('Error updating certificate');
+    }
+});
+
 module.exports = router;
