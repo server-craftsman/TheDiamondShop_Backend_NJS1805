@@ -216,10 +216,10 @@ router.get('/:GIAReportNumber', async (req, res) => {
     }
 });
 
-router.put('/update-cert/:ReportNumber', async (req, res) => {
+router.put('/update-cert/:CertificateID', async (req, res) => {
     try {
         const cert = req.body;
-        const updatecert = await certificateDAO.updatecert(req.params.ReportNumber, cert);
+        const updatecert = await certificateDAO.updatecert(req.params.CertificateID, cert);
         res.json(updatecert);
     } catch (error) {
         res.status(500).send(error.message);

@@ -74,23 +74,40 @@ class certificateDAO {
     }
   }
 
-  async updatecert(ReportNumber, cert) {
+  async updatecert(CertificateID, cert) {
     try {
       let pool = await sql.connect(config);
       let updatecert = await pool
         .request()
+        .input("CertificateID", sql.VarChar, CertificateID)
+        .input("InspectionDate", sql.Date, cert.InspectionDate)
         .input("ClarityGrade", sql.VarChar, cert.ClarityGrade)
         .input("ShapeAndCuttingStyle", sql.VarChar, cert.ShapeAndCuttingStyle)
-        .input("GIAReportNumber", sql.VarChar, ReportNumber)
+        .input("GIAReportNumber", sql.VarChar, cert.GIAReportNumber)
         .input("Measurements", sql.VarChar, cert.Measurements)
-        .input("CaratWeight", sql.VarChar, cert.CaratWeight)
+        .input("CaratWeight", sql.Decimal(5, 2), cert.CaratWeight)
         .input("ColorGrade", sql.VarChar, cert.ColorGrade)
         .input("SymmetryGrade", sql.VarChar, cert.SymmetryGrade)
         .input("CutGrade", sql.VarChar, cert.CutGrade)
         .input("PolishGrade", sql.VarChar, cert.PolishGrade)
         .input("Fluorescence", sql.VarChar, cert.Fluorescence)
+        .input("ImageLogoCertificate", sql.VarChar(sql.MAX), cert.ImageLogoCertificate)
         .query(
-          "UPDATE Certificate SET ClarityGrade =@ClarityGrade, ShapeAndCuttingStyle = @ShapeAndCuttingStyle,  Measurements = @Measurements, CaratWeight = @CaratWeight, ColorGrade = @ColorGrade, SymmetryGrade = @SymmetryGrade, CutGrade = @CutGrade, PolishGrade = @PolishGrade, Fluorescence = @Fluorescence WHERE GIAReportNumber = @GIAReportNumber"
+          `UPDATE Certificate 
+          SET
+          InspectionDate = @InspectionDate,
+          ClarityGrade = @ClarityGrade, 
+          ShapeAndCuttingStyle = @ShapeAndCuttingStyle,
+          GIAReportNumber = @GIAReportNumber,
+          Measurements = @Measurements, 
+          CaratWeight = @CaratWeight, 
+          ColorGrade = @ColorGrade, 
+          SymmetryGrade = @SymmetryGrade, 
+          CutGrade = @CutGrade, 
+          PolishGrade = @PolishGrade, 
+          Fluorescence = @Fluorescence,
+          ImageLogoCertificate = @ImageLogoCertificate
+          WHERE CertificateID = @CertificateID`
         );
       if (updatecert.rowsAffected[0] > 0) {
         return {
