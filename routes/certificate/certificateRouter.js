@@ -200,11 +200,11 @@ router.get("/lookup", async (req, response) => {
         });
 });
 
-router.get('/:GIAReportNumber', async (req, res) => {
-    const GIAReportNumber = req.params.GIAReportNumber;
+router.get('/:CertificateID', async (req, res) => {
+    const CertificateID = req.params.CertificateID;
 
     try {
-        const certificate = await certificateDAO.getCertificateByGIAReportNumber(GIAReportNumber);
+        const certificate = await certificateDAO.getCertificateByCertificateID(CertificateID);
         if (certificate) {
             res.json(certificate);
         } else {

@@ -48,14 +48,36 @@ class certificateDAO {
   //     }
   // }
 
-  async getCertificateByGIAReportNumber(GIAReportNumber) {
+  async getCertificateByCertificateID(CertificateID) {
     try {
       const pool = await sql.connect(config);
       const result = await pool
         .request()
-        .input("GIAReportNumber", sql.VarChar, GIAReportNumber)
+        .input("CertificateID", sql.Int, CertificateID)
         .query(
-          "SELECT GIAReportNumber, InspectionDate, ClarityGrade, ShapeAndCuttingStyle, Measurements, CaratWeight, ColorGrade, SymmetryGrade, CutGrade, PolishGrade, Fluorescence FROM Certificate WHERE GIAReportNumber = @GIAReportNumber"
+          `SELECT c.*,
+		b.BridalStyle,
+		b.Category,
+		b.ImageBridal,
+		b.Description AS Bridal,
+		d.DiamondOrigin,
+		d.StockNumber,
+		d.Descriptors,
+		d.Image,
+		dr.RingStyle,
+		dr.NameRings,
+		dr.Description AS DiamondRings,
+		dr.ImageRings,
+		t.TimepiecesStyle,
+		t.DialColor,
+		t.Description AS DiamondTimepieces,
+		t.ImageTimepieces
+		FROM Certificate c
+				 LEFT JOIN Bridal b ON c.BridalID = b.BridalID
+				 LEFT JOIN DiamondRings dr ON dr.DiamondRingsID = c.DiamondRingsID
+				 LEFT JOIN Diamond d	ON d.DiamondID = c.DiamondID
+				LEFT JOIN DiamondTimepieces t ON t.DiamondTimepiecesID = c.DiamondTimepiecesID
+    WHERE c.CertificateID = @CertificateID;`
         );
       return result.recordset[0];
     } catch (err) {
@@ -91,7 +113,11 @@ class certificateDAO {
         .input("CutGrade", sql.VarChar, cert.CutGrade)
         .input("PolishGrade", sql.VarChar, cert.PolishGrade)
         .input("Fluorescence", sql.VarChar, cert.Fluorescence)
-        .input("ImageLogoCertificate", sql.VarChar(sql.MAX), cert.ImageLogoCertificate)
+        .input(
+          "ImageLogoCertificate",
+          sql.VarChar(sql.MAX),
+          cert.ImageLogoCertificate
+        )
         .query(
           `UPDATE Certificate 
           SET
