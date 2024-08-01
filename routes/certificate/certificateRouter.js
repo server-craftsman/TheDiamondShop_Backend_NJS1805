@@ -237,28 +237,47 @@ router.post('/print-certificate', async (req, res) => {
 
 router.put('/edit-certificate/:id', async (req, res) => {
     const certificateID = req.params.id;
-    const { inspectionDate, clarityGrade, shapeAndCuttingStyle, GIAReportNumber, measurements, caratWeight, colorGrade, symmetryGrade, cutGrade, polishGrade, fluorescence, imageLogoCertificate, bridalID, diamondTimepiecesID, diamondRingsID, diamondID } = req.body;
+    const {
+        InspectionDate,
+        ClarityGrade,
+        ShapeAndCuttingStyle,
+        GIAReportNumber,
+        Measurements,
+        CaratWeight,
+        ColorGrade,
+        SymmetryGrade,
+        CutGrade,
+        PolishGrade,
+        Fluorescence,
+        ImageLogoCertificate,
+        BridalID,
+        DiamondTimepiecesID,
+        DiamondRingsID,
+        DiamondID
+    } = req.body;
+
+    console.log('Received Data:', req.body);
 
     try {
         const pool = await sql.connect(config);
-        const result = await pool.request()
+        await pool.request()
             .input('CertificateID', sql.Int, certificateID)
-            .input('InspectionDate', sql.Date, inspectionDate)
-            .input('ClarityGrade', sql.VarChar(50), clarityGrade)
-            .input('ShapeAndCuttingStyle', sql.VarChar(50), shapeAndCuttingStyle)
-            .input('GIAReportNumber', sql.VarChar(50), GIAReportNumber)
-            .input('Measurements', sql.VarChar(100), measurements)
-            .input('CaratWeight', sql.Decimal(5, 2), caratWeight)
-            .input('ColorGrade', sql.VarChar(50), colorGrade)
-            .input('SymmetryGrade', sql.VarChar(50), symmetryGrade)
-            .input('CutGrade', sql.VarChar(50), cutGrade)
-            .input('PolishGrade', sql.VarChar(50), polishGrade)
-            .input('Fluorescence', sql.VarChar(50), fluorescence)
-            .input('ImageLogoCertificate', sql.NVarChar(sql.MAX), imageLogoCertificate)
-            .input('BridalID', sql.Int, bridalID)
-            .input('DiamondTimepiecesID', sql.Int, diamondTimepiecesID)
-            .input('DiamondRingsID', sql.Int, diamondRingsID)
-            .input('DiamondID', sql.Int, diamondID)
+            .input('InspectionDate', sql.Date, InspectionDate || null)
+            .input('ClarityGrade', sql.VarChar(50), ClarityGrade || null)
+            .input('ShapeAndCuttingStyle', sql.VarChar(50), ShapeAndCuttingStyle || null)
+            .input('GIAReportNumber', sql.VarChar(50), GIAReportNumber || null)
+            .input('Measurements', sql.VarChar(100), Measurements || null)
+            .input('CaratWeight', sql.Decimal(5, 2), CaratWeight || null)
+            .input('ColorGrade', sql.VarChar(50), ColorGrade || null)
+            .input('SymmetryGrade', sql.VarChar(50), SymmetryGrade || null)
+            .input('CutGrade', sql.VarChar(50), CutGrade || null)
+            .input('PolishGrade', sql.VarChar(50), PolishGrade || null)
+            .input('Fluorescence', sql.VarChar(50), Fluorescence || null)
+            .input('ImageLogoCertificate', sql.NVarChar(sql.MAX), ImageLogoCertificate || null)
+            .input('BridalID', sql.Int, BridalID || null)
+            .input('DiamondTimepiecesID', sql.Int, DiamondTimepiecesID || null)
+            .input('DiamondRingsID', sql.Int, DiamondRingsID || null)
+            .input('DiamondID', sql.Int, DiamondID || null)
             .query(`
                 UPDATE Certificate
                 SET InspectionDate = @InspectionDate,
@@ -282,7 +301,7 @@ router.put('/edit-certificate/:id', async (req, res) => {
 
         res.status(200).send('Certificate updated successfully');
     } catch (err) {
-        console.error('Error updating certificate:', err);
+        console.error('Error updating certificate:', err.message);
         res.status(500).send('Error updating certificate');
     }
 });
