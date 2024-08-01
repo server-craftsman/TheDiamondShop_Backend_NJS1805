@@ -1640,4 +1640,47 @@ router.post('/price-bridal-id', async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+//Add Price for Material and Ringsize difference
+router.post('/addPrice/:id', async (req, res) => {
+  const bridalID = req.params.id;
+  const { materialID, ringSizeID, price } = req.body;
+
+  try {
+    const pool = await sql.connect(config);
+
+    // Start a transaction
+    const transaction = new sql.Transaction(pool);
+
+    await transaction.begin();
+
+    try {
+      // Insert the new price into the BridalPrice table
+      const result = await transaction.request()
+        .input('price', sql.Decimal(18, 2), price)
+        .query('INSERT INTO BridalPrice (Price) OUTPUT INSERTED.PriceID VALUES (@price)');
+      
+      const priceID = result.recordset[0].PriceID;
+
+      // Insert the new entry into BridalAccessory table with BridalID
+      await transaction.request()
+        .input('bridalID', sql.Int, bridalID)
+        .input('materialID', sql.Int, materialID)
+        .input('ringSizeID', sql.Int, ringSizeID)
+        .input('priceID', sql.Int, priceID)
+        .query('INSERT INTO BridalAccessory (BridalID, MaterialID, RingSizeID, PriceID) VALUES (@bridalID, @materialID, @ringSizeID, @priceID)');
+
+      // Commit the transaction
+      await transaction.commit();
+      res.status(200).send('Price added successfully');
+    } catch (err) {
+      // Rollback the transaction in case of error
+      await transaction.rollback();
+      console.error('Transaction error:', err);
+      res.status(500).send('Internal Server Error');
+    }
+  } catch (err) {
+    console.error('Database connection error:', err);
+    res.status(500).send('Internal Server Error');
+  }
+});
 module.exports = router;
