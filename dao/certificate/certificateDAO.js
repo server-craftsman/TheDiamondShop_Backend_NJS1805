@@ -59,25 +59,25 @@ class certificateDAO {
 		b.BridalStyle,
 		b.Category,
 		b.ImageBridal,
-		b.Description AS Bridal,
+		b.Description AS BridalDescription,
 		d.DiamondOrigin,
 		d.StockNumber,
 		d.Descriptors,
-		d.Image,
+		d.Image AS DiamondImage,
 		dr.RingStyle,
 		dr.NameRings,
-		dr.Description AS DiamondRings,
+		dr.Description AS RingsDescription,
 		dr.ImageRings,
 		t.TimepiecesStyle,
 		t.DialColor,
-		t.Description AS DiamondTimepieces,
+		t.Description AS TimepiecesDescription,
 		t.ImageTimepieces
 		FROM Certificate c
 				 LEFT JOIN Bridal b ON c.BridalID = b.BridalID
 				 LEFT JOIN DiamondRings dr ON dr.DiamondRingsID = c.DiamondRingsID
 				 LEFT JOIN Diamond d	ON d.DiamondID = c.DiamondID
 				LEFT JOIN DiamondTimepieces t ON t.DiamondTimepiecesID = c.DiamondTimepiecesID
-    WHERE c.CertificateID = @CertificateID;`
+            WHERE c.CertificateID = @CertificateID;`
         );
       return result.recordset[0];
     } catch (err) {
